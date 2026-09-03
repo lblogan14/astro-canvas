@@ -365,7 +365,7 @@ def view(
 def absorber_catalog(
     absorbers: Table,
     linelist: ListNameParam = "LLS",
-    visible: Annotated[bool, Param(label="Visible by default")] = True,
+    visible: Annotated[bool, Param(label="Visible by default")] = False,
 ) -> Table:
     """Normalise any absorber catalogue into rb_multispec's absorber-manager table.
 
@@ -376,7 +376,7 @@ def absorber_catalog(
     Args:
         absorbers: Catalogue to normalise.
         linelist: Line list assigned to systems whose own list is unknown.
-        visible: Whether the systems start plotted.
+        visible: Whether the systems start plotted (rb_multispec adds them unplotted).
 
     Returns:
         ``Zabs``/``LineList``/``Color``/``Visible``/``Label``, one row per system.

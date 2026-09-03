@@ -218,7 +218,12 @@ def test_absorber_catalog_normalises_the_zfind_shape() -> None:
     # 'zfind_igm' is not one of rb_multispec's options, so the fallback list is used.
     assert catalog.columns["LineList"].tolist() == ["LLS", "LLS"]
     assert catalog.columns["Color"].tolist() == list(M.ABSORBER_COLORS[:2])
-    assert catalog.columns["Visible"].tolist() == [True, True]
+    # rb_multispec adds systems unplotted; the viewer's checkboxes turn them on.
+    assert catalog.columns["Visible"].tolist() == [False, False]
+    assert MS.absorber_catalog(zfind_catalog, visible=True).columns["Visible"].tolist() == [
+        True,
+        True,
+    ]
     assert catalog.columns["Label"][0] == f"z={MGII_Z:.4f} (zfind_igm)"
 
 
@@ -230,7 +235,7 @@ def test_absorber_catalog_keeps_a_known_line_list() -> None:
             "Color": np.array(["cyan"], dtype=np.str_),
         }
     )
-    catalog = MS.absorber_catalog(table, linelist="LLS", visible=False)
+    catalog = MS.absorber_catalog(table, linelist="LLS")
     assert catalog.columns["LineList"].tolist() == ["DLA"]
     assert catalog.columns["Color"].tolist() == ["cyan"]
     assert catalog.columns["Visible"].tolist() == [False]

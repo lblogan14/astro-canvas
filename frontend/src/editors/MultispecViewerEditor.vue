@@ -244,6 +244,17 @@ const allMarkers = computed(() => [...markers.value, ...identifiedMarkers.value]
 
 // --- cursor, panels, keyboard -------------------------------------------------------------------
 
+/** Panels share the stack's height, within rb_multispec-ish bounds. */
+const MIN_PANEL = 110
+const MAX_PANEL = 260
+const stackEl = ref<HTMLDivElement | null>(null)
+const stackHeight = ref(0)
+const panelHeight = computed(() => {
+  const n = Math.max(1, panels.value.length)
+  if (!stackHeight.value) return MIN_PANEL
+  return Math.min(MAX_PANEL, Math.max(MIN_PANEL, Math.floor(stackHeight.value / n) - 2))
+})
+
 const activePanel = ref(0)
 const cursor = ref<{ x: number; y: number }>({ x: Number.NaN, y: Number.NaN })
 const yRanges = ref<Record<number, [number, number] | null>>({})
@@ -604,8 +615,20 @@ function onKey(event: KeyboardEvent): void {
 }
 
 const root = ref<HTMLDivElement | null>(null)
-onMounted(() => root.value?.focus())
+let stackObserver: ResizeObserver | null = null
+onMounted(() => {
+  root.value?.focus()
+  const el = stackEl.value
+  if (el && typeof ResizeObserver !== 'undefined') {
+    stackHeight.value = el.clientHeight
+    stackObserver = new ResizeObserver(() => {
+      stackHeight.value = el.clientHeight
+    })
+    stackObserver.observe(el)
+  }
+})
 onBeforeUnmount(() => {
+  stackObserver?.disconnect()
   for (const name of requested) execution.clearTag(listKey(name), listTag(name))
 })
 
@@ -746,7 +769,7 @@ function onZInput(event: Event): void {
     </div>
 
     <div class="grid min-h-0 flex-1 grid-cols-[1fr_21rem] gap-3">
-      <div class="min-h-0 overflow-auto pr-1" data-testid="multispec-stack">
+      <div ref="stackEl" class="min-h-0 overflow-auto pr-1" data-testid="multispec-stack">
         <MultispecPanel
           v-for="(panel, index) in panels"
           :key="index"
@@ -757,6 +780,7 @@ function onZInput(event: Event): void {
           :y-range="yRanges[index] ?? null"
           :show-error="showError"
           :show-labels="showLabels"
+          :height="panelHeight"
           :show-axis="index === panels.length - 1"
           :label="labels[index]"
           @hover="(x, y) => onHover(index, x, y)"

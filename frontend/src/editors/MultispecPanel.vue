@@ -15,6 +15,9 @@ import 'uplot/dist/uPlot.min.css'
 import { useUiStore } from '@/stores/ui'
 import { fluxRange, type SpectrumSeries } from '@/widgets/spectrumSeries'
 
+/** Above this many ticks in view the labels are dropped (they would overlap into a wall). */
+const LABEL_LIMIT = 40
+
 export interface PanelMarker {
   x: number
   label?: string
@@ -111,6 +114,12 @@ function drawMarkers(u: uPlot): void {
   const ctx = u.ctx
   const top = u.bbox.top
   const height = u.bbox.height
+  const inView = props.markers.filter((marker) => {
+    const left = u.valToPos(marker.x, 'x', true)
+    return left >= u.bbox.left && left <= u.bbox.left + u.bbox.width
+  })
+  // Above this many ticks the rotated names are an unreadable wall; zoom in to get them back.
+  const labelled = props.showLabels && inView.length <= LABEL_LIMIT
   ctx.save()
   ctx.beginPath()
   ctx.rect(u.bbox.left, top, u.bbox.width, height)
@@ -118,9 +127,8 @@ function drawMarkers(u: uPlot): void {
   ctx.font = `10px ${getComputedStyle(u.root).fontFamily || 'sans-serif'}`
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'
-  for (const marker of props.markers) {
+  for (const marker of inView) {
     const left = u.valToPos(marker.x, 'x', true)
-    if (left < u.bbox.left || left > u.bbox.left + u.bbox.width) continue
     ctx.strokeStyle = marker.color ?? '#8B5CF6'
     ctx.lineWidth = 1
     ctx.setLineDash(marker.dash ? [4, 3] : [])
@@ -128,7 +136,7 @@ function drawMarkers(u: uPlot): void {
     ctx.moveTo(left, top)
     ctx.lineTo(left, top + height)
     ctx.stroke()
-    if (props.showLabels && marker.label) {
+    if (labelled && marker.label) {
       ctx.save()
       ctx.fillStyle = marker.color ?? '#8B5CF6'
       ctx.translate(left + 2, top + 2)
