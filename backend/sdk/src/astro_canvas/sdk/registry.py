@@ -32,6 +32,8 @@ class NodeRegistry:
         """Per pack, a folder of bundled sample data copied to ``<workspace>/samples/<pack>``."""
         self.security: dict[str, str] = {}
         """Per pack security class declared at registration (``standard`` when absent)."""
+        self.template_dirs: dict[str, Path] = {}
+        """Per pack, a folder of workflow templates (``*.acw`` documents plus optional ``*.md``)."""
 
     def add_sample_data(self, path: Path, *, pack: str) -> None:
         """Declare a directory of sample files shipped with ``pack``."""
@@ -40,6 +42,10 @@ class NodeRegistry:
     def declare_security(self, level: str, *, pack: str) -> None:
         """Record the pack's manifest ``security`` class (``standard``, ``needs-network``, ...)."""
         self.security[pack] = level
+
+    def add_templates(self, path: Path, *, pack: str) -> None:
+        """Declare a directory of workflow templates shipped with ``pack``."""
+        self.template_dirs[pack] = Path(path)
 
     def add(self, node: NodeDef, *, pack: str | None = None) -> NodeDef:
         """Register ``node``; raises ``DuplicateNodeError`` if the id is taken."""
@@ -77,6 +83,7 @@ class NodeRegistry:
             del self._specs[nid]
         self.sample_dirs.pop(pack, None)
         self.security.pop(pack, None)
+        self.template_dirs.pop(pack, None)
         return len(doomed) + self.types.remove_pack(pack)
 
     def get(self, node_id: str) -> NodeDef:
@@ -144,6 +151,9 @@ class PackRegistry:
 
     def declare_security(self, level: str) -> None:
         self.registry.declare_security(level, pack=self.pack)
+
+    def add_templates(self, path: Path) -> None:
+        self.registry.add_templates(path, pack=self.pack)
 
     @property
     def types(self) -> TypeRegistry:

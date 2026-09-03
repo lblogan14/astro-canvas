@@ -11,9 +11,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from 'reka-ui'
-import { Copy, History, MoreHorizontal, Pencil, Plus, RotateCcw, Trash2 } from '@lucide/vue'
+import {
+  Copy,
+  History,
+  LayoutTemplate,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Trash2,
+} from '@lucide/vue'
 
-import type { WorkflowSummary } from '@/api/types'
+import type { TemplateInfo, WorkflowSummary } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { useSessionStore } from '@/stores/session'
 import { useUiStore } from '@/stores/ui'
@@ -30,8 +39,12 @@ const ui = useUiStore()
 const renaming = ref<string | null>(null)
 const renameDraft = ref('')
 const showVersions = ref(false)
+const showTemplates = ref(false)
 
-onMounted(() => void workflows.refresh())
+onMounted(() => {
+  void workflows.refresh()
+  void workflows.loadTemplates()
+})
 watch(
   () => workflow.saveState,
   (state) => {
@@ -87,6 +100,12 @@ async function remove(item: WorkflowSummary): Promise<void> {
     const next = workflows.items[0]
     await router.push(next ? { name: 'workflow', params: { id: next.id } } : { name: 'home' })
   }
+}
+
+async function useTemplate(template: TemplateInfo): Promise<void> {
+  const id = await workflows.instantiate(template.id)
+  ui.notify(t('workflows.template_created', { name: template.name }))
+  await router.push({ name: 'workflow', params: { id } })
 }
 
 async function toggleVersions(): Promise<void> {
@@ -186,6 +205,48 @@ function formatDate(iso: string): string {
               </DropdownMenuContent>
             </DropdownMenuPortal>
           </DropdownMenuRoot>
+        </li>
+      </ul>
+    </div>
+
+    <div class="border-t">
+      <button
+        type="button"
+        class="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold hover:bg-muted"
+        :aria-expanded="showTemplates"
+        data-testid="toggle-templates"
+        @click="showTemplates = !showTemplates"
+      >
+        <LayoutTemplate class="size-3.5" /> {{ t('workflows.templates') }}
+        <span class="ml-auto text-muted-foreground">{{ workflows.templates.length }}</span>
+      </button>
+      <ul v-if="showTemplates" class="space-y-1 px-2 pb-2" data-testid="template-list">
+        <li v-if="workflows.templates.length === 0" class="px-1 text-xs text-muted-foreground">
+          {{ t('workflows.templates_empty') }}
+        </li>
+        <li
+          v-for="template in workflows.templates"
+          :key="template.id"
+          class="flex items-center gap-2 rounded-md border px-2 py-1 text-xs"
+          :data-template-id="template.id"
+        >
+          <span class="min-w-0 flex-1">
+            <span class="block truncate font-medium" :title="template.description">{{
+              template.name
+            }}</span>
+            <span class="block truncate text-muted-foreground">
+              {{ template.pack }} · {{ t('workflows.template_nodes', template.node_count) }}
+            </span>
+          </span>
+          <Button
+            size="xs"
+            variant="outline"
+            :aria-label="t('workflows.use_template', { name: template.name })"
+            data-testid="template-use"
+            @click="useTemplate(template)"
+          >
+            {{ t('workflows.use') }}
+          </Button>
         </li>
       </ul>
     </div>

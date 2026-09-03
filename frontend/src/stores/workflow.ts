@@ -430,6 +430,20 @@ export const useWorkflowStore = defineStore('workflow', () => {
     )
   }
 
+  /** Set several params of one node in a single undo entry (editors' Apply). */
+  function setParams(nodeId: string, patch: Record<string, unknown>): void {
+    commit('command.edit_param', (draft) => {
+      const node = draft.nodes[nodeId]
+      if (!node) return
+      const params = { ...node.params }
+      for (const [name, value] of Object.entries(patch)) {
+        if (value === undefined) delete params[name]
+        else params[name] = value
+      }
+      draft.nodes[nodeId] = { ...node, params }
+    })
+  }
+
   function setTitle(nodeId: string, title: string | null): void {
     updateNode(nodeId, { title: title?.trim() ? title.trim() : null }, 'command.rename', {
       uiOnly: true,
@@ -765,6 +779,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     moveNodes,
     resizeNode,
     setParam,
+    setParams,
     setTitle,
     setNotes,
     setDisabled,

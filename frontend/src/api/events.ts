@@ -143,6 +143,20 @@ export interface ErrorMessage {
   ts: number
 }
 
+/** Reply to `preview.compute`: the tagged summaries were sent (ok) or the node body failed. */
+export interface PreviewComputedMessage {
+  type: 'preview.computed'
+  workflow_id: string | null
+  node_id: string | null
+  node_type: string | null
+  tag: string
+  ok: boolean
+  ports?: string[]
+  error?: string
+  elapsed_ms: number
+  ts: number
+}
+
 export type ServerMessage =
   | EngineEvent
   | HelloMessage
@@ -151,6 +165,7 @@ export type ServerMessage =
   | CancelResultMessage
   | PongMessage
   | ErrorMessage
+  | PreviewComputedMessage
 
 export type ServerMessageType = ServerMessage['type']
 
@@ -171,6 +186,7 @@ const MESSAGE_TYPES: ReadonlySet<string> = new Set<ServerMessageType>([
   'cancel.result',
   'pong',
   'error',
+  'preview.computed',
 ])
 
 /** Narrow an arbitrary JSON payload to a known server message (or `null`). */
@@ -193,6 +209,18 @@ export interface PreviewViewport {
   tag?: string
 }
 
+/**
+ * `preview.compute`: run a node body with candidate params off the scheduler (editor live
+ * previews). Either a node instance (`node_id`, inputs from the graph) or a bare node type.
+ */
+export interface ComputeRequest {
+  node_id?: string
+  node_type?: string
+  params: Record<string, unknown>
+  tag?: string
+  viewport?: PreviewViewport
+}
+
 /** Commands the client sends; every one is a JSON object with a `type`. */
 export type ClientCommand =
   | { type: 'subscribe'; workflow_id: string }
@@ -205,4 +233,5 @@ export type ClientCommand =
       viewport: PreviewViewport
     }
   | { type: 'output.request'; node_id: string; port: string }
+  | ({ type: 'preview.compute' } & ComputeRequest)
   | { type: 'ping' }

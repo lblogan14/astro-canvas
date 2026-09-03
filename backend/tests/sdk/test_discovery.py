@@ -24,7 +24,8 @@ def test_discover_installed_packs(discovery: DiscoveryResult) -> None:
     assert names["core"].type_count == 20
     assert names["core"].distribution == "astro-canvas-core"
     assert names["core"].version == "0.1.0a0"
-    assert names["rbcodes"].node_count == 0 and names["rbcodes"].error is None
+    assert names["rbcodes"].node_count == 11 and names["rbcodes"].error is None
+    assert names["rbcodes"].type_count == 0  # the pack reuses the core ``astro.*`` types
     assert discovery.registry.validate_unique() == []
     assert discovery.errors == []
 

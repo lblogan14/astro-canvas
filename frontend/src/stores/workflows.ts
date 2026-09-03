@@ -2,7 +2,7 @@ import { ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 
 import { api } from '@/api/client'
-import type { WorkflowDoc, WorkflowSummary, WorkflowVersionInfo } from '@/api/types'
+import type { TemplateInfo, WorkflowDoc, WorkflowSummary, WorkflowVersionInfo } from '@/api/types'
 import { clone } from '@/lib/deepEqual'
 import { newId } from '@/lib/ids'
 
@@ -10,6 +10,8 @@ import { newId } from '@/lib/ids'
 export const useWorkflowsStore = defineStore('workflows', () => {
   const items = shallowRef<WorkflowSummary[]>([])
   const versions = shallowRef<WorkflowVersionInfo[]>([])
+  /** Pack-shipped templates (`GET /api/templates`). */
+  const templates = shallowRef<TemplateInfo[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -42,6 +44,22 @@ export const useWorkflowsStore = defineStore('workflows', () => {
     return saved.doc.id as string
   }
 
+  async function loadTemplates(): Promise<void> {
+    try {
+      templates.value = await api.listTemplates()
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : String(err)
+      templates.value = []
+    }
+  }
+
+  /** Create a workflow from a template; returns the new workflow's id. */
+  async function instantiate(templateId: string, name?: string): Promise<string> {
+    const saved = await api.instantiateTemplate(templateId, name ?? null)
+    await refresh()
+    return saved.doc.id as string
+  }
+
   async function loadVersions(id: string): Promise<void> {
     try {
       versions.value = await api.listVersions(id)
@@ -55,5 +73,18 @@ export const useWorkflowsStore = defineStore('workflows', () => {
     return api.getVersion(id, versionId)
   }
 
-  return { items, versions, loading, error, refresh, remove, duplicate, loadVersions, fetchVersion }
+  return {
+    items,
+    versions,
+    templates,
+    loading,
+    error,
+    refresh,
+    remove,
+    duplicate,
+    loadTemplates,
+    instantiate,
+    loadVersions,
+    fetchVersion,
+  }
 })

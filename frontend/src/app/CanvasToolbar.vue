@@ -84,6 +84,7 @@ const LAYOUTS = ['canvas', 'app', 'wizard', 'dashboard', 'batch'] as const
       size="icon-sm"
       :aria-pressed="ui.sidebarOpen && ui.sidebarPanel === 'workflows'"
       :title="t('toolbar.workflows')"
+      data-testid="toggle-workflows"
       @click="ui.showSidebar('workflows')"
     >
       <Workflow />

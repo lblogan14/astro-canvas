@@ -10,6 +10,7 @@ import {
   type PreviewViewport,
   type ServerMessage,
   parseServerMessage,
+  type ComputeRequest,
 } from './events'
 import { type DecodedFrame, decodeFrame } from './frames'
 import { wsUrl } from './client'
@@ -135,6 +136,10 @@ export class WsClient {
 
   requestPreview(nodeId: string, port: string, viewport: PreviewViewport = {}): boolean {
     return this.send({ type: 'preview.request', node_id: nodeId, port, viewport })
+  }
+
+  requestCompute(request: ComputeRequest): boolean {
+    return this.send({ type: 'preview.compute', tag: 'editor', ...request })
   }
 
   // --- internals ------------------------------------------------------------------------------

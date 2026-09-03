@@ -94,6 +94,8 @@ the `?token=` URL. Set `ASTRO_CANVAS_AUTH=false` to disable.
 | `GET /workflows/{id}/status` | `{node_errors, nodes: {id: node.status}, current_run, auto_run}` for reconnecting clients |
 | `GET /workflows/{id}/settings` · `POST /workflows/{id}/settings` `{auto_run}` | read / toggle the scheduler's auto-run switch (enabling it runs dirty cheap nodes immediately) |
 | `POST /workflows/{id}/run` `{targets?}` | 202 `{run_id}`; runs to the targets (default every leaf) |
+| `GET /templates` · `GET /templates/{id}` | pack-shipped workflow templates (`id = <pack>.<file stem>`, `name, description, pack, node_count, file, readme`) / the template document itself |
+| `POST /templates/{id}/instantiate` `{name?}` | 201 `{doc, node_errors}`: a stored copy under a fresh id (`meta.template` records the origin) that compiles and auto-runs like any workflow |
 | `GET /runs?workflow_id=` · `GET /runs/{id}` | history (`status, started, finished, targets, nodes[]`) |
 | `POST /runs/{id}/cancel` | `{cancelled}` |
 | `GET /outputs/{node}/{port}?workflow_id=&fmt=json\|msgpack\|arrow\|npz&decimate=N&range=lo,hi` | full outputs; `decimate`/`range` apply to spectrum-like values |
@@ -121,11 +123,16 @@ workflow_id`:
 | `node.output.summary` | `node_id, port, type_id, summary, tag` (≤ 4000 points for spectra; `port="$preview"` for `ctx.preview`; `tag` echoes `viewport.tag` so viewer-only slices do not replace thumbnails) |
 | `workspace.changed` | `paths` (workspace-relative); broadcast to every subscriber (`workflow_id = "*"`) |
 | `run.started` / `run.finished` | `run_id, targets, n_nodes, cached` (+ `status, elapsed_ms`) |
+| `preview.computed` | reply to `preview.compute`: `node_id` or `node_type`, `tag`, `ok`, `ports`, `elapsed_ms`, `error` (the tagged `node.output.summary` events for every output precede it) |
 
 Client → server: `subscribe {workflow_id}` (replies with `subscribed`, `graph.validation` and one
 `node.status` per node), `run {targets?}`, `cancel {run_id?, node_id?}`,
 `preview.request {node_id, port, viewport: {lo, hi, n_out, rows, tag}}` (re-decimated summary: `lo/hi` restrict the axis or the cube band, `n_out` is the point budget or tile edge, `rows` the table head),
-`output.request {node_id, port}` (binary frame), `ping`.
+`output.request {node_id, port}` (binary frame),
+`preview.compute {node_id | node_type, params, tag, viewport}` (phase 05: run one node body with candidate
+params outside the scheduler, nothing cached or committed; inputs come from the graph's cached upstream
+outputs for `node_id`, or the node type runs on `params` alone; replies are tagged `node.output.summary`
+events plus `preview.computed`), `ping`.
 
 Binary frames: `u32 msg_type (1 = output) | u32 header_len | msgpack header | buffers`, header
 `{node_id, port, type_id, data, arrays: [{name, dtype, shape, offset, nbytes}]}`; each array is a
@@ -140,6 +147,8 @@ C-contiguous little-endian buffer at `offset` in the payload (`dtype="bytes"` fo
 | `Cube3D` | `shape, instrument, wave_unit, wave_range, band, has_var, wcs, tile` (white light over `lo..hi`), `spectrum: {wave, flux}` (integrated, ≤ 512 points) |
 | `Table` | `n_rows, columns, units, dtypes, head: {col: values}` (first `rows`, default 50), `arrow_b64` (Arrow IPC of the head) |
 | `Figure` | `kind, size` plus `plotly` or `png_b64` when ≤ 400 kB |
+| `Continuum` | `n, index[], cont[]` (whole when ≤ `n_out`, default 20000, else strided with `index` on the spectrum grid), `masks`, `method`, `order`, `bic`, `params` (JSON-safe; `bic_results` rows) |
+| `LineList` | `n, source, wrest[], name[], fval[], gamma?[]` (first `rows`, default 2000) |
 | scalars, `File`, others | `{type, data: {...}}` (arrays summarised as shape/dtype/min/max) |
 
 ## CLI

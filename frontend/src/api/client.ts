@@ -8,6 +8,7 @@ import type {
   RunDetail,
   SniffResult,
   SystemInfo,
+  TemplateInfo,
   UploadResult,
   WorkflowDoc,
   WorkflowSaved,
@@ -131,6 +132,15 @@ export const api = {
     request<WorkflowSettings>(`/api/workflows/${enc(id)}/settings`),
   setWorkflowSettings: (id: string, settings: WorkflowSettings) =>
     request<WorkflowSettings>(`/api/workflows/${enc(id)}/settings`, json('POST', settings)),
+
+  // Phase 05: pack-shipped workflow templates.
+  listTemplates: () => request<TemplateInfo[]>('/api/templates'),
+  getTemplate: (id: string) => request<WorkflowDoc>(`/api/templates/${enc(id)}`),
+  instantiateTemplate: (id: string, name?: string | null) =>
+    request<WorkflowSaved>(
+      `/api/templates/${enc(id)}/instantiate`,
+      json('POST', { name: name ?? null }),
+    ),
 
   startRun: (id: string, targets?: string[] | null) =>
     request<RunAccepted>(

@@ -16,6 +16,8 @@ export type PortTypeSpec = Schemas['PortTypeSpec']
 export type PackRecord = Schemas['PackRecord']
 export type PackLoadError = Schemas['PackLoadError']
 export type Cost = NodeSpec['cost']
+// Phase 05: pack-shipped workflow templates.
+export type TemplateInfo = Schemas['TemplateInfo']
 
 // Phase 02: workflows, runs and engine events (see docs/formats/workflow.md).
 export type WorkflowDoc = Schemas['WorkflowDoc']

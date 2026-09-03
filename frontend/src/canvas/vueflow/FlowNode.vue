@@ -15,6 +15,7 @@ import { useExecutionStore } from '@/stores/execution'
 import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { useSelectionStore } from '@/stores/selection'
 import { useSessionStore } from '@/stores/session'
+import { useUiStore } from '@/stores/ui'
 import { useWorkflowStore } from '@/stores/workflow'
 import type { AstroNodeData } from './toFlow'
 
@@ -28,6 +29,7 @@ const schema = useNodesSchemaStore()
 const execution = useExecutionStore()
 const session = useSessionStore()
 const selection = useSelectionStore()
+const ui = useUiStore()
 const lod = inject(CANVAS_LOD_KEY, ref(false))
 
 const node = computed(() => workflow.nodes[props.id])
@@ -75,6 +77,10 @@ function remove(): void {
 
 function toggleCollapse(): void {
   workflow.setUi(props.id, { collapsed: !(node.value?.ui?.collapsed === true) })
+}
+
+function openEditor(): void {
+  ui.openEditor({ nodeId: props.id })
 }
 </script>
 
@@ -135,6 +141,7 @@ function toggleCollapse(): void {
       @duplicate="duplicate"
       @delete="remove"
       @toggle-collapse="toggleCollapse"
+      @open-editor="openEditor"
     >
       <template #input-handle="{ port }">
         <Handle

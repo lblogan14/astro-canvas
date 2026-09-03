@@ -269,4 +269,66 @@ describe('execution store', () => {
     expect(ex.nodes).toEqual({})
     expect(ex.currentRunId).toBeNull()
   })
+
+  it('records preview.computed results per node and tag, and clears them with the tagged views', () => {
+    const ex = useExecutionStore()
+    ex.applyMessage({
+      type: 'node.output.summary',
+      ts: 1,
+      workflow_id: WF,
+      node_id: 'cont',
+      port: 'continuum',
+      type_id: 'astro.Continuum',
+      summary: { cont: [1] },
+      tag: 'editor',
+    })
+    ex.applyMessage({
+      type: 'node.output.summary',
+      ts: 1,
+      workflow_id: WF,
+      node_id: 'cont',
+      port: 'continuum',
+      type_id: 'astro.Continuum',
+      summary: { cont: [2] },
+      tag: 'viewer',
+    })
+    ex.applyMessage({
+      type: 'preview.computed',
+      ts: 2,
+      workflow_id: WF,
+      node_id: 'cont',
+      node_type: null,
+      tag: 'editor',
+      ok: true,
+      ports: ['continuum', 'normalized'],
+      elapsed_ms: 8.5,
+    })
+    expect(ex.compute('cont', 'editor')).toEqual({
+      ok: true,
+      ports: ['continuum', 'normalized'],
+      error: null,
+      elapsedMs: 8.5,
+      ts: 2,
+    })
+    expect(ex.compute('cont', 'viewer')).toBeUndefined()
+    // Type-mode previews are keyed by `type:<node type>`.
+    ex.applyMessage({
+      type: 'preview.computed',
+      ts: 3,
+      workflow_id: WF,
+      node_id: null,
+      node_type: 'rbcodes.lines.line_list',
+      tag: 'editor',
+      ok: false,
+      error: 'boom',
+      elapsed_ms: 1,
+    })
+    expect(ex.compute('type:rbcodes.lines.line_list', 'editor')?.error).toBe('boom')
+    ex.clearTag('cont', 'editor')
+    expect(ex.compute('cont', 'editor')).toBeUndefined()
+    expect(ex.view('cont', 'continuum', 'editor')).toBeUndefined()
+    expect(ex.view('cont', 'continuum', 'viewer')?.summary).toEqual({ cont: [2] })
+    ex.reset()
+    expect(ex.computes).toEqual({})
+  })
 })
