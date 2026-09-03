@@ -62,8 +62,8 @@ dev = [
 astro-canvas = "astro_canvas.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/bkoservices/astro-canvas"
-Source = "https://github.com/bkoservices/astro-canvas"
+Homepage = "https://github.com/lblogan14/astro-canvas"
+Source = "https://github.com/lblogan14/astro-canvas"
 
 [dependency-groups]
 # Node packs developed in this monorepo. Installed editable by `uv sync` so the

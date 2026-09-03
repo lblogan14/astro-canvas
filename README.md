@@ -30,7 +30,7 @@ Prerequisites: [uv](https://docs.astral.sh/uv/), Node 22, [pnpm](https://pnpm.io
 Details in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```sh
-git clone https://github.com/bkoservices/astro-canvas
+git clone https://github.com/lblogan14/astro-canvas
 cd astro-canvas
 task install                 # uv sync + pnpm install + Playwright chromium
 task dev                     # backend http://127.0.0.1:8765 · Vite http://127.0.0.1:5173

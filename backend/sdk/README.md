@@ -1,6 +1,6 @@
 # astro-canvas-sdk
 
-The node SDK for [Astro Canvas](https://github.com/bkoservices/astro-canvas) packs: the `@node`
+The node SDK for [Astro Canvas](https://github.com/lblogan14/astro-canvas) packs: the `@node`
 decorator, `Param`, `NodeContext`, `@port_type`, `NodeSpec` and the registry. It provides the
 `astro_canvas.sdk` namespace portion so packs can depend on it without pulling in the FastAPI app.
 
