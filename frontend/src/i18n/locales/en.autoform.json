@@ -1,0 +1,35 @@
+{
+  "autoform": {
+    "advanced": "Advanced ({count})",
+    "add": "Add",
+    "required_marker": "required",
+    "linked": "linked",
+    "link": "Link {label} as input",
+    "unlink": "Unlink {label}",
+    "browse": "Browse…",
+    "browse_soon": "File picker coming soon",
+    "path_placeholder": "Path…",
+    "slider_for": "{label} slider",
+    "range_low": "{label} lower bound",
+    "range_high": "{label} upper bound",
+    "list_item": "{label} item {index}",
+    "list_add": "Add item to {label}",
+    "list_remove": "Remove item {index}",
+    "color_hex": "{label} hex value",
+    "json_invalid": "Not valid JSON",
+    "errors": {
+      "required": "Required",
+      "type": "Expected {expected}",
+      "integer": "Must be a whole number",
+      "min": "Must be at least {limit}",
+      "max": "Must be at most {limit}",
+      "min_length": "At least {limit} characters",
+      "max_length": "At most {limit} characters",
+      "pattern": "Does not match the expected format",
+      "enum": "Not one of the allowed values",
+      "min_items": "At least {limit} items",
+      "max_items": "At most {limit} items",
+      "range_order": "Lower bound must not exceed upper bound"
+    }
+  }
+}
