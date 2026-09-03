@@ -39,12 +39,31 @@ quasar at z = 3.01). The kernels are ports of `GUIs/zfind/{engine,picket_fence,l
 `tests/packs/rbcodes/test_zfind_matches_rbcodes.py` asserts 1e-9 agreement where rbcodes is importable and
 `fixtures/reference_zfind.json` (from `generate_reference_zfind.py`) pins rbcodes' numbers for the 3.12 tests.
 
+## Phase 07: multi-spectrum viewing and line identification (`rb_multispec` as a workflow)
+
+| Node | rbcodes | Notes |
+|---|---|---|
+| `rbcodes.multispec.view` | `GUIs.multispecviewer.multispec` | interactive: stacks a `SpectrumCollection`, holds the absorber catalogue and the identified lines in its parameters; outputs both as tables plus a `MultispecView`; editor **multispec-viewer** |
+| `rbcodes.multispec.absorber_catalog` | `AbsorberManager` | any catalogue -> `Zabs`/`LineList`/`Color`/`Visible`, colours from `rb_utility.rb_set_color` |
+| `rbcodes.multispec.export_linelist`, `import_linelist` | `io_manager` | the fixed-width `txt`, the `csv` and the combined `MultispecViewer` JSON |
+| `rbcodes.multispec.reconcile_linelists` | `utils.reconcile_linelists` | merge several sessions' identifications within a velocity threshold |
+| `rbcodes.multispec.quick_fit` | `LineFitter.fit_gaussian`, `fit_com` | two-anchor continuum, emission/absorption from the residual's sign |
+| `rbcodes.multispec.vstack` | `vStack` | one velocity panel per transition inside the spectrum |
+
+Port type `rbcodes.MultispecView` (renderer `multispec-thumb`). Template:
+`templates/multi-spectrum-viewer.acw` (three SDSS spectra, the zfind absorber search seeding the
+catalogue, the z = 1.3855 MgII doublet pre-identified). `LineFitter` and `io_manager` are Qt-free
+upstream, so the nodes call them directly when rbcodes is installed; `kernels/line_fit.py` and
+`kernels/multispec_io.py` are the ports used otherwise, and `tests/packs/rbcodes/test_multispec_io.py`
+asserts that rb_multispec's own reader opens what `export_linelist` writes.
+
 ### rbcodes or the vendored kernels
 
 `rbcodes` still pins `python_requires <3.11`, so it installs only on Python 3.10 (the marker in
 `pyproject.toml`). When it is importable the nodes call it; otherwise they use the line-by-line ports in
 `astro_canvas_rbcodes/kernels/` (`compute_EW`, `rb_setline` with the bundled `lines/`, `rb_iter_contfit`,
-`fit_continuum_full_spec`, `rb_specbin`, `compute_SNR_1d`; MIT, from rbcodes 2.4.0 @ `4499012`). Every output
+`fit_continuum_full_spec`, `rb_specbin`, `compute_SNR_1d`, the `rb_zfind` engine, `LineFitter`,
+`io_manager` and `utils.reconcile_linelists`; MIT, from rbcodes 2.4.0 @ `4499012`). Every output
 records which backend ran in `meta["rbcodes"]`. `backend/tests/packs/rbcodes/test_kernels_match_rbcodes.py`
 asserts that both agree to 1e-9 on identical arrays; `test_absorption_pipeline.py` compares the nodes with
 reference values produced by rbcodes itself (`fixtures/reference_ew.json`, regenerate with
