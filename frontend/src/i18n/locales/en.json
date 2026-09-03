@@ -13,14 +13,196 @@
     "version": "v{version}",
     "retry": "Reconnect"
   },
+  "ws": {
+    "idle": "Events idle",
+    "connecting": "Events connecting…",
+    "open": "Events live",
+    "reconnecting": "Events reconnecting…",
+    "closed": "Events closed"
+  },
   "theme": {
     "toggle": "Switch theme (current: {theme})",
     "system": "system",
     "light": "light",
     "dark": "dark"
   },
+  "common": {
+    "close": "Close",
+    "clear": "Clear",
+    "cancel": "Cancel",
+    "loading": "Loading…"
+  },
   "canvas": {
-    "placeholder": "The canvas arrives in phase 03.",
-    "hint": "Phase 00 foundation: this shell reaches the FastAPI backend through /api/health."
+    "empty_title": "No workflow open",
+    "empty_hint": "Create or open a workflow from the Workflows panel.",
+    "reject": {
+      "self": "A node cannot feed itself.",
+      "unknown_node": "That node type is not installed.",
+      "unknown_port": "Unknown port.",
+      "multiple_inputs": "That input is already connected. Disconnect it first.",
+      "type_mismatch": "Incompatible types: the output cannot feed that input.",
+      "cycle": "That connection would create a cycle."
+    }
+  },
+  "node": {
+    "rename": "Rename",
+    "menu": "Node menu",
+    "show_error": "Show error details",
+    "hint": "Hint: {hint}",
+    "enable": "Enable",
+    "bypass": "Bypass",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "run_here": "Run to here",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "unlink_param": "Unlink {param} (back to a widget)",
+    "preview_placeholder": "Preview arrives in phase 04",
+    "cache_hit": "Cached",
+    "elapsed": "{ms} ms",
+    "state": {
+      "idle": "Idle",
+      "dirty": "Pending",
+      "stale": "Stale",
+      "queued": "Queued",
+      "running": "Running",
+      "done": "Done",
+      "error": "Error",
+      "cancelled": "Cancelled",
+      "bypassed": "Bypassed"
+    },
+    "cost": {
+      "label": "Cost: {cost}",
+      "default": "Default",
+      "cheap": "Cheap",
+      "expensive": "Expensive",
+      "auto": "Auto"
+    }
+  },
+  "group": {
+    "rename": "Rename group",
+    "untitled": "Group",
+    "color": "Group colour {color}",
+    "ungroup": "Ungroup"
+  },
+  "toolbar": {
+    "label": "Workflow toolbar",
+    "library": "Node library (Tab to search)",
+    "workflows": "Workflows",
+    "inspector": "Inspector",
+    "drawer": "Log and errors",
+    "name_placeholder": "Untitled workflow",
+    "workflow_name": "Workflow name",
+    "undo": "Undo {label} (Ctrl+Z)",
+    "redo": "Redo {label} (Ctrl+Y)",
+    "fit_view": "Fit view (.)",
+    "layout": "Layout",
+    "layout_canvas": "Canvas",
+    "layout_app": "App",
+    "layout_wizard": "Wizard",
+    "layout_dashboard": "Dashboard",
+    "layout_batch": "Batch",
+    "auto_run": "Auto-run",
+    "auto_run_hint": "Run cheap nodes automatically after every edit",
+    "run": "Run",
+    "run_hint": "Run the workflow (Ctrl+Enter)",
+    "cancel": "Cancel",
+    "save": {
+      "clean": "",
+      "pending": "Unsaved changes",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "error": "Save failed"
+    }
+  },
+  "library": {
+    "title": "Node library",
+    "search": "Search nodes…",
+    "no_results": "No nodes match “{query}”.",
+    "favorites": "Favourites",
+    "add_hint": "Add {name} (Enter or double-click; drag onto the canvas)",
+    "favorite": "Add {name} to favourites",
+    "unfavorite": "Remove {name} from favourites",
+    "drag_hint": "Drag a node onto the canvas, double-click to add it at the centre, or press Tab."
+  },
+  "workflows": {
+    "title": "Workflows",
+    "new": "New",
+    "untitled": "Untitled workflow",
+    "rename": "Rename",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "actions": "Actions for {name}",
+    "empty": "No workflows yet. Create one to start.",
+    "confirm_delete": "Delete “{name}”? This cannot be undone.",
+    "nodes_count": "{count} node | {count} nodes",
+    "versions": "Versions",
+    "no_versions": "No saved versions yet.",
+    "version_label": "Version {id}",
+    "restore": "Restore version {id}",
+    "restored": "Restored version {id} (undo to revert).",
+    "duplicated": "Duplicated “{name}”.",
+    "open_failed": "Could not open workflow {id}."
+  },
+  "inspector": {
+    "title": "Inspector",
+    "empty": "Select a node to edit its parameters.",
+    "node_title": "Title",
+    "params": "Parameters",
+    "cost": "Cost",
+    "bypass": "Bypass",
+    "notes": "Notes",
+    "notes_placeholder": "Notes shown on the node…",
+    "group_title": "Group title",
+    "group_members": "{count} member | {count} members"
+  },
+  "drawer": {
+    "title": "Run log and errors",
+    "log": "Log",
+    "errors": "Errors",
+    "system": "System",
+    "clear": "Clear",
+    "empty_log": "No events yet.",
+    "no_errors": "No errors.",
+    "system": {
+      "version": "Version",
+      "python": "Python",
+      "platform": "Platform",
+      "workspace": "Workspace",
+      "disk": "Disk",
+      "disk_value": "{free} GiB free of {total} GiB",
+      "packs": "Packs"
+    }
+  },
+  "palette": {
+    "title": "Add node",
+    "placeholder": "Type to search nodes…",
+    "connect_placeholder": "Nodes that accept this output…",
+    "no_results": "No matching nodes.",
+    "hint": "↑↓ to navigate · Enter to add · Esc to close"
+  },
+  "command": {
+    "add_node": "add node",
+    "delete": "delete",
+    "move": "move",
+    "resize": "resize",
+    "edit_param": "edit parameter",
+    "rename": "rename",
+    "notes": "edit notes",
+    "bypass": "bypass",
+    "enable": "enable",
+    "cost": "change cost",
+    "ui": "node display",
+    "link": "link parameter",
+    "connect": "connect",
+    "disconnect": "disconnect",
+    "group": "group",
+    "ungroup": "ungroup",
+    "group_edit": "edit group",
+    "paste": "paste",
+    "duplicate": "duplicate",
+    "rename_workflow": "rename workflow",
+    "describe": "edit description",
+    "restore": "restore version"
   }
 }

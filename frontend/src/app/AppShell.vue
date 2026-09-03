@@ -2,13 +2,16 @@
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { Monitor, Moon, Sun } from '@lucide/vue'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useSessionStore } from '@/stores/session'
 import { useUiStore } from '@/stores/ui'
 
 const { t } = useI18n()
 const ui = useUiStore()
+const session = useSessionStore()
 
 onMounted(() => {
   ui.setTheme(ui.theme)
@@ -18,12 +21,25 @@ onMounted(() => {
 
 <template>
   <div class="flex h-dvh flex-col bg-background text-foreground">
-    <header class="flex h-12 shrink-0 items-center justify-between border-b px-4">
+    <header class="flex h-10 shrink-0 items-center justify-between border-b px-4">
       <div class="flex items-baseline gap-3">
         <h1 class="text-sm font-semibold tracking-tight">{{ t('app.title') }}</h1>
         <span class="hidden text-xs text-muted-foreground sm:inline">{{ t('app.tagline') }}</span>
       </div>
       <div class="flex items-center gap-2">
+        <Badge
+          data-testid="ws-status"
+          :data-status="session.wsStatus"
+          variant="outline"
+          class="hidden sm:inline-flex"
+        >
+          <span
+            class="size-1.5 rounded-full"
+            :class="session.isConnected ? 'bg-emerald-500' : 'bg-current opacity-60'"
+            aria-hidden="true"
+          />
+          {{ t(`ws.${session.wsStatus}`) }}
+        </Badge>
         <Badge
           data-testid="backend-status"
           :data-status="ui.backendStatus"
@@ -45,15 +61,19 @@ onMounted(() => {
         </Button>
         <Button
           variant="ghost"
-          size="xs"
+          size="icon-xs"
           :aria-label="t('theme.toggle', { theme: t(`theme.${ui.theme}`) })"
+          :title="t('theme.toggle', { theme: t(`theme.${ui.theme}`) })"
+          data-testid="theme-toggle"
           @click="ui.cycleTheme()"
         >
-          {{ t(`theme.${ui.theme}`) }}
+          <Sun v-if="ui.theme === 'light'" />
+          <Moon v-else-if="ui.theme === 'dark'" />
+          <Monitor v-else />
         </Button>
       </div>
     </header>
-    <main class="relative flex-1 overflow-hidden">
+    <main class="relative min-h-0 flex-1 overflow-hidden">
       <RouterView />
     </main>
   </div>
