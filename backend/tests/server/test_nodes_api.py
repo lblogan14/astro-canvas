@@ -72,9 +72,17 @@ def test_packs_and_system_report_load_errors(settings: Settings) -> None:
             "version": "unknown",
             "enabled": True,
             "node_count": 0,
+            "security": "standard",
             "error": packs[0]["error"]["error"],
         },
-        {"name": "good", "version": "unknown", "enabled": True, "node_count": 1, "error": None},
+        {
+            "name": "good",
+            "version": "unknown",
+            "enabled": True,
+            "node_count": 1,
+            "security": "standard",
+            "error": None,
+        },
     ]
 
 

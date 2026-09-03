@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VOTABLE version="1.4" xmlns="http://www.ivoa.net/xml/VOTable/v1.3">
+  <DESCRIPTION>VizieR cone search recorded for Astro Canvas tests (trimmed to three rows)</DESCRIPTION>
+  <RESOURCE name="I/355">
+    <TABLE name="I/355/gaiadr3" nrows="3">
+      <FIELD name="RA_ICRS" datatype="double" unit="deg" ucd="pos.eq.ra;meta.main"/>
+      <FIELD name="DE_ICRS" datatype="double" unit="deg" ucd="pos.eq.dec;meta.main"/>
+      <FIELD name="Source" datatype="long" ucd="meta.id;meta.main"/>
+      <FIELD name="Gmag" datatype="float" unit="mag" ucd="phot.mag;em.opt"/>
+      <FIELD name="Plx" datatype="float" unit="mas"/>
+      <DATA>
+        <TABLEDATA>
+          <TR><TD>10.6801</TD><TD>41.2690</TD><TD>369228400001</TD><TD>15.1</TD><TD>0.12</TD></TR>
+          <TR><TD>10.6849</TD><TD>41.2702</TD><TD>369228400002</TD><TD>17.6</TD><TD></TD></TR>
+          <TR><TD>10.6899</TD><TD>41.2661</TD><TD>369228400003</TD><TD>19.9</TD><TD>-0.05</TD></TR>
+        </TABLEDATA>
+      </DATA>
+    </TABLE>
+  </RESOURCE>
+</VOTABLE>

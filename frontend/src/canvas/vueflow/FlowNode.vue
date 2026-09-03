@@ -10,6 +10,7 @@ import { Ban, Copy, Play, Trash2 } from '@lucide/vue'
 import { CANVAS_LOD_KEY } from '@/canvas/CanvasAdapter'
 import NodeShell, { type ShellPort } from '@/canvas/NodeShell.vue'
 import { portStyle } from '@/canvas/ports'
+import { PreviewHost } from '@/previews'
 import { useExecutionStore } from '@/stores/execution'
 import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { useSelectionStore } from '@/stores/selection'
@@ -154,6 +155,9 @@ function toggleCollapse(): void {
           v-bind="handleStyle(port)"
           :data-port-type="port.type"
         />
+      </template>
+      <template #preview="{ exec: execution, spec: nodeSpec }">
+        <PreviewHost :node-id="id" :spec="nodeSpec" :exec="execution" />
       </template>
     </NodeShell>
   </template>

@@ -148,9 +148,9 @@ def test_workspace_layout_migrations_and_safe_paths(tmp_path: Path) -> None:
     ws = Workspace(tmp_path / "ws")
     assert ws.state_dir.name == ".astro-canvas"
     assert ws.blobs_dir.is_dir() and ws.scratch_dir.is_dir() and ws.db_path.is_file()
-    assert current_revision(ws.engine) == "0001"
+    assert current_revision(ws.engine) == "0002"
     again = Workspace(ws.root)  # idempotent re-open
-    assert current_revision(again.engine) == "0001"
+    assert current_revision(again.engine) == "0002"
     scratch = ws.new_scratch()
     assert scratch.parent == ws.scratch_dir
     assert ws.clear_scratch() == 1 and not scratch.exists()

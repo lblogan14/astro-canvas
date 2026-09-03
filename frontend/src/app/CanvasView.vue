@@ -11,13 +11,17 @@ import { useSessionStore } from '@/stores/session'
 import { useUiStore } from '@/stores/ui'
 import { useWorkflowStore } from '@/stores/workflow'
 import { useWorkflowsStore } from '@/stores/workflows'
+import { setFileDropTranslator } from '@/canvas/fileDrop'
+import { useWorkspaceStore } from '@/stores/workspace'
 import BottomDrawer from './drawer/BottomDrawer.vue'
 import CommandPalette from './CommandPalette.vue'
 import InspectorPanel from './inspector/InspectorPanel.vue'
 import NodeLibrary from './library/NodeLibrary.vue'
 import { useShortcutActions, useShortcuts } from './shortcuts'
 import CanvasToolbar from './CanvasToolbar.vue'
+import ViewerSheet from './viewer/ViewerSheet.vue'
 import WorkflowsPanel from './workflows/WorkflowsPanel.vue'
+import WorkspacePanel from './workspace/WorkspacePanel.vue'
 
 const LAST_KEY = 'astro-canvas-last-workflow'
 
@@ -75,9 +79,13 @@ async function openFromRoute(): Promise<void> {
   }
 }
 
+const workspace = useWorkspaceStore()
+setFileDropTranslator((key, params) => t(key, params ?? {}))
+
 onMounted(async () => {
   session.connect()
   if (!schema.isReady) await schema.load()
+  void workspace.load()
   await openFromRoute()
 })
 
@@ -112,6 +120,7 @@ onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
         :data-panel="ui.sidebarPanel"
       >
         <NodeLibrary v-if="ui.sidebarPanel === 'library'" />
+        <WorkspacePanel v-else-if="ui.sidebarPanel === 'workspace'" />
         <WorkflowsPanel v-else />
       </aside>
 
@@ -119,6 +128,7 @@ onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
         <div class="relative min-h-0 flex-1">
           <FlowCanvas />
           <CommandPalette />
+          <ViewerSheet />
           <div
             v-if="ui.toast"
             class="pointer-events-none absolute bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-md border px-3 py-2 text-xs shadow-md"

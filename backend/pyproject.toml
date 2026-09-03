@@ -44,6 +44,7 @@ dependencies = [
   "structlog>=24",
   "python-multipart>=0.0.9",
   "httpx>=0.27",
+  "watchfiles>=1.2.0",
 ]
 
 [project.optional-dependencies]
@@ -61,8 +62,8 @@ dev = [
 astro-canvas = "astro_canvas.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/bkoservices/astro-canvas"
-Source = "https://github.com/bkoservices/astro-canvas"
+Homepage = "https://github.com/lblogan14/astro-canvas"
+Source = "https://github.com/lblogan14/astro-canvas"
 
 [dependency-groups]
 # Node packs developed in this monorepo. Installed editable by `uv sync` so the
@@ -109,6 +110,7 @@ src = ["src", "sdk/src", "tests"]
 select = ["E", "F", "I", "UP", "B", "SIM", "PL"]
 ignore = [
   "PLR0913", # too many arguments (node functions legitimately take many params)
+  "PLR0917", # too many positional arguments (same reason)
   "PLR2004", # magic value comparison
   "PLR0912", # too many branches
   "PLR0915", # too many statements

@@ -11,6 +11,7 @@ import {
 import {
   Check,
   ChevronDown,
+  FolderOpen,
   Library,
   LoaderCircle,
   Maximize,
@@ -86,6 +87,16 @@ const LAYOUTS = ['canvas', 'app', 'wizard', 'dashboard', 'batch'] as const
       @click="ui.showSidebar('workflows')"
     >
       <Workflow />
+    </Button>
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      :aria-pressed="ui.sidebarOpen && ui.sidebarPanel === 'workspace'"
+      :title="t('toolbar.workspace')"
+      data-testid="toggle-workspace"
+      @click="ui.showSidebar('workspace')"
+    >
+      <FolderOpen />
     </Button>
 
     <span class="mx-1 h-5 w-px bg-border" aria-hidden="true" />

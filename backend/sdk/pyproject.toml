@@ -30,7 +30,7 @@ dependencies = [
 astropy = ["astropy>=6"]
 
 [project.urls]
-Homepage = "https://github.com/bkoservices/astro-canvas"
+Homepage = "https://github.com/lblogan14/astro-canvas"
 
 [tool.hatch.version]
 path = "src/astro_canvas/sdk/__init__.py"

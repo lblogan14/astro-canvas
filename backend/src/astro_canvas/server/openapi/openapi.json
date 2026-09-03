@@ -1,6 +1,77 @@
 {
   "components": {
     "schemas": {
+      "Body_upload_file_api_workspace_upload_post": {
+        "properties": {
+          "chunk_count": {
+            "default": 1,
+            "minimum": 1.0,
+            "title": "Chunk Count",
+            "type": "integer"
+          },
+          "chunk_index": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Chunk Index",
+            "type": "integer"
+          },
+          "dir": {
+            "default": "uploads",
+            "description": "Target folder, workspace-relative.",
+            "title": "Dir",
+            "type": "string"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "description": "The file (or one chunk of it).",
+            "title": "File",
+            "type": "string"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "on_conflict": {
+            "default": "error",
+            "enum": [
+              "error",
+              "rename",
+              "overwrite"
+            ],
+            "title": "On Conflict",
+            "type": "string"
+          },
+          "overwrite": {
+            "default": false,
+            "title": "Overwrite",
+            "type": "boolean"
+          },
+          "upload_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set for chunked uploads.",
+            "title": "Upload Id"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_file_api_workspace_upload_post",
+        "type": "object"
+      },
       "CancelResult": {
         "properties": {
           "cancelled": {
@@ -51,6 +122,115 @@
           "to"
         ],
         "title": "EdgeDoc",
+        "type": "object"
+      },
+      "EntryModel": {
+        "properties": {
+          "children": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/EntryModel"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "``None`` for folders not yet listed (lazy).",
+            "title": "Children"
+          },
+          "is_dir": {
+            "title": "Is Dir",
+            "type": "boolean"
+          },
+          "mime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mime"
+          },
+          "mtime": {
+            "default": 0.0,
+            "title": "Mtime",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "size": {
+            "default": 0,
+            "title": "Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "name",
+          "is_dir"
+        ],
+        "title": "EntryModel",
+        "type": "object"
+      },
+      "FileInfoModel": {
+        "properties": {
+          "blake3": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blake3"
+          },
+          "mime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mime"
+          },
+          "mtime": {
+            "title": "Mtime",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "name",
+          "size",
+          "mtime"
+        ],
+        "title": "FileInfoModel",
         "type": "object"
       },
       "GroupDoc": {
@@ -114,6 +294,19 @@
           "version"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "MkdirRequest": {
+        "properties": {
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "MkdirRequest",
         "type": "object"
       },
       "NodeDoc": {
@@ -592,6 +785,11 @@
             "title": "Node Count",
             "type": "integer"
           },
+          "security": {
+            "default": "standard",
+            "title": "Security",
+            "type": "string"
+          },
           "version": {
             "title": "Version",
             "type": "string"
@@ -674,6 +872,12 @@
             "default": 0,
             "title": "Node Count",
             "type": "integer"
+          },
+          "security": {
+            "default": "standard",
+            "description": "Manifest security class: standard, needs-network or runs-subprocess.",
+            "title": "Security",
+            "type": "string"
           },
           "type_count": {
             "default": 0,
@@ -1032,6 +1236,66 @@
         "title": "RunRequest",
         "type": "object"
       },
+      "SelectRequest": {
+        "properties": {
+          "create": {
+            "default": false,
+            "title": "Create",
+            "type": "boolean"
+          },
+          "path": {
+            "description": "Absolute path of the folder to open as the workspace.",
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "SelectRequest",
+        "type": "object"
+      },
+      "SniffResult": {
+        "properties": {
+          "detail": {
+            "default": "",
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "spectrum",
+              "image",
+              "cube",
+              "table",
+              "unknown"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "node": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "kind"
+        ],
+        "title": "SniffResult",
+        "type": "object"
+      },
       "SubgraphDoc": {
         "additionalProperties": true,
         "properties": {
@@ -1146,6 +1410,66 @@
           "packs"
         ],
         "title": "SystemInfo",
+        "type": "object"
+      },
+      "TreeResponse": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/EntryModel"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "entries"
+        ],
+        "title": "TreeResponse",
+        "type": "object"
+      },
+      "UploadResult": {
+        "properties": {
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "file": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FileInfoModel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "received": {
+            "title": "Received",
+            "type": "integer"
+          },
+          "upload_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Id"
+          }
+        },
+        "required": [
+          "received",
+          "complete"
+        ],
+        "title": "UploadResult",
         "type": "object"
       },
       "ValidationError": {
@@ -1468,6 +1792,48 @@
           "created"
         ],
         "title": "WorkflowVersionInfo",
+        "type": "object"
+      },
+      "WorkspaceInfo": {
+        "description": "The active workspace and the user's recent ones.",
+        "properties": {
+          "downloads_dir": {
+            "default": "downloads",
+            "title": "Downloads Dir",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "recent": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Recent",
+            "type": "array"
+          },
+          "root": {
+            "title": "Root",
+            "type": "string"
+          },
+          "samples_dir": {
+            "default": "samples",
+            "title": "Samples Dir",
+            "type": "string"
+          },
+          "uploads_dir": {
+            "default": "uploads",
+            "title": "Uploads Dir",
+            "type": "string"
+          }
+        },
+        "required": [
+          "root",
+          "name"
+        ],
+        "title": "WorkspaceInfo",
         "type": "object"
       }
     }
@@ -2416,6 +2782,411 @@
         "summary": "Get Version",
         "tags": [
           "workflows"
+        ]
+      }
+    },
+    "/api/workspace": {
+      "get": {
+        "description": "The active workspace folder and recently used ones.",
+        "operationId": "workspace_info_api_workspace_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Workspace Info",
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
+    "/api/workspace/file": {
+      "delete": {
+        "description": "Delete a file, or a folder (``recursive=true`` removes its contents).",
+        "operationId": "delete_path_api_workspace_file_delete",
+        "parameters": [
+          {
+            "description": "Workspace-relative file or (empty) folder.",
+            "in": "query",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "description": "Workspace-relative file or (empty) folder.",
+              "title": "Path",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "recursive",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Recursive",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Path",
+        "tags": [
+          "workspace"
+        ]
+      },
+      "get": {
+        "description": "Download a workspace file.",
+        "operationId": "download_file_api_workspace_file_get",
+        "parameters": [
+          {
+            "description": "Workspace-relative file path.",
+            "in": "query",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "description": "Workspace-relative file path.",
+              "title": "Path",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download File",
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
+    "/api/workspace/info": {
+      "get": {
+        "description": "Size, mtime, MIME and blake3 (cached by path + mtime) of one file.",
+        "operationId": "file_info_api_workspace_info_get",
+        "parameters": [
+          {
+            "description": "Workspace-relative file path.",
+            "in": "query",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "description": "Workspace-relative file path.",
+              "title": "Path",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hash",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Hash",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileInfoModel"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "File Info",
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
+    "/api/workspace/mkdir": {
+      "post": {
+        "description": "Create a folder (and parents) inside the workspace.",
+        "operationId": "make_directory_api_workspace_mkdir_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MkdirRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryModel"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Make Directory",
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
+    "/api/workspace/select": {
+      "post": {
+        "description": "Switch the server to another workspace folder (closing every open workflow).",
+        "operationId": "select_workspace_api_workspace_select_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Select Workspace",
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
+    "/api/workspace/sniff": {
+      "get": {
+        "description": "Guess the data kind of a file and the ``core.io.load_*`` node that reads it.",
+        "operationId": "sniff_file_api_workspace_sniff_get",
+        "parameters": [
+          {
+            "description": "Workspace-relative file path.",
+            "in": "query",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "description": "Workspace-relative file path.",
+              "title": "Path",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SniffResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sniff File",
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
+    "/api/workspace/tree": {
+      "get": {
+        "description": "Entries of a folder, folders first; nested folders beyond ``depth`` are listed lazily.",
+        "operationId": "workspace_tree_api_workspace_tree_get",
+        "parameters": [
+          {
+            "description": "Workspace-relative folder (``''`` = root).",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "Workspace-relative folder (``''`` = root).",
+              "title": "Path",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "depth",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 6,
+              "minimum": 1,
+              "title": "Depth",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hidden",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Hidden",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TreeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Workspace Tree",
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
+    "/api/workspace/upload": {
+      "post": {
+        "description": "Store an uploaded file in the workspace.\n\nFiles above 100 MB should be sent as ordered chunks sharing an ``upload_id``; the file lands\nat its final path when the last chunk (``chunk_index == chunk_count - 1``) arrives.",
+        "operationId": "upload_file_api_workspace_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_file_api_workspace_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload File",
+        "tags": [
+          "workspace"
         ]
       }
     }

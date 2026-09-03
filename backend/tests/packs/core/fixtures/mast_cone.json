@@ -1,0 +1,40 @@
+{
+  "status": "COMPLETE",
+  "msg": "",
+  "paging": {"page": 1, "pageSize": 5000, "pagesFiltered": 1, "rows": 2, "rowsFiltered": 2, "rowsTotal": 2},
+  "fields": [
+    {"name": "intentType", "type": "string"},
+    {"name": "obs_collection", "type": "string"},
+    {"name": "instrument_name", "type": "string"},
+    {"name": "target_name", "type": "string"},
+    {"name": "s_ra", "type": "float"},
+    {"name": "s_dec", "type": "float"},
+    {"name": "t_exptime", "type": "float"},
+    {"name": "obs_id", "type": "string"},
+    {"name": "dataURL", "type": "string"}
+  ],
+  "data": [
+    {
+      "intentType": "science",
+      "obs_collection": "HST",
+      "instrument_name": "ACS/WFC",
+      "target_name": "M31-FIELD",
+      "s_ra": 10.68,
+      "s_dec": 41.27,
+      "t_exptime": 1200.0,
+      "obs_id": "j8f8f8010",
+      "dataURL": "mast:HST/product/j8f8f8010_drz.fits"
+    },
+    {
+      "intentType": "science",
+      "obs_collection": "HST",
+      "instrument_name": "WFC3/UVIS",
+      "target_name": "M31-BULGE",
+      "s_ra": 10.69,
+      "s_dec": 41.26,
+      "t_exptime": null,
+      "obs_id": "ibh706010",
+      "dataURL": null
+    }
+  ]
+}

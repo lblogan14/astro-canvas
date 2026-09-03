@@ -39,3 +39,12 @@ export type NodeState = NodeStatus['state']
 
 /** `node_errors` as returned by the compiler: per node id, a list of issues. */
 export type NodeErrors = Record<string, NodeIssue[]>
+
+// Phase 04: workspace files.
+export type WorkspaceInfo = Schemas['WorkspaceInfo']
+export type WorkspaceEntry = Schemas['EntryModel']
+export type WorkspaceTree = Schemas['TreeResponse']
+export type WorkspaceFileInfo = Schemas['FileInfoModel']
+export type UploadResult = Schemas['UploadResult']
+export type SniffResult = Schemas['SniffResult']
+export type SniffKind = SniffResult['kind']

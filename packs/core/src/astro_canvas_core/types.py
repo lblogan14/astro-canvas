@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import base64
+import contextlib
+import math
 from collections.abc import Mapping
 from typing import Any as TypingAny
 from typing import Literal
@@ -19,12 +22,75 @@ from astro_canvas.sdk import (
     NDArray,
     PortType,
     StrArray,
-    decimate,
+    decimate_indices,
     port_type,
 )
 
 Frame = Literal["observed", "rest", "velocity"]
 ARROW_PART = "table.arrow"
+DEFAULT_TILE = 128
+"""Default edge length of image thumbnails in summaries (``n_out`` in the viewport raises it)."""
+MAX_TILE = 1024
+DEFAULT_TABLE_ROWS = 50
+
+
+def _viewport_int(
+    viewport: Mapping[str, TypingAny] | None, key: str, default: int, cap: int
+) -> int:
+    try:
+        value = int((viewport or {}).get(key, default))
+    except (TypeError, ValueError):
+        value = default
+    return max(1, min(value, cap))
+
+
+def zscale_limits(data: npt.NDArray[TypingAny]) -> tuple[float, float]:
+    """IRAF/ds9-style zscale display limits of ``data`` (NaNs ignored), via astropy."""
+    from astropy.visualization import ZScaleInterval  # noqa: PLC0415 - lazy import
+
+    finite = np.asarray(data, dtype=np.float64)
+    finite = finite[np.isfinite(finite)]
+    if finite.size == 0:
+        return 0.0, 1.0
+    if finite.size < 5 or float(finite.min()) == float(finite.max()):
+        return float(finite.min()), float(finite.max())
+    lo, hi = ZScaleInterval().get_limits(finite)
+    if not (math.isfinite(lo) and math.isfinite(hi)) or lo == hi:
+        return float(finite.min()), float(finite.max())
+    return float(lo), float(hi)
+
+
+def image_tile(data: npt.NDArray[TypingAny], max_size: int) -> dict[str, TypingAny]:
+    """A stride-downsampled float32 tile (edge <= ``max_size``) plus display statistics.
+
+    The tile travels inside the JSON summary as base64 little-endian float32 rows (``height`` x
+    ``width``); ``step`` is the integer stride so the client can map tile pixels back to data.
+    """
+    array = np.asarray(data, dtype=np.float32)
+    if array.ndim != 2:
+        raise ValueError("image_tile expects a 2-d array")
+    ny, nx = array.shape
+    step = max(1, math.ceil(max(ny, nx) / max(1, max_size)))
+    tile = np.ascontiguousarray(array[::step, ::step], dtype="<f4")
+    finite = tile[np.isfinite(tile)]
+    lo, hi = zscale_limits(tile)
+    stats: dict[str, TypingAny] = {
+        "width": int(tile.shape[1]),
+        "height": int(tile.shape[0]),
+        "step": int(step),
+        "dtype": "f4",
+        "b64": base64.b64encode(tile.tobytes()).decode("ascii"),
+        "zscale": [lo, hi],
+    }
+    if finite.size:
+        p1, p99 = np.percentile(finite, [1.0, 99.0])
+        stats["minmax"] = [float(finite.min()), float(finite.max())]
+        stats["percentile"] = [float(p1), float(p99)]
+    else:
+        stats["minmax"] = [0.0, 1.0]
+        stats["percentile"] = [0.0, 1.0]
+    return stats
+
 
 # --- scalars -----------------------------------------------------------------------------------
 
@@ -110,23 +176,37 @@ class Spectrum1D(PortType):
         return int(self.wave.shape[0])
 
     def summary(self, viewport: Mapping[str, TypingAny] | None = None) -> dict[str, TypingAny]:
-        """Decimated ``wave``/``flux`` (<= ``n_out`` points, default 4000) for the preview."""
-        n_out = int((viewport or {}).get("n_out", 4000))
-        wave, flux = self.wave, self.flux
+        """Decimated ``wave``/``flux`` (and ``error``/``continuum``) for the preview.
+
+        ``viewport`` may carry ``lo``/``hi`` (axis range to keep) and ``n_out`` (point budget,
+        default 4000, max 20000). Every series is sampled at the same MinMaxLTTB indices so the
+        client can draw error bands and continuum overlays without re-aligning.
+        """
+        n_out = _viewport_int(viewport, "n_out", 4000, 20000)
+        index = np.arange(len(self))
         if viewport and "lo" in viewport and "hi" in viewport:
-            keep = (wave >= float(viewport["lo"])) & (wave <= float(viewport["hi"]))
-            wave, flux = wave[keep], flux[keep]
-        dw, df = decimate(wave, flux, n_out=n_out)
-        return {
+            lo, hi = float(viewport["lo"]), float(viewport["hi"])
+            index = index[(self.wave >= min(lo, hi)) & (self.wave <= max(lo, hi))]
+        wave, flux = self.wave[index], self.flux[index]
+        pick = index[decimate_indices(wave, flux, n_out=n_out)]
+        out: dict[str, TypingAny] = {
             "type": self.type_id(),
             "n": len(self),
-            "wave": dw.tolist(),
-            "flux": df.tolist(),
+            "n_view": int(index.size),
+            "range": [float(self.wave[0]), float(self.wave[-1])] if len(self) else None,
+            "wave": self.wave[pick].tolist(),
+            "flux": self.flux[pick].tolist(),
             "wave_unit": self.wave_unit,
             "flux_unit": self.flux_unit,
             "frame": self.frame,
             "z": self.z,
+            "v0_wrest": self.v0_wrest,
         }
+        if self.error is not None:
+            out["error"] = self.error[pick].tolist()
+        if self.continuum is not None:
+            out["continuum"] = self.continuum[pick].tolist()
+        return out
 
 
 @port_type(id="astro.SpectrumCollection", color="#3B6FD6", summary_renderer="spectrum-stack")
@@ -208,15 +288,38 @@ class Table(PortType):
     def dtypes(self) -> dict[str, str]:
         return {name: col.dtype.str for name, col in self.columns.items()}
 
+    def head_arrow(self, rows: int) -> bytes:
+        """Arrow IPC stream of the first ``rows`` rows."""
+        import pyarrow as pa  # noqa: PLC0415 - lazy: pyarrow only when blobbing tables
+
+        table = pa.table({name: pa.array(col[:rows]) for name, col in self.columns.items()})
+        sink = pa.BufferOutputStream()
+        with pa.ipc.new_stream(sink, table.schema) as writer:
+            writer.write_table(table)
+        return bytes(sink.getvalue().to_pybytes())
+
     def summary(self, viewport: Mapping[str, TypingAny] | None = None) -> dict[str, TypingAny]:
-        head = int((viewport or {}).get("rows", 20))
-        return {
+        """Shape, column names/units/dtypes and the first rows (JSON and Arrow IPC base64)."""
+        rows = _viewport_int(viewport, "rows", DEFAULT_TABLE_ROWS, 1000)
+        head = {name: _json_list(col[:rows]) for name, col in self.columns.items()}
+        out: dict[str, TypingAny] = {
             "type": self.type_id(),
             "n_rows": self.n_rows,
             "columns": list(self.columns),
             "units": self.units,
-            "head": {name: col[:head].tolist() for name, col in self.columns.items()},
+            "dtypes": self.dtypes(),
+            "head": head,
         }
+        # Arrow is a convenience for the grid widget; the JSON head always works.
+        with contextlib.suppress(Exception):
+            out["arrow_b64"] = base64.b64encode(self.head_arrow(rows)).decode("ascii")
+        return out
+
+
+def _json_list(values: npt.NDArray[TypingAny]) -> list[TypingAny]:
+    if values.dtype.kind == "f":
+        return [None if not math.isfinite(v) else float(v) for v in values.tolist()]
+    return [v for v in values.tolist()]
 
 
 @port_type(id="astro.Image2D", color="#EC4899", summary_renderer="image-thumb")
@@ -227,6 +330,22 @@ class Image2D(PortType):
     header: dict[str, TypingAny] = {}
     wcs: dict[str, TypingAny] | None = None
     unit: str | None = None
+
+    @property
+    def shape(self) -> tuple[int, int]:
+        return int(self.data.shape[0]), int(self.data.shape[1])
+
+    def summary(self, viewport: Mapping[str, TypingAny] | None = None) -> dict[str, TypingAny]:
+        """A downsampled float32 tile (edge <= ``n_out``, default 128) with zscale limits."""
+        size = _viewport_int(viewport, "n_out", DEFAULT_TILE, MAX_TILE)
+        return {
+            "type": self.type_id(),
+            "shape": list(self.shape),
+            "unit": self.unit,
+            "wcs": self.wcs,
+            "object": self.header.get("OBJECT"),
+            "tile": image_tile(self.data, size),
+        }
 
 
 @port_type(id="astro.Cube3D", color="#DB2777", summary_renderer="cube-thumb")
@@ -247,6 +366,48 @@ class Cube3D(PortType):
         if self.var is not None and self.var.shape != self.flux.shape:
             raise ValueError("var must have the same shape as flux")
         return self
+
+    @property
+    def shape(self) -> tuple[int, int, int]:
+        return int(self.flux.shape[0]), int(self.flux.shape[1]), int(self.flux.shape[2])
+
+    def white_light(
+        self, lo: float | None = None, hi: float | None = None
+    ) -> npt.NDArray[np.float32]:
+        """Mean over the spectral axis (optionally restricted to ``[lo, hi]``), NaN-aware."""
+        keep = np.ones(self.wave.shape[0], dtype=bool)
+        if lo is not None:
+            keep &= self.wave >= lo
+        if hi is not None:
+            keep &= self.wave <= hi
+        if not keep.any():
+            keep[:] = True
+        with np.errstate(all="ignore"):
+            image = np.nanmean(self.flux[keep], axis=0)
+        return np.asarray(image, dtype=np.float32)
+
+    def summary(self, viewport: Mapping[str, TypingAny] | None = None) -> dict[str, TypingAny]:
+        """White-light thumbnail (``lo``/``hi`` restrict the band) plus the integrated spectrum."""
+        size = _viewport_int(viewport, "n_out", DEFAULT_TILE, MAX_TILE)
+        lo = viewport.get("lo") if viewport else None
+        hi = viewport.get("hi") if viewport else None
+        band = (float(lo) if lo is not None else None, float(hi) if hi is not None else None)
+        with np.errstate(all="ignore"):
+            integrated = np.nansum(self.flux, axis=(1, 2)).astype(np.float64)
+        pick = decimate_indices(self.wave, integrated, n_out=512)
+        return {
+            "type": self.type_id(),
+            "shape": list(self.shape),
+            "instrument": self.instrument,
+            "object": self.header.get("OBJECT"),
+            "wave_unit": self.header.get("_WAVEUNIT", "Angstrom"),
+            "wave_range": [float(self.wave[0]), float(self.wave[-1])] if self.wave.size else None,
+            "band": [band[0], band[1]],
+            "has_var": self.var is not None,
+            "wcs": self.wcs,
+            "tile": image_tile(self.white_light(*band), size),
+            "spectrum": {"wave": self.wave[pick].tolist(), "flux": integrated[pick].tolist()},
+        }
 
 
 # --- lines, redshifts, continua ----------------------------------------------------------------
@@ -373,8 +534,28 @@ class Figure(PortType):
         return self
 
     def summary(self, viewport: Mapping[str, TypingAny] | None = None) -> dict[str, TypingAny]:
-        size = len(self.png) if self.png is not None else len(str(self.plotly))
-        return {"type": self.type_id(), "kind": self.kind, "size": size}
+        """Kind and size; the payload itself is inlined when it is small enough to preview."""
+        import json  # noqa: PLC0415
+
+        out: dict[str, TypingAny] = {"type": self.type_id(), "kind": self.kind}
+        if self.png is not None:
+            out["size"] = len(self.png)
+            if len(self.png) <= 400_000:
+                out["png_b64"] = base64.b64encode(self.png).decode("ascii")
+        else:
+            text = json.dumps(self.plotly, separators=(",", ":"), default=_json_default)
+            out["size"] = len(text)
+            if len(text) <= 400_000:
+                out["plotly"] = json.loads(text)
+        return out
+
+
+def _json_default(value: TypingAny) -> TypingAny:
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, np.generic):
+        return value.item()
+    raise TypeError(f"{type(value).__name__} is not JSON-serializable")
 
 
 @port_type(id="astro.Any", color="#6B7280", summary_renderer="type-name")

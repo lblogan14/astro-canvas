@@ -6,10 +6,12 @@ import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 
 import { api } from '@/api/client'
+import type { PreviewViewport } from '@/api/events'
 import type { DecodedFrame } from '@/api/frames'
 import { type WsStatus, WsClient } from '@/api/ws'
 import { useExecutionStore } from './execution'
 import { useWorkflowStore } from './workflow'
+import { useWorkspaceStore } from './workspace'
 
 export type FrameListener = (frame: DecodedFrame) => void
 
@@ -32,7 +34,13 @@ export const useSessionStore = defineStore('session', () => {
       // A reconnect replays `subscribed` + snapshot from the server; refresh issues/state as well.
       if (status === 'open' && attempt === 0 && ws.workflowId) void refreshStatus(ws.workflowId)
     })
-    ws.onMessage((message) => useExecutionStore().applyMessage(message))
+    ws.onMessage((message) => {
+      if (message.type === 'workspace.changed') {
+        useWorkspaceStore().applyChange(message.paths)
+        return
+      }
+      useExecutionStore().applyMessage(message)
+    })
     ws.onFrame((frame) => {
       for (const listener of frameListeners) listener(frame)
     })
@@ -121,7 +129,7 @@ export const useSessionStore = defineStore('session', () => {
     useExecutionStore().autoRun = settings.auto_run
   }
 
-  function requestPreview(nodeId: string, port: string, viewport = {}): boolean {
+  function requestPreview(nodeId: string, port: string, viewport: PreviewViewport = {}): boolean {
     return client.value?.requestPreview(nodeId, port, viewport) ?? false
   }
 

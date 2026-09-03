@@ -213,8 +213,13 @@ class Scheduler:
             }
             fingerprint: Any = None
             if node_def.fingerprint is not None:
+                extra = (
+                    {"workspace": self.workspace_root}
+                    if node_def.fingerprint_wants_workspace
+                    else {}
+                )
                 try:
-                    fingerprint = node_def.fingerprint(**node.params)
+                    fingerprint = node_def.fingerprint(**node.params, **extra)
                 except Exception as exc:  # noqa: BLE001 - a failing fingerprint just busts the cache
                     fingerprint = f"error:{exc!r}:{time.time_ns()}"
             keys[nid] = cache_key(node.type, node.version, node.params, upstream, fingerprint)

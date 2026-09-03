@@ -11,12 +11,14 @@ from astro_canvas_core import types as T
 from pydantic import TypeAdapter
 
 from astro_canvas.engine.events import (
+    BROADCAST,
     FRAME_OUTPUT,
     Event,
     EventBus,
     NodeProgress,
     NodeStatus,
     RunStarted,
+    WorkspaceChanged,
     decode_frame,
     encode_frame,
     output_frame,
@@ -60,6 +62,19 @@ async def test_bus_filters_by_workflow_and_accepts_threads() -> None:
     assert len(drained) == 5 and drained[0].workflow_id == "w1"
     bus.publish(NodeProgress(workflow_id="w1", node_id="a", frac=0.5))  # no subscribers left
     assert all_events.queue.qsize() == 0
+
+
+async def test_broadcast_events_reach_every_subscriber() -> None:
+    bus = EventBus()
+    bus.bind()
+    only_w1 = bus.subscribe("w1")
+    bus.publish(WorkspaceChanged(workflow_id=BROADCAST, paths=["a.fits"]))
+    bus.publish(WorkspaceChanged(workflow_id="w2", paths=["b.fits"]))
+    await asyncio.sleep(0)
+    assert only_w1.queue.qsize() == 1
+    event = await only_w1.next(timeout=1)
+    assert isinstance(event, WorkspaceChanged) and event.paths == ["a.fits"]
+    only_w1.close()
 
 
 def test_publish_without_loop_is_a_noop() -> None:

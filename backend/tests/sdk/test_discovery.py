@@ -20,7 +20,7 @@ def test_discover_installed_packs(discovery: DiscoveryResult) -> None:
     names = {p.name: p for p in discovery.packs}
     assert set(names) >= {"core", "rbcodes"}
     assert names["core"].error is None
-    assert names["core"].node_count == 7
+    assert names["core"].node_count == 27
     assert names["core"].type_count == 20
     assert names["core"].distribution == "astro-canvas-core"
     assert names["core"].version == "0.1.0a0"

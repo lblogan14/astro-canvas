@@ -31,6 +31,7 @@ class PackInfo(BaseModel):
     version: str
     enabled: bool = True
     node_count: int = 0
+    security: str = "standard"
     error: str | None = None
 
 
@@ -66,13 +67,15 @@ def health() -> HealthResponse:
 def system(request: Request) -> SystemInfo:
     """Describe the running server: versions, workspace, disk, packs."""
     settings: Settings = request.app.state.settings
-    free, total = _disk_usage(settings.workspace)
+    runtime = getattr(request.app.state, "runtime", None)
+    workspace: Path = runtime.workspace.root if runtime is not None else settings.workspace
+    free, total = _disk_usage(workspace)
     return SystemInfo(
         version=__version__,
         python=platform.python_version(),
         platform=f"{platform.system()} {platform.release()} ({platform.machine()}) {sys.platform}",
-        workspace=str(settings.workspace),
-        workspace_exists=settings.workspace.is_dir(),
+        workspace=str(workspace),
+        workspace_exists=workspace.is_dir(),
         disk_free_bytes=free,
         disk_total_bytes=total,
         packs=[
@@ -81,6 +84,7 @@ def system(request: Request) -> SystemInfo:
                 version=p.version,
                 enabled=p.enabled,
                 node_count=p.node_count,
+                security=p.security,
                 error=p.error.error if p.error else None,
             )
             for p in request.app.state.packs

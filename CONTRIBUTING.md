@@ -24,7 +24,7 @@ toolchain, the day-to-day commands, and the conventions every change must follow
 ## Quick start
 
 ```sh
-git clone https://github.com/bkoservices/astro-canvas
+git clone https://github.com/lblogan14/astro-canvas
 cd astro-canvas
 task install        # uv sync + pnpm install + Playwright chromium
 task dev            # backend on http://127.0.0.1:8765, Vite on http://127.0.0.1:5173

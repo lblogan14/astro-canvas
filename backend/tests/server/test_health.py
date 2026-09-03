@@ -27,7 +27,7 @@ def test_system_reports_environment(client: TestClient, settings: Settings) -> N
     assert body["workspace_exists"] is True
     assert body["disk_total_bytes"] >= body["disk_free_bytes"] > 0
     assert [p["name"] for p in body["packs"]] == ["core", "rbcodes"]
-    assert body["packs"][0]["node_count"] == 7 and body["packs"][0]["error"] is None
+    assert body["packs"][0]["node_count"] == 27 and body["packs"][0]["error"] is None
     assert body["python"].count(".") == 2
 
 

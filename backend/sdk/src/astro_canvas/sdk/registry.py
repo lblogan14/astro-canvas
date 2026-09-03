@@ -8,6 +8,7 @@ import logging
 import traceback
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from pathlib import Path
 from types import ModuleType
 from typing import Any
 
@@ -27,6 +28,18 @@ class NodeRegistry:
         self._nodes: dict[str, NodeDef] = {}
         self._specs: dict[str, NodeSpec] = {}
         self.types = types if types is not None else TypeRegistry()
+        self.sample_dirs: dict[str, Path] = {}
+        """Per pack, a folder of bundled sample data copied to ``<workspace>/samples/<pack>``."""
+        self.security: dict[str, str] = {}
+        """Per pack security class declared at registration (``standard`` when absent)."""
+
+    def add_sample_data(self, path: Path, *, pack: str) -> None:
+        """Declare a directory of sample files shipped with ``pack``."""
+        self.sample_dirs[pack] = Path(path)
+
+    def declare_security(self, level: str, *, pack: str) -> None:
+        """Record the pack's manifest ``security`` class (``standard``, ``needs-network``, ...)."""
+        self.security[pack] = level
 
     def add(self, node: NodeDef, *, pack: str | None = None) -> NodeDef:
         """Register ``node``; raises ``DuplicateNodeError`` if the id is taken."""
@@ -62,6 +75,8 @@ class NodeRegistry:
         for nid in doomed:
             del self._nodes[nid]
             del self._specs[nid]
+        self.sample_dirs.pop(pack, None)
+        self.security.pop(pack, None)
         return len(doomed) + self.types.remove_pack(pack)
 
     def get(self, node_id: str) -> NodeDef:
@@ -124,6 +139,12 @@ class PackRegistry:
     def add_module(self, module: ModuleType) -> int:
         return self.registry.add_module(module, pack=self.pack)
 
+    def add_sample_data(self, path: Path) -> None:
+        self.registry.add_sample_data(path, pack=self.pack)
+
+    def declare_security(self, level: str) -> None:
+        self.registry.declare_security(level, pack=self.pack)
+
     @property
     def types(self) -> TypeRegistry:
         return self.registry.types
@@ -183,6 +204,7 @@ def discover(
                 entry_point=ep.value,
                 node_count=len(registry) - nodes_before if error is None else 0,
                 type_count=len(registry.types) - types_before if error is None else 0,
+                security=registry.security.get(ep.name, "standard"),
                 error=error,
             )
         )

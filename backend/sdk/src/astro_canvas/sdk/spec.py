@@ -112,4 +112,8 @@ class PackRecord(BaseModel):
     enabled: bool = True
     node_count: int = 0
     type_count: int = 0
+    security: str = Field(
+        default="standard",
+        description="Manifest security class: standard, needs-network or runs-subprocess.",
+    )
     error: PackLoadError | None = None

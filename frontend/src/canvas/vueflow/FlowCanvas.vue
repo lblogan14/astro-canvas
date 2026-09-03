@@ -30,7 +30,8 @@ import {
   type Point,
   registerCanvasAdapter,
 } from '@/canvas/CanvasAdapter'
-import { NODE_DRAG_TYPE } from '@/canvas/dnd'
+import { FILE_DRAG_TYPE, NODE_DRAG_TYPE, isCanvasDrop } from '@/canvas/dnd'
+import { addLoaderNode, addUploadedFiles } from '@/canvas/fileDrop'
 import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { useSelectionStore } from '@/stores/selection'
 import { useUiStore } from '@/stores/ui'
@@ -195,20 +196,41 @@ onEdgeUpdate(({ edge, connection }: EdgeUpdateEvent) => {
 // --- drag & drop from the library -----------------------------------------------------------------
 
 function onDragOver(event: DragEvent): void {
-  if (event.dataTransfer?.types.includes(NODE_DRAG_TYPE)) {
+  if (isCanvasDrop(event.dataTransfer)) {
     event.preventDefault()
-    event.dataTransfer.dropEffect = 'copy'
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
   }
 }
 
 function onDrop(event: DragEvent): void {
-  const typeId = event.dataTransfer?.getData(NODE_DRAG_TYPE)
-  const spec = typeId ? schema.byId[typeId] : undefined
-  if (!spec) return
-  event.preventDefault()
+  const transfer = event.dataTransfer
+  if (!transfer) return
   const point = screenToFlowCoordinate({ x: event.clientX, y: event.clientY })
-  const id = workflow.addNode(spec, [Math.round(point.x - 100), Math.round(point.y - 16)])
-  selection.set([id])
+  const pos: [number, number] = [Math.round(point.x - 100), Math.round(point.y - 16)]
+  const typeId = transfer.getData(NODE_DRAG_TYPE)
+  const spec = typeId ? schema.byId[typeId] : undefined
+  if (spec) {
+    event.preventDefault()
+    const id = workflow.addNode(spec, pos)
+    selection.set([id])
+    return
+  }
+  // A workspace file dragged from the Workspace panel: sniff it and add the matching loader.
+  const filePath = transfer.getData(FILE_DRAG_TYPE)
+  if (filePath) {
+    event.preventDefault()
+    void addLoaderNode(filePath, pos).then((id) => {
+      if (id) selection.set([id])
+    })
+    return
+  }
+  // OS files: upload into the workspace first, then add loaders.
+  if (transfer.files.length) {
+    event.preventDefault()
+    void addUploadedFiles(transfer.files, pos).then((ids) => {
+      if (ids.length) selection.set(ids)
+    })
+  }
 }
 
 // --- fit on load ----------------------------------------------------------------------------------

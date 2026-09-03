@@ -29,6 +29,7 @@ from astro_canvas.sdk.arrays import (
     StrArray,
     arrays_equal,
     decimate,
+    decimate_indices,
 )
 from astro_canvas.sdk.blob import Blob
 from astro_canvas.sdk.context import NodeContext, NullContext
@@ -117,6 +118,7 @@ __all__ = [
     "__version__",
     "arrays_equal",
     "decimate",
+    "decimate_indices",
     "discover",
     "errors",
     "is_compatible",

@@ -143,9 +143,28 @@ def test_preview_request_redecimates_for_viewport(api: TestClient) -> None:
         assert event["type"] == "node.output.summary" and event["port"] == "out"
         wave = event["summary"]["wave"]
         assert len(wave) <= 64 and min(wave) >= 1200 and max(wave) <= 1210
-        assert event["summary"]["n"] == 20000
+        assert event["summary"]["n"] == 20000 and event["tag"] is None
+        ws.send_json(
+            {
+                "type": "preview.request",
+                "node_id": "src",
+                "port": "out",
+                "viewport": {"n_out": 32, "tag": "viewer"},
+            }
+        )
+        tagged = ws.receive_json()
+        assert tagged["tag"] == "viewer" and len(tagged["summary"]["wave"]) <= 32
         ws.send_json({"type": "preview.request", "node_id": "src", "port": "nope"})
         assert "no output" in ws.receive_json()["message"]
+        ws.send_json(
+            {
+                "type": "preview.request",
+                "node_id": "src",
+                "port": "out",
+                "viewport": {"lo": "not-a-number", "hi": 5},
+            }
+        )
+        assert "preview failed" in ws.receive_json()["message"]
 
 
 def test_output_request_streams_binary_frame(api: TestClient) -> None:

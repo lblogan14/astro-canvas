@@ -1,0 +1,11 @@
+{
+  "metadata": [
+    {"name": "main_id", "description": "Main identifier for an object", "datatype": "char", "arraysize": "*"},
+    {"name": "ra", "description": "Right ascension", "datatype": "double", "unit": "deg"},
+    {"name": "dec", "description": "Declination", "datatype": "double", "unit": "deg"},
+    {"name": "otype_txt", "description": "Object type", "datatype": "char", "arraysize": "*"}
+  ],
+  "data": [
+    ["M  31", 10.684708, 41.26875, "AGN"]
+  ]
+}
