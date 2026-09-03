@@ -1,10 +1,12 @@
 /**
  * Colour maps as 256-entry RGBA lookup tables. viridis/magma/inferno/plasma use the degree-6
  * polynomial fits of the matplotlib maps (Matt Zucker); gray is linear; cubehelix follows
- * D. A. Green (2011) with the standard parameters.
+ * D. A. Green (2011) with the standard parameters; rdbu is a diverging blue-white-red ramp for
+ * velocity maps, where the sign of the value is what the eye should read first.
  */
 
-export type ColormapName = 'viridis' | 'gray' | 'magma' | 'cubehelix' | 'inferno' | 'plasma'
+export type ColormapName =
+  'viridis' | 'gray' | 'magma' | 'cubehelix' | 'inferno' | 'plasma' | 'rdbu'
 
 export const COLORMAP_NAMES: readonly ColormapName[] = [
   'viridis',
@@ -13,6 +15,7 @@ export const COLORMAP_NAMES: readonly ColormapName[] = [
   'cubehelix',
   'inferno',
   'plasma',
+  'rdbu',
 ]
 
 type Vec3 = [number, number, number]
@@ -90,6 +93,19 @@ function clamp01(value: number): number {
   return value < 0 ? 0 : value > 1 ? 1 : value
 }
 
+/** Diverging blue (low) to white (mid) to red (high), the ColorBrewer RdBu endpoints. */
+function rdbu(t: number): Vec3 {
+  const low: Vec3 = [0.129, 0.4, 0.674]
+  const mid: Vec3 = [0.969, 0.969, 0.969]
+  const high: Vec3 = [0.698, 0.094, 0.169]
+  const [from, to, u] = t < 0.5 ? [low, mid, t * 2] : [mid, high, (t - 0.5) * 2]
+  return [
+    from[0] + (to[0] - from[0]) * u,
+    from[1] + (to[1] - from[1]) * u,
+    from[2] + (to[2] - from[2]) * u,
+  ]
+}
+
 const cache = new Map<ColormapName, Uint8ClampedArray>()
 
 /** 256 × RGBA bytes for `name` (memoised). */
@@ -101,6 +117,7 @@ export function colormapLut(name: ColormapName): Uint8ClampedArray {
     const t = i / 255
     let rgb: Vec3
     if (name === 'gray') rgb = [t, t, t]
+    else if (name === 'rdbu') rgb = rdbu(t)
     else if (name === 'cubehelix') rgb = cubehelix(t)
     else rgb = evalPoly(POLYS[name], t)
     lut[i * 4] = Math.round(clamp01(rgb[0]) * 255)

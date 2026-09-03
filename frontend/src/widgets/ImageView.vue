@@ -20,6 +20,7 @@ import {
   sampleTile,
 } from '@/lib/tile'
 import { type WcsDict, formatDec, formatRa, wcsFromDict } from '@/lib/wcs'
+import { formatCompact as formatValue } from './formatValue'
 
 const props = withDefaults(
   defineProps<{
@@ -218,13 +219,6 @@ const readout = computed(() => {
   }
   return parts
 })
-
-function formatValue(value: number): string {
-  if (!Number.isFinite(value)) return 'NaN'
-  const abs = Math.abs(value)
-  if (abs !== 0 && (abs < 1e-3 || abs >= 1e6)) return value.toExponential(3)
-  return value.toPrecision(5).replace(/\.?0+$/, '')
-}
 
 onMounted(() => {
   repaint()

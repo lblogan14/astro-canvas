@@ -13,6 +13,7 @@ import FigurePreview from './renderers/FigurePreview.vue'
 import FileChip from './renderers/FileChip.vue'
 import ImageThumb from './renderers/ImageThumb.vue'
 import KvTile from './renderers/KvTile.vue'
+import MomentThumbs from './renderers/MomentThumbs.vue'
 import MultispecThumb from './renderers/MultispecThumb.vue'
 import SpectrumThumb from './renderers/SpectrumThumb.vue'
 import TableHead from './renderers/TableHead.vue'
@@ -32,6 +33,7 @@ export type PreviewId =
   | 'zfind-curve'
   | 'candidates-table'
   | 'multispec-thumb'
+  | 'moment-thumbs'
 
 /** Props every renderer receives. */
 export interface PreviewProps {
@@ -56,6 +58,7 @@ const COMPONENTS: Record<PreviewId, Component> = {
   'zfind-curve': ZFindCurve,
   'candidates-table': CandidatesTable,
   'multispec-thumb': MultispecThumb,
+  'moment-thumbs': MomentThumbs,
 }
 
 /** Backend `summary_renderer` ids → frontend preview ids. */
@@ -78,6 +81,7 @@ const RENDERER_ALIASES: Record<string, PreviewId> = {
   'zfind-curve': 'zfind-curve',
   'candidates-table': 'candidates-table',
   'multispec-thumb': 'multispec-thumb',
+  'moment-thumbs': 'moment-thumbs',
 }
 
 /** Renderers that have a full-size view in the viewer sheet. */
@@ -91,6 +95,12 @@ export const EXPANDABLE: ReadonlySet<PreviewId> = new Set<PreviewId>([
   'kv-tile',
 ])
 
+function isMapEntry(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) return false
+  const entry = value as Record<string, unknown>
+  return typeof entry['key'] === 'string' && isTileSummary(entry['tile'])
+}
+
 export function isPreviewId(value: unknown): value is PreviewId {
   return typeof value === 'string' && value in COMPONENTS
 }
@@ -100,6 +110,8 @@ export function rendererFromSummary(summary: Record<string, unknown>): PreviewId
   if (Array.isArray(summary['wave']) && Array.isArray(summary['flux'])) return 'spectrum-thumb'
   if (Array.isArray(summary['panels']) && Array.isArray(summary['absorbers']))
     return 'multispec-thumb'
+  if (Array.isArray(summary['maps']) && summary['maps'].some((m) => isMapEntry(m)))
+    return 'moment-thumbs'
   if (Array.isArray(summary['z']) && Array.isArray(summary['curves'])) return 'zfind-curve'
   if (Array.isArray(summary['rows']) && 'accepted' in summary) return 'candidates-table'
   if (isTileSummary(summary['tile'])) {
@@ -149,6 +161,9 @@ export function previewBudget(id: PreviewId, width: number): number | null {
     case 'image-thumb':
     case 'cube-thumb':
       return Math.min(512, Math.max(64, w))
+    // Three maps share the node's width, so each tile only needs a third of it.
+    case 'moment-thumbs':
+      return Math.min(256, Math.max(48, Math.round(w / 3)))
     default:
       return null
   }

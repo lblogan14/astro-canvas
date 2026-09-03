@@ -262,6 +262,12 @@
     },
     "multispec": {
       "caption": "{panels} spectra, {absorbers} systems, {lines} lines"
+    },
+    "moment": {
+      "m0": "M0",
+      "m1": "M1",
+      "m2": "M2",
+      "snr": "SNR"
     }
   },
   "viewer": {
@@ -332,7 +338,8 @@
       "line-picker": "Line picker",
       "continuum-mask": "Continuum masks",
       "z-accept": "Accept redshift",
-      "multispec-viewer": "Multi-spectrum viewer"
+      "multispec-viewer": "Multi-spectrum viewer",
+      "aperture-editor": "Apertures"
     },
     "range": {
       "hint": "Drag the orange handles or type the limits. Apply writes vmin/vmax to the node.",
@@ -450,6 +457,36 @@
         "quickid": "Read the cursor as Lya, Lyb, SiIV, OVI, NeVIII, CIV, MgII or FeII",
         "clear": "Clear the fit overlay",
         "help": "Show or hide this list"
+      }
+    },
+    "aperture": {
+      "tool": "Shape",
+      "shapes": {
+        "circle": "Circle",
+        "box": "Box",
+        "annulus": "Annulus",
+        "polygon": "Polygon"
+      },
+      "draw_background": "Draw as background",
+      "background": "Background",
+      "import": "Import .reg",
+      "export": "Export .reg",
+      "clear": "Clear all",
+      "remove": "Remove aperture",
+      "band": "Collapse band",
+      "full_band": "Full band",
+      "empty": "Drag on the image to draw an aperture.",
+      "counts": "{sources} source / {total} apertures",
+      "extracting": "Extracting…",
+      "extract_error": "Extraction failed: {message}",
+      "no_source": "Mark at least one aperture as a source.",
+      "status": {
+        "added": "{shape} added",
+        "removed": "Aperture removed",
+        "imported": "Imported {n} apertures",
+        "import_partial": "Imported {n} apertures; {skipped} sky regions need the graph node",
+        "import_empty": "No image-coordinate apertures in that file",
+        "exported": "Exported {n} apertures"
       }
     }
   }
