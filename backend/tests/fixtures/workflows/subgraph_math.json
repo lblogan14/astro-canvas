@@ -1,0 +1,22 @@
+{
+  "format": "astro-canvas/workflow", "version": 1, "id": "sample-subgraph", "name": "Subgraph math",
+  "description": "A subgraph instance (add-one) inlined by the compiler.",
+  "nodes": {
+    "c": {"type": "core.math.constant", "params": {"value": 5.0}},
+    "inst": {"type": "subgraph:add1", "title": "Add one"},
+    "dbl": {"type": "core.math.expr", "params": {"expression": "x * 2"}, "linked": ["x"]}
+  },
+  "edges": {
+    "e1": {"from": ["c", "out"], "to": ["inst", "value"]},
+    "e2": {"from": ["inst", "result"], "to": ["dbl", "x"]}
+  },
+  "subgraphs": {
+    "add1": {
+      "name": "Add one",
+      "nodes": {"plus": {"type": "core.math.expr", "params": {"expression": "x + 1"}, "linked": ["x"]}},
+      "edges": {},
+      "inputs": [{"name": "value", "node": "plus", "port": "x"}],
+      "outputs": [{"name": "result", "node": "plus", "port": "out"}]
+    }
+  }
+}

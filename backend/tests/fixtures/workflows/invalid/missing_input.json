@@ -1,0 +1,8 @@
+{
+  "format": "astro-canvas/workflow", "version": 1, "id": "fx-missing-input", "name": "Missing input",
+  "nodes": {
+    "crop": {"type": "core.spec.crop", "params": {"lo": 1000, "hi": 2000}},
+    "vel": {"type": "core.spec.to_velocity", "params": {"wrest": 1215.67}}
+  },
+  "edges": {"e1": {"from": ["crop", "out"], "to": ["vel", "spec"]}}
+}

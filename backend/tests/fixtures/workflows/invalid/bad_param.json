@@ -1,0 +1,9 @@
+{
+  "format": "astro-canvas/workflow", "version": 1, "id": "fx-bad-param", "name": "Bad param",
+  "nodes": {
+    "c": {"type": "core.math.constant", "params": {"value": "not-a-number"}},
+    "e": {"type": "core.math.expr", "params": {"expression": "x", "nope": 1}, "linked": ["x", "ghost"]},
+    "r": {"type": "core.spec.to_rest_frame", "params": {"z": 99.0}, "disabled": true}
+  },
+  "edges": {"e1": {"from": ["c", "out"], "to": ["e", "x"]}}
+}

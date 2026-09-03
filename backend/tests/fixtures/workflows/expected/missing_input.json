@@ -1,0 +1,16 @@
+{
+  "node_errors": {
+    "crop": [
+      {
+        "code": "missing_input",
+        "message": "input 'spec' is required",
+        "port": "spec",
+        "param": null
+      }
+    ]
+  },
+  "runnable": [],
+  "blocked": [
+    "vel"
+  ]
+}

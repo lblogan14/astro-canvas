@@ -14,6 +14,11 @@ def default_workspace() -> Path:
     return Path(platformdirs.user_documents_dir()) / "AstroCanvas"
 
 
+def default_config_dir() -> Path:
+    """Per-user config folder holding the ``token`` file."""
+    return Path(platformdirs.user_config_dir("AstroCanvas", appauthor=False))
+
+
 class Settings(BaseSettings):
     """Runtime configuration.
 
@@ -27,6 +32,21 @@ class Settings(BaseSettings):
     port: int = Field(default=8765, ge=1, le=65535)
     workspace: Path = Field(default_factory=default_workspace)
     log_level: str = "info"
+
+    # Security (design 11): bearer token for /api and /ws; generated when unset.
+    auth: bool = True
+    token: str | None = None
+    config_dir: Path = Field(default_factory=default_config_dir)
+
+    # Execution engine (design 6.2-6.3).
+    cache_memory_mb: int = Field(default=2048, ge=1)
+    cache_disk_gb: float = Field(default=20.0, gt=0)
+    cache_max_age_days: int = Field(default=30, ge=1)
+    max_workers: int | None = Field(default=None, ge=1)
+    process_pool: bool = True
+    run_timeout_s: float | None = Field(default=3600.0, gt=0)
+    debounce_ms: int = Field(default=250, ge=0)
+    auto_threshold_ms: int = Field(default=2000, ge=0)
 
 
 def get_settings(**overrides: object) -> Settings:

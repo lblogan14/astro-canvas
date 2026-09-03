@@ -1,0 +1,16 @@
+{
+  "node_errors": {
+    "collect": [
+      {
+        "code": "type_mismatch",
+        "message": "astro.Float from c.out cannot feed a (astro.Spectrum1D)",
+        "port": "a",
+        "param": null
+      }
+    ]
+  },
+  "runnable": [
+    "c"
+  ],
+  "blocked": []
+}

@@ -1,0 +1,18 @@
+{
+  "node_errors": {
+    "ghost": [
+      {
+        "code": "unknown_node",
+        "message": "unknown node type 'core.nope.missing'",
+        "port": null,
+        "param": null
+      }
+    ]
+  },
+  "runnable": [
+    "c"
+  ],
+  "blocked": [
+    "e"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "format": "astro-canvas/workflow", "version": 1, "id": "sample-disabled", "name": "Disabled passthrough",
+  "nodes": {
+    "src": {"type": "test.spec.make", "params": {"n": 50}},
+    "crop": {"type": "core.spec.crop", "params": {"lo": 1200, "hi": 1300}, "disabled": true},
+    "rest": {"type": "core.spec.to_rest_frame", "params": {"z": 0.5}}
+  },
+  "edges": {
+    "e1": {"from": ["src", "out"], "to": ["crop", "spec"]},
+    "e2": {"from": ["crop", "out"], "to": ["rest", "spec"]}
+  }
+}

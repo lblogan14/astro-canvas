@@ -1,0 +1,16 @@
+{
+  "format": "astro-canvas/workflow", "version": 1, "id": "sample-math-chain", "name": "Math chain",
+  "description": "constant -> expr -> expr, with a note; every node is cheap so it auto-runs.",
+  "nodes": {
+    "c": {"type": "core.math.constant", "title": "Two", "pos": [80, 80], "params": {"value": 2.0}},
+    "sq": {"type": "core.math.expr", "title": "Square", "pos": [360, 80], "params": {"expression": "x ** 2"}, "linked": ["x"]},
+    "sum": {"type": "core.math.expr", "title": "Sum", "pos": [640, 80], "params": {"expression": "x + y + z", "z": 1.0}, "linked": ["x", "y"]},
+    "note": {"type": "core.note.markdown", "pos": [80, 300], "params": {"text": "# Sample\nA tiny reactive chain."}}
+  },
+  "edges": {
+    "e1": {"from": ["c", "out"], "to": ["sq", "x"]},
+    "e2": {"from": ["sq", "out"], "to": ["sum", "x"]},
+    "e3": {"from": ["c", "out"], "to": ["sum", "y"]}
+  },
+  "meta": {"tags": ["sample"]}
+}

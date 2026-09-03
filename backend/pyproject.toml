@@ -138,12 +138,13 @@ module = ["astro_canvas.sdk.*", "astro_canvas.engine.*"]
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["astropy.*", "pyarrow.*"]
+module = ["astropy.*", "pyarrow.*", "msgpack", "msgpack.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-# Compiled extension without type hints for its downsampler classes.
-module = ["tsdownsample"]
+# Compiled extension without type hints for its downsampler classes; pebble's annotations are
+# loose (``args: list``, ``timeout: float``) and several methods are untyped.
+module = ["tsdownsample", "pebble", "pebble.*"]
 follow_imports = "skip"
 ignore_missing_imports = true
 
