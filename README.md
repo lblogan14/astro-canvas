@@ -8,9 +8,11 @@ headless nodes so undergrads and researchers can run the same tools in a browser
 
 ## Status
 
-**Pre-alpha, phase 01 of 13 (node SDK and registry).** The repository builds, lints, tests, and runs a FastAPI + Vue
+**Pre-alpha, phase 02 of 13 (execution engine).** The repository builds, lints, tests, and runs a FastAPI + Vue
 shell on Windows, macOS, and Linux. Packs register nodes and port types through `astro_canvas.sdk`; the server lists
-their schemas at `/api/nodes`, `/api/types`, `/api/packs`. No execution engine or canvas yet. See the roadmap below.
+their schemas at `/api/nodes`, `/api/types`, `/api/packs`, stores `workflow.json` documents, and executes them
+reactively (content-hash cache, cost gating, thread/process executors, cancellation) with events over `/ws`.
+`astro-canvas run workflow.json` executes a document headlessly. No canvas UI yet. See the roadmap below.
 
 | Phase | Outcome |
 |---|---|
@@ -40,8 +42,17 @@ Run the built wheel anywhere with uv:
 uv run --with backend/dist/astro_canvas_sdk-*.whl --with backend/dist/astro_canvas-*.whl astro-canvas serve --open
 ```
 
-Configuration is via `ASTRO_CANVAS_*` environment variables (`HOST`, `PORT`, `WORKSPACE`, `LOG_LEVEL`) or the
-`astro-canvas serve --host --port --workspace --open` flags.
+Configuration is via `ASTRO_CANVAS_*` environment variables (`HOST`, `PORT`, `WORKSPACE`, `LOG_LEVEL`, `TOKEN`, `AUTH`,
+`CACHE_MEMORY_MB`, `CACHE_DISK_GB`, `CACHE_MAX_AGE_DAYS`, `MAX_WORKERS`, `PROCESS_POOL`, `RUN_TIMEOUT_S`, `DEBOUNCE_MS`,
+`AUTO_THRESHOLD_MS`) or the `astro-canvas serve --host --port --workspace --open` flags. The server prints a
+`http://127.0.0.1:8765/?token=…` URL at startup; every `/api` and `/ws` request needs that bearer token
+(also written to `<config>/token`).
+
+Execute a workflow without the UI:
+
+```sh
+uv run --directory backend astro-canvas run tests/fixtures/workflows/math_chain.json --workspace /tmp/ws
+```
 
 ## Tooling rule
 
@@ -58,6 +69,8 @@ workspace members) · `launcher/`, `deploy/` (phase 12) · `registry/` (pack ind
 - [CONTRIBUTING.md](CONTRIBUTING.md): toolchain, tasks, conventions.
 - [docs/formats/node-schema.md](docs/formats/node-schema.md): the `/api/nodes` JSON contract (`NodeSpec`,
   `ParamSpec`, port types, packs, blobs).
+- [docs/formats/workflow.md](docs/formats/workflow.md): `workflow.json` format v1, compile rules, execution model,
+  REST endpoints for workflows/runs/outputs, the `/ws` event protocol and binary frames.
 - [backend/sdk/README.md](backend/sdk/README.md): writing nodes with the SDK.
 - [docs/dev/rbcodes-compat.md](docs/dev/rbcodes-compat.md): rbcodes on Python 3.12, test results, and the
   proposed upstream patch ([docs/dev/rbcodes-upstream.patch](docs/dev/rbcodes-upstream.patch)).

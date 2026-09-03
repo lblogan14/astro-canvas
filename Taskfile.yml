@@ -60,7 +60,7 @@ tasks:
       - task: test:e2e
 
   test:py:
-    desc: Backend pytest with coverage and per-package gates (sdk >= 90%)
+    desc: Backend pytest with coverage and per-package gates (sdk >= 90%, engine/store >= 85%)
     cmds:
       - uv run --directory {{.BE}} pytest
       - uv run --directory {{.BE}} python ../scripts/check_coverage.py
