@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import shutil
+from collections.abc import Mapping
 from datetime import timedelta
+from pathlib import Path
 from typing import Any
 
 import structlog
@@ -24,8 +27,10 @@ from astro_canvas.engine.executors import ProcessExecutor, ThreadExecutor
 from astro_canvas.engine.graph import WorkflowDoc
 from astro_canvas.engine.scheduler import RunInfo, Scheduler, SchedulerConfig
 from astro_canvas.sdk import NodeRegistry, PortType
+from astro_canvas.server.watcher import WorkspaceWatcher
 from astro_canvas.settings import Settings
 from astro_canvas.store.models import Workflow, WorkflowVersion, utcnow
+from astro_canvas.store.recent import RecentWorkspaces
 from astro_canvas.store.runs import NodeStatStore, RunStore
 from astro_canvas.store.workspace import Workspace
 
@@ -52,6 +57,31 @@ class UnknownWorkflowError(LookupError):
     """No workflow with that id is stored."""
 
 
+def seed_samples(workspace: Workspace, sample_dirs: Mapping[str, Path]) -> list[Path]:
+    """Copy each pack's bundled sample files into ``<workspace>/samples/<pack>`` once.
+
+    Existing files are left alone (users may edit or delete them); returns the copied paths.
+    """
+    copied: list[Path] = []
+    for pack, source in sample_dirs.items():
+        if not source.is_dir():
+            continue
+        dest = workspace.samples_dir / pack
+        for item in sorted(source.rglob("*")):
+            if not item.is_file() or item.name.startswith("."):
+                continue
+            target = dest / item.relative_to(source)
+            if target.exists():
+                continue
+            try:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(item, target)
+                copied.append(target)
+            except OSError as exc:  # pragma: no cover - read-only workspace
+                log.warning("could not copy sample", file=str(item), error=str(exc))
+    return copied
+
+
 def doc_hash(doc: WorkflowDoc) -> str:
     """Content hash of a document, ignoring the ``meta`` timestamps the server maintains."""
     data = doc.model_dump(by_alias=True, mode="json")
@@ -68,18 +98,7 @@ class EngineRuntime:
     def __init__(self, settings: Settings, registry: NodeRegistry) -> None:
         self.settings = settings
         self.registry = registry
-        self.workspace = Workspace(settings.workspace)
         self.bus = EventBus()
-        self.memory = MemoryLRU(settings.cache_memory_mb * 1024 * 1024)
-        self.index = OutputIndex(self.workspace.sessions)
-        self.cache = OutputCache(
-            memory=self.memory,
-            blobs=BlobStore(self.workspace.blobs_dir),
-            index=self.index,
-            types=registry.types,
-            max_disk_bytes=int(settings.cache_disk_gb * 1024**3),
-            max_age=timedelta(days=settings.cache_max_age_days),
-        )
         self.threads = ThreadExecutor(settings.max_workers)
         self.processes: ProcessExecutor | None = (
             ProcessExecutor(
@@ -88,9 +107,67 @@ class EngineRuntime:
             if settings.process_pool
             else None
         )
-        self.runs = RunStore(self.workspace.sessions)
+        self.recent = RecentWorkspaces(settings.config_dir)
         self.schedulers: dict[str, Scheduler] = {}
+        self.watcher: WorkspaceWatcher | None = None
+        self._open_workspace(Path(settings.workspace))
+
+    # --- workspace ---------------------------------------------------------------------------
+
+    def _open_workspace(self, root: Path) -> None:
+        """Bind caches, stores and sample data to ``root`` (fresh state for a new workspace)."""
+        settings = self.settings
+        self.workspace = Workspace(root)
+        self.settings.workspace = self.workspace.root
+        self.memory = MemoryLRU(settings.cache_memory_mb * 1024 * 1024)
+        self.index = OutputIndex(self.workspace.sessions)
+        self.cache = OutputCache(
+            memory=self.memory,
+            blobs=BlobStore(self.workspace.blobs_dir),
+            index=self.index,
+            types=self.registry.types,
+            max_disk_bytes=int(settings.cache_disk_gb * 1024**3),
+            max_age=timedelta(days=settings.cache_max_age_days),
+        )
+        self.runs = RunStore(self.workspace.sessions)
+        self.recent.touch(self.workspace.root)
+        copied = seed_samples(self.workspace, self.registry.sample_dirs)
+        if copied:
+            log.info("sample data copied", files=len(copied), into=str(self.workspace.samples_dir))
         self.gc()
+
+    async def switch_workspace(self, root: Path, *, create: bool = False) -> Path:
+        """Close every open workflow and re-open the runtime on another folder."""
+        target = Path(root).expanduser().resolve()
+        if target.exists() and not target.is_dir():
+            raise NotADirectoryError(str(target))
+        if not target.exists():
+            if not create:
+                raise FileNotFoundError(str(target))
+            target.mkdir(parents=True, exist_ok=True)
+        watching = self.watcher is not None and self.watcher.running
+        await self.stop_watcher()
+        await asyncio.gather(*(s.close() for s in self.schedulers.values()), return_exceptions=True)
+        self.schedulers.clear()
+        self.workspace.close()
+        self._open_workspace(target)
+        if watching:
+            self.start_watcher()
+        log.info("workspace switched", root=str(self.workspace.root))
+        return self.workspace.root
+
+    def start_watcher(self) -> None:
+        """Start publishing ``workspace.changed`` events for the active workspace."""
+        if not self.settings.watch_workspace:
+            return
+        if self.watcher is None or self.watcher.root != self.workspace.root:
+            self.watcher = WorkspaceWatcher(self.bus, self.workspace.root)
+        self.watcher.start()
+
+    async def stop_watcher(self) -> None:
+        if self.watcher is not None:
+            await self.watcher.stop()
+            self.watcher = None
 
     # --- schedulers --------------------------------------------------------------------------
 
@@ -241,6 +318,7 @@ class EngineRuntime:
     # --- lifecycle ---------------------------------------------------------------------------
 
     async def shutdown(self) -> None:
+        await self.stop_watcher()
         await asyncio.gather(*(s.close() for s in self.schedulers.values()), return_exceptions=True)
         self.threads.shutdown()
         if self.processes is not None:

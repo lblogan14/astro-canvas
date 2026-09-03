@@ -77,6 +77,18 @@ class Output(Base):
     last_used: Mapped[datetime] = mapped_column(default=utcnow, index=True)
 
 
+class FileRecord(Base):
+    """Cached content hash of a workspace file, keyed by its relative path and mtime (phase 04)."""
+
+    __tablename__ = "files"
+
+    path: Mapped[str] = mapped_column(String(1024), primary_key=True)
+    mtime_ns: Mapped[int] = mapped_column(Integer)
+    size: Mapped[int] = mapped_column(Integer)
+    blake3: Mapped[str] = mapped_column(String(64))
+    hashed: Mapped[datetime] = mapped_column(default=utcnow)
+
+
 class NodeStat(Base):
     """Per node instance runtime statistics used for ``auto`` cost promotion."""
 

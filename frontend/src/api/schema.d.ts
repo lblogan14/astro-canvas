@@ -348,10 +348,219 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/workspace': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Workspace Info
+     * @description The active workspace folder and recently used ones.
+     */
+    get: operations['workspace_info_api_workspace_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workspace/file': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Download File
+     * @description Download a workspace file.
+     */
+    get: operations['download_file_api_workspace_file_get']
+    put?: never
+    post?: never
+    /**
+     * Delete Path
+     * @description Delete a file, or a folder (``recursive=true`` removes its contents).
+     */
+    delete: operations['delete_path_api_workspace_file_delete']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workspace/info': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * File Info
+     * @description Size, mtime, MIME and blake3 (cached by path + mtime) of one file.
+     */
+    get: operations['file_info_api_workspace_info_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workspace/mkdir': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Make Directory
+     * @description Create a folder (and parents) inside the workspace.
+     */
+    post: operations['make_directory_api_workspace_mkdir_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workspace/select': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Select Workspace
+     * @description Switch the server to another workspace folder (closing every open workflow).
+     */
+    post: operations['select_workspace_api_workspace_select_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workspace/sniff': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Sniff File
+     * @description Guess the data kind of a file and the ``core.io.load_*`` node that reads it.
+     */
+    get: operations['sniff_file_api_workspace_sniff_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workspace/tree': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Workspace Tree
+     * @description Entries of a folder, folders first; nested folders beyond ``depth`` are listed lazily.
+     */
+    get: operations['workspace_tree_api_workspace_tree_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workspace/upload': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Upload File
+     * @description Store an uploaded file in the workspace.
+     *
+     *     Files above 100 MB should be sent as ordered chunks sharing an ``upload_id``; the file lands
+     *     at its final path when the last chunk (``chunk_index == chunk_count - 1``) arrives.
+     */
+    post: operations['upload_file_api_workspace_upload_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
 }
 export type webhooks = Record<string, never>
 export interface components {
   schemas: {
+    /** Body_upload_file_api_workspace_upload_post */
+    Body_upload_file_api_workspace_upload_post: {
+      /**
+       * Chunk Count
+       * @default 1
+       */
+      chunk_count: number
+      /**
+       * Chunk Index
+       * @default 0
+       */
+      chunk_index: number
+      /**
+       * Dir
+       * @description Target folder, workspace-relative.
+       * @default uploads
+       */
+      dir: string
+      /**
+       * File
+       * @description The file (or one chunk of it).
+       */
+      file: string
+      /** Filename */
+      filename?: string | null
+      /**
+       * On Conflict
+       * @default error
+       * @enum {string}
+       */
+      on_conflict: 'error' | 'rename' | 'overwrite'
+      /**
+       * Overwrite
+       * @default false
+       */
+      overwrite: boolean
+      /**
+       * Upload Id
+       * @description Set for chunked uploads.
+       */
+      upload_id?: string | null
+    }
     /** CancelResult */
     CancelResult: {
       /** Cancelled */
@@ -366,6 +575,47 @@ export interface components {
       from: [string, string]
       /** To */
       to: [string, string]
+    }
+    /** EntryModel */
+    EntryModel: {
+      /**
+       * Children
+       * @description ``None`` for folders not yet listed (lazy).
+       */
+      children?: components['schemas']['EntryModel'][] | null
+      /** Is Dir */
+      is_dir: boolean
+      /** Mime */
+      mime?: string | null
+      /**
+       * Mtime
+       * @default 0
+       */
+      mtime: number
+      /** Name */
+      name: string
+      /** Path */
+      path: string
+      /**
+       * Size
+       * @default 0
+       */
+      size: number
+    }
+    /** FileInfoModel */
+    FileInfoModel: {
+      /** Blake3 */
+      blake3?: string | null
+      /** Mime */
+      mime?: string | null
+      /** Mtime */
+      mtime: number
+      /** Name */
+      name: string
+      /** Path */
+      path: string
+      /** Size */
+      size: number
     }
     /** GroupDoc */
     GroupDoc: {
@@ -398,6 +648,11 @@ export interface components {
       status: 'ok'
       /** Version */
       version: string
+    }
+    /** MkdirRequest */
+    MkdirRequest: {
+      /** Path */
+      path: string
     }
     /**
      * NodeDoc
@@ -619,6 +874,11 @@ export interface components {
        * @default 0
        */
       node_count: number
+      /**
+       * Security
+       * @default standard
+       */
+      security: string
       /** Version */
       version: string
     }
@@ -661,6 +921,12 @@ export interface components {
        * @default 0
        */
       node_count: number
+      /**
+       * Security
+       * @description Manifest security class: standard, needs-network or runs-subprocess.
+       * @default standard
+       */
+      security: string
       /**
        * Type Count
        * @default 0
@@ -844,6 +1110,36 @@ export interface components {
        */
       targets?: string[] | null
     }
+    /** SelectRequest */
+    SelectRequest: {
+      /**
+       * Create
+       * @default false
+       */
+      create: boolean
+      /**
+       * Path
+       * @description Absolute path of the folder to open as the workspace.
+       */
+      path: string
+    }
+    /** SniffResult */
+    SniffResult: {
+      /**
+       * Detail
+       * @default
+       */
+      detail: string
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind: 'spectrum' | 'image' | 'cube' | 'table' | 'unknown'
+      /** Node */
+      node?: string | null
+      /** Path */
+      path: string
+    }
     /** SubgraphDoc */
     SubgraphDoc: {
       /** Edges */
@@ -899,6 +1195,23 @@ export interface components {
       workspace: string
       /** Workspace Exists */
       workspace_exists: boolean
+    }
+    /** TreeResponse */
+    TreeResponse: {
+      /** Entries */
+      entries: components['schemas']['EntryModel'][]
+      /** Path */
+      path: string
+    }
+    /** UploadResult */
+    UploadResult: {
+      /** Complete */
+      complete: boolean
+      file?: components['schemas']['FileInfoModel'] | null
+      /** Received */
+      received: number
+      /** Upload Id */
+      upload_id?: string | null
     }
     /** ValidationError */
     ValidationError: {
@@ -1060,6 +1373,36 @@ export interface components {
       id: number
       /** Label */
       label?: string | null
+    }
+    /**
+     * WorkspaceInfo
+     * @description The active workspace and the user's recent ones.
+     */
+    WorkspaceInfo: {
+      /**
+       * Downloads Dir
+       * @default downloads
+       */
+      downloads_dir: string
+      /** Name */
+      name: string
+      /**
+       * Recent
+       * @default []
+       */
+      recent: string[]
+      /** Root */
+      root: string
+      /**
+       * Samples Dir
+       * @default samples
+       */
+      samples_dir: string
+      /**
+       * Uploads Dir
+       * @default uploads
+       */
+      uploads_dir: string
     }
   }
   responses: never
@@ -1675,6 +2018,287 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['WorkflowDoc']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  workspace_info_api_workspace_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['WorkspaceInfo']
+        }
+      }
+    }
+  }
+  download_file_api_workspace_file_get: {
+    parameters: {
+      query: {
+        /** @description Workspace-relative file path. */
+        path: string
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  delete_path_api_workspace_file_delete: {
+    parameters: {
+      query: {
+        /** @description Workspace-relative file or (empty) folder. */
+        path: string
+        recursive?: boolean
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  file_info_api_workspace_info_get: {
+    parameters: {
+      query: {
+        /** @description Workspace-relative file path. */
+        path: string
+        hash?: boolean
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['FileInfoModel']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  make_directory_api_workspace_mkdir_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MkdirRequest']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['EntryModel']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  select_workspace_api_workspace_select_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SelectRequest']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['WorkspaceInfo']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  sniff_file_api_workspace_sniff_get: {
+    parameters: {
+      query: {
+        /** @description Workspace-relative file path. */
+        path: string
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SniffResult']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  workspace_tree_api_workspace_tree_get: {
+    parameters: {
+      query?: {
+        /** @description Workspace-relative folder (``''`` = root). */
+        path?: string
+        depth?: number
+        hidden?: boolean
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['TreeResponse']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  upload_file_api_workspace_upload_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['Body_upload_file_api_workspace_upload_post']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['UploadResult']
         }
       }
       /** @description Validation Error */

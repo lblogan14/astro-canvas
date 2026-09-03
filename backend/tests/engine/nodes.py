@@ -136,6 +136,25 @@ def bump_fingerprint() -> None:
     _COUNTER["n"] += 1
 
 
+_SEEN_WORKSPACES: list[object] = []
+
+
+def _workspace_fingerprint(name: str = "", *, workspace: object = None) -> str:
+    _SEEN_WORKSPACES.append(workspace)
+    return f"{workspace}:{name}"
+
+
+@node(
+    id="test.fingerprint.workspace",
+    name="Workspace Fingerprint",
+    category="Test",
+    fingerprint=_workspace_fingerprint,
+)
+def fingerprinted_with_workspace(name: str = "") -> str:
+    """Its fingerprint callable asks for the workspace root."""
+    return name
+
+
 def build_registry() -> NodeRegistry:
     """Core packs plus these test nodes (used as ``registry_factory`` in worker processes)."""
     import sys

@@ -141,6 +141,16 @@ async def test_fingerprint_busts_the_cache(harness: Harness) -> None:
     assert scheduler.records["f"].key != key and scheduler.records["f"].state == "dirty"
 
 
+async def test_fingerprint_receives_the_workspace_root_when_declared(harness: Harness) -> None:
+    doc = make_doc({"w": {"type": "test.fingerprint.workspace", "params": {"name": "a"}}})
+    scheduler = harness.scheduler(doc)
+    assert test_nodes._SEEN_WORKSPACES[-1] == scheduler.workspace_root
+    key = scheduler.records["w"].key
+    doc.nodes["w"].params["name"] = "b"
+    scheduler.update(doc)
+    assert scheduler.records["w"].key != key
+
+
 async def test_validation_issues_are_published_and_nodes_idle(harness: Harness) -> None:
     doc = load_doc("invalid/missing_input")
     scheduler = harness.scheduler(doc)

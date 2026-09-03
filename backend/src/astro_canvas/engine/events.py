@@ -27,6 +27,9 @@ RunStatus = Literal["running", "done", "error", "cancelled"]
 FRAME_OUTPUT = 1
 """Binary frame type: one node output's arrays."""
 
+BROADCAST = "*"
+"""``workflow_id`` of events delivered to every subscriber (``workspace.changed`` etc.)."""
+
 _HEADER = struct.Struct("<II")
 
 
@@ -150,7 +153,7 @@ class Subscription:
         self.dropped = 0
 
     def accepts(self, event: _Event) -> bool:
-        return self.workflow_id is None or event.workflow_id == self.workflow_id
+        return self.workflow_id is None or event.workflow_id in (self.workflow_id, BROADCAST)
 
     def _offer(self, event: _Event | None) -> None:
         try:

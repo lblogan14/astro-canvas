@@ -18,6 +18,7 @@ from astro_canvas.server.runs import router as runs_router
 from astro_canvas.server.runtime import EngineRuntime
 from astro_canvas.server.static import mount_static
 from astro_canvas.server.workflows import router as workflows_router
+from astro_canvas.server.workspace import router as workspace_router
 from astro_canvas.server.ws import router as ws_router
 from astro_canvas.settings import Settings, get_settings
 
@@ -46,6 +47,8 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        runtime.bus.bind()
+        runtime.start_watcher()
         yield
         await runtime.shutdown()
 
@@ -67,6 +70,7 @@ def create_app(
     app.include_router(workflows_router, prefix="/api")
     app.include_router(runs_router, prefix="/api")
     app.include_router(outputs_router, prefix="/api")
+    app.include_router(workspace_router, prefix="/api")
     app.include_router(ws_router)
     if token is not None:
         app.add_middleware(TokenAuthMiddleware, token=token)

@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     debounce_ms: int = Field(default=250, ge=0)
     auto_threshold_ms: int = Field(default=2000, ge=0)
 
+    # Workspace (design 6.5): publish ``workspace.changed`` events from a file watcher.
+    watch_workspace: bool = True
+
 
 def get_settings(**overrides: object) -> Settings:
     """Build settings from the environment, applying non-``None`` overrides on top."""

@@ -13,8 +13,12 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from astro_canvas.engine.cache import BlobStore
 from astro_canvas.store.db import make_engine, migrate
+from astro_canvas.store.files import FileIndex
 
 STATE_DIR = ".astro-canvas"
+SAMPLES_DIR = "samples"
+DOWNLOADS_DIR = "downloads"
+UPLOADS_DIR = "uploads"
 
 
 class PathOutsideWorkspaceError(ValueError):
@@ -60,6 +64,7 @@ class Workspace:
         migrate(self.engine)
         self.sessions: sessionmaker[Session] = sessionmaker(self.engine, expire_on_commit=False)
         self.blobs = BlobStore(self.blobs_dir)
+        self.files = FileIndex(self.sessions)
 
     @classmethod
     def open(cls, root: Path) -> Workspace:
@@ -72,6 +77,30 @@ class Workspace:
 
     def safe_path(self, relative: str | PurePath) -> Path:
         return safe_path(self.root, relative)
+
+    def relative(self, path: Path) -> str:
+        """Workspace-relative POSIX form of an absolute path inside the root."""
+        return Path(path).resolve().relative_to(self.root).as_posix()
+
+    @property
+    def samples_dir(self) -> Path:
+        """``<root>/samples`` (bundled pack sample data is copied here on first run)."""
+        return self._sub(SAMPLES_DIR)
+
+    @property
+    def downloads_dir(self) -> Path:
+        """``<root>/downloads`` (astroquery-style fetch nodes cache here by query hash)."""
+        return self._sub(DOWNLOADS_DIR)
+
+    @property
+    def uploads_dir(self) -> Path:
+        """``<root>/uploads`` (default target of the upload endpoint)."""
+        return self._sub(UPLOADS_DIR)
+
+    def _sub(self, name: str) -> Path:
+        path = self.root / name
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
     def new_scratch(self, prefix: str = "run-") -> Path:
         return Path(tempfile.mkdtemp(prefix=prefix, dir=self.scratch_dir))

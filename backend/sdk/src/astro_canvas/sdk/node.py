@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import functools
+import inspect
 from collections.abc import Callable, Hashable, Mapping, Sequence
 from typing import Any
 
@@ -37,6 +38,7 @@ class NodeDef:
         self.context_param = shape.context_param
         self.quantity_units: dict[str, str] = shape.quantity_units
         self.fingerprint = fingerprint
+        self.fingerprint_wants_workspace = _accepts_workspace(fingerprint)
         functools.update_wrapper(self, func)
 
     @property
@@ -84,6 +86,19 @@ class NodeDef:
         return self.func(**kwargs)
 
 
+def _accepts_workspace(func: Callable[..., Hashable] | None) -> bool:
+    """True when a fingerprint callable takes a ``workspace`` keyword (or ``**kwargs``)."""
+    if func is None:
+        return False
+    try:
+        params = inspect.signature(func).parameters
+    except (TypeError, ValueError):
+        return False
+    return "workspace" in params or any(
+        p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()
+    )
+
+
 def _to_quantity(value: Any, unit: str) -> Any:
     import astropy.units as u  # noqa: PLC0415 - optional dependency, only for Quantity params
 
@@ -119,7 +134,9 @@ def node(
         preview: Frontend preview renderer id.
         editor: Frontend expandable editor id.
         outputs: Names for tuple outputs (default ``out0``, ``out1``, ...) or one single output.
-        fingerprint: Callable returning a hashable that changes when external state changes.
+        fingerprint: Callable returning a hashable that changes when external state changes. It
+            receives the node's params as keywords, plus ``workspace: Path`` when it declares
+            that parameter (file loaders hash the target's mtime/size this way).
         expand: The node returns a graph to expand into sub-nodes (batch runner).
         lazy: Input ports resolved on demand through ``ctx.needs(port)``.
         deprecated: Hide from the menu, keep loadable.
