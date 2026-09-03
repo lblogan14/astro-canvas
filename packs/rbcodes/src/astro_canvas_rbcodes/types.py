@@ -1,9 +1,11 @@
-"""Port types of the rbcodes pack (``rbcodes.*``): the ``rb_zfind`` result objects.
+"""Port types of the rbcodes pack (``rbcodes.*``): zfind results and the multispec view.
 
 ``ZFindResult``/``AbsorberResult``/``ZSolution`` mirror the dataclasses in
 ``rbcodes.GUIs.zfind.io``; the searched spectrum travels inside the result (``input_spec``) so
 the ``z-accept`` editor can overlay lines on it without another request. ``ZCandidates`` is the
-ranked candidate table produced by ``rbcodes.zfind.rank``. Summaries are JSON-safe (non-finite
+ranked candidate table produced by ``rbcodes.zfind.rank``, and ``MultispecView`` is what
+``rbcodes.multispec.view`` draws (the stacked panels plus the absorber and identified-line
+catalogues). Summaries are JSON-safe (non-finite
 numbers become ``null``) and decimate the curves to the viewport's ``n_out``.
 """
 
@@ -255,9 +257,112 @@ class ZCandidates(PortType):
         }
 
 
+class AbsorberSystem(BaseModel):
+    """One row of rb_multispec's absorber manager (``Zabs``/``LineList``/``Color``/``Visible``)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    zabs: float
+    linelist: str = "LLS"
+    color: str = "sky_blue"
+    visible: bool = True
+    label: str = ""
+
+    def row(self) -> dict[str, Any]:
+        return {
+            "zabs": json_float(self.zabs),
+            "linelist": self.linelist,
+            "color": self.color,
+            "visible": bool(self.visible),
+            "label": self.label,
+        }
+
+
+class IdentifiedLine(BaseModel):
+    """One identified transition (rb_multispec's ``Name``/``Wave_obs``/``Zabs`` line list)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    wave_obs: float
+    zabs: float
+    wave_rest: float | None = None
+    spectrum: str = ""
+
+    def rest(self) -> float:
+        if self.wave_rest is not None:
+            return float(self.wave_rest)
+        return float(self.wave_obs) / (1.0 + float(self.zabs))
+
+    def row(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "wave_obs": json_float(self.wave_obs),
+            "zabs": json_float(self.zabs),
+            "wave_rest": json_float(self.rest()),
+            "spectrum": self.spectrum,
+        }
+
+
+@port_type(id="rbcodes.MultispecView", color="#0EA5E9", summary_renderer="multispec-thumb")
+class MultispecView(PortType):
+    """What the multi-spectrum viewer shows: the stacked spectra, absorbers and identified lines.
+
+    The ``view`` output of ``rbcodes.multispec.view``: the panels as they are displayed (after
+    smoothing and the wavelength window), the absorber systems whose lines are overlaid and the
+    identified-line catalogue. Its summary drives the ``multispec-thumb`` inline preview.
+    """
+
+    spectra: list[Spectrum1D] = []
+    labels: list[str] = []
+    absorbers: list[AbsorberSystem] = []
+    identified: list[IdentifiedLine] = []
+    z: float = 0.0
+    linelist: str = "LLS"
+    meta: dict[str, Any] = {}
+
+    @model_validator(mode="after")
+    def _labels_match(self) -> MultispecView:
+        if self.labels and len(self.labels) != len(self.spectra):
+            raise ValueError("labels must match spectra")
+        return self
+
+    def __len__(self) -> int:
+        return len(self.spectra)
+
+    def wave_range(self) -> tuple[float, float] | None:
+        lo = min((float(s.wave[0]) for s in self.spectra if len(s)), default=None)
+        hi = max((float(s.wave[-1]) for s in self.spectra if len(s)), default=None)
+        return None if lo is None or hi is None else (lo, hi)
+
+    def summary(self, viewport: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        """Panels decimated to ``n_out`` (default 400, at most ``max_panels`` of them).
+
+        Every panel is a ``Spectrum1D`` summary, so the thumbnail and the editor share the
+        decimation. ``absorbers``/``identified`` are the whole (small) catalogues.
+        """
+        n_out = _viewport_int(viewport, "n_out", 400, 20000)
+        max_panels = _viewport_int(viewport, "max_panels", 8, 64)
+        window = self.wave_range()
+        return {
+            "type": self.type_id(),
+            "count": len(self.spectra),
+            "labels": list(self.labels),
+            "range": [window[0], window[1]] if window else None,
+            "z": json_float(self.z),
+            "linelist": self.linelist,
+            "panels": [s.summary({"n_out": n_out}) for s in self.spectra[:max_panels]],
+            "absorbers": [a.row() for a in self.absorbers],
+            "identified": [line.row() for line in self.identified],
+        }
+
+
 __all__ = [
     "AbsorberCandidate",
     "AbsorberResult",
+    "AbsorberSystem",
+    "IdentifiedLine",
+    "MultispecView",
     "Statistic",
     "ZCandidateRow",
     "ZCandidates",

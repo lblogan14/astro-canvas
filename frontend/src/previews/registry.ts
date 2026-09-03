@@ -13,6 +13,7 @@ import FigurePreview from './renderers/FigurePreview.vue'
 import FileChip from './renderers/FileChip.vue'
 import ImageThumb from './renderers/ImageThumb.vue'
 import KvTile from './renderers/KvTile.vue'
+import MultispecThumb from './renderers/MultispecThumb.vue'
 import SpectrumThumb from './renderers/SpectrumThumb.vue'
 import TableHead from './renderers/TableHead.vue'
 import ValueChip from './renderers/ValueChip.vue'
@@ -30,6 +31,7 @@ export type PreviewId =
   | 'value-chip'
   | 'zfind-curve'
   | 'candidates-table'
+  | 'multispec-thumb'
 
 /** Props every renderer receives. */
 export interface PreviewProps {
@@ -53,6 +55,7 @@ const COMPONENTS: Record<PreviewId, Component> = {
   'value-chip': ValueChip,
   'zfind-curve': ZFindCurve,
   'candidates-table': CandidatesTable,
+  'multispec-thumb': MultispecThumb,
 }
 
 /** Backend `summary_renderer` ids → frontend preview ids. */
@@ -74,6 +77,7 @@ const RENDERER_ALIASES: Record<string, PreviewId> = {
   'type-name': 'value-chip',
   'zfind-curve': 'zfind-curve',
   'candidates-table': 'candidates-table',
+  'multispec-thumb': 'multispec-thumb',
 }
 
 /** Renderers that have a full-size view in the viewer sheet. */
@@ -94,6 +98,8 @@ export function isPreviewId(value: unknown): value is PreviewId {
 /** Guess a renderer from the payload when no metadata says otherwise. */
 export function rendererFromSummary(summary: Record<string, unknown>): PreviewId {
   if (Array.isArray(summary['wave']) && Array.isArray(summary['flux'])) return 'spectrum-thumb'
+  if (Array.isArray(summary['panels']) && Array.isArray(summary['absorbers']))
+    return 'multispec-thumb'
   if (Array.isArray(summary['z']) && Array.isArray(summary['curves'])) return 'zfind-curve'
   if (Array.isArray(summary['rows']) && 'accepted' in summary) return 'candidates-table'
   if (isTileSummary(summary['tile'])) {
@@ -138,6 +144,7 @@ export function previewBudget(id: PreviewId, width: number): number | null {
     case 'spectrum-thumb':
     case 'spectrum-stack':
     case 'zfind-curve':
+    case 'multispec-thumb':
       return Math.min(4000, Math.max(200, w * 2))
     case 'image-thumb':
     case 'cube-thumb':

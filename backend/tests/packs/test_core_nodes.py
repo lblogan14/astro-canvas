@@ -81,17 +81,21 @@ def test_markdown_note_has_no_ports() -> None:
 
 
 def test_rbcodes_pack_registers_nodes_and_guards_qt() -> None:
+    import sys
+
     import astro_canvas_rbcodes
 
     from astro_canvas.sdk import NodeRegistry
 
+    # Only *new* rbcodes imports matter: on Python 3.10 an earlier test may already have
+    # imported it deliberately (the parity tests do).
+    before = {m for m in sys.modules if m == "rbcodes" or m.startswith("rbcodes.")}
     reg = NodeRegistry()
     astro_canvas_rbcodes.register(reg.for_pack("rbcodes"))
-    assert len(reg) == 21 and all(i.startswith("rbcodes.") for i in reg.ids())
+    assert len(reg) == 28 and all(i.startswith("rbcodes.") for i in reg.ids())
     assert "rbcodes" in reg.sample_dirs and "rbcodes" in reg.template_dirs
     assert reg.security["rbcodes"] == "standard"
     assert os.environ["MPLBACKEND"] == "Agg"
     assert os.environ["QT_QPA_PLATFORM"] == "offscreen"
-    import sys
-
-    assert not any(m == "rbcodes" or m.startswith("rbcodes.") for m in sys.modules)
+    after = {m for m in sys.modules if m == "rbcodes" or m.startswith("rbcodes.")}
+    assert after == before

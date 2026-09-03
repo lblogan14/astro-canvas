@@ -206,6 +206,10 @@ export interface PreviewViewport {
   hi?: number
   n_out?: number
   rows?: number
+  /** `SpectrumCollection`: how many items to summarise (default 8, cap 64). */
+  max_items?: number
+  /** `rbcodes.MultispecView`: how many panels to summarise (default 8, cap 64). */
+  max_panels?: number
   tag?: string
 }
 

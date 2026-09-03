@@ -44,7 +44,7 @@ def test_get_node_and_404(client: TestClient) -> None:
 def test_list_types(client: TestClient) -> None:
     body = client.get("/api/types").json()
     ids = [t["id"] for t in body]
-    assert ids == sorted(ids) and len(ids) == 24  # 20 core + 4 rbcodes zfind types
+    assert ids == sorted(ids) and len(ids) == 25  # 20 core + 5 rbcodes (zfind + multispec)
     spectrum = next(t for t in body if t["id"] == "astro.Spectrum1D")
     assert spectrum["compatible_with"] == ["astro.SpectrumCollection"]
     assert spectrum["color"] == "#5B8DEF"

@@ -57,3 +57,9 @@ def reference() -> dict[str, Any]:
 def sdss1() -> Spectrum1D:
     """The z = 3.01 SDSS quasar with the z = 1.3855 MgII absorber, loaded once per session."""
     return load_spectrum(path="sdss1.fits", ctx=NullContext(workspace=SAMPLES))
+
+
+@pytest.fixture(scope="session")
+def samples_galaxy() -> Spectrum1D:
+    """The z = 0.00586 SDSS star-forming galaxy, loaded once per session."""
+    return load_spectrum(path="spec-0398-51789-0282.fits", ctx=NullContext(workspace=SAMPLES))

@@ -1,4 +1,4 @@
-"""Astro Canvas node pack for rbcodes: absorption lines (phase 05) and redshift finding (06).
+"""Astro Canvas node pack for rbcodes: absorption lines, redshift finding, multi-spectrum view.
 
 Importing this package must never import ``rbcodes`` (some of its modules select a Qt matplotlib
 backend at import time). Node modules import rbcodes lazily inside the node functions, after
@@ -41,10 +41,17 @@ def templates_dir() -> Path | None:
 def register(registry: PackRegistry) -> None:
     """Entry point (``astro_canvas.nodes`` -> ``rbcodes``): nodes, sample data and templates."""
     from astro_canvas_rbcodes import types  # noqa: PLC0415
-    from astro_canvas_rbcodes.nodes import absorption, continuum, io, lines, zfind  # noqa: PLC0415
+    from astro_canvas_rbcodes.nodes import (  # noqa: PLC0415
+        absorption,
+        continuum,
+        io,
+        lines,
+        multispec,
+        zfind,
+    )
 
     registry.declare_security("standard")
-    for module in (types, lines, absorption, continuum, io, zfind):
+    for module in (types, lines, absorption, continuum, io, zfind, multispec):
         registry.add_module(module)
     samples = sample_data_dir()
     if samples is not None:

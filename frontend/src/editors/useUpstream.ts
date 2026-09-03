@@ -45,7 +45,15 @@ export function summaryData(entry: SummaryEntry | undefined): Record<string, unk
   return entry.summary
 }
 
-export function useUpstream(nodeId: Ref<string>, port: string) {
+/**
+ * `viewport` overrides the default point budget (the multi-spectrum viewer asks for more
+ * panels and fewer points each); it is merged over `{ n_out: EDITOR_POINTS }`.
+ */
+export function useUpstream(
+  nodeId: Ref<string>,
+  port: string,
+  viewport: Record<string, unknown> = {},
+) {
   const workflow = useWorkflowStore()
   const execution = useExecutionStore()
   const session = useSessionStore()
@@ -68,7 +76,11 @@ export function useUpstream(nodeId: Ref<string>, port: string) {
   function request(): void {
     const src = source.value
     if (!src) return
-    session.requestPreview(src.nodeId, src.port, { n_out: EDITOR_POINTS, tag: EDITOR_TAG })
+    session.requestPreview(src.nodeId, src.port, {
+      n_out: EDITOR_POINTS,
+      ...viewport,
+      tag: EDITOR_TAG,
+    })
   }
 
   // Re-request when the upstream node finishes a new run or the wiring changes.

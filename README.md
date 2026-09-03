@@ -16,7 +16,9 @@ them with type checking, edit parameters in schema-generated widgets, run, and w
 copy/paste, groups, autosave and version restore. Phase 04 adds the workspace folder (browse, upload, drag files onto the canvas),
 loaders for spectra/tables/images/cubes, archive fetch nodes, inline previews (uPlot, image tiles, table heads) and a full-size
 viewer (Plotly with server-side re-sampling, Canvas2D image view with WCS readout, Arrow tables).
-See [docs/guide/canvas.md](docs/guide/canvas.md), [docs/guide/data.md](docs/guide/data.md) and the roadmap below.
+See [docs/guide/canvas.md](docs/guide/canvas.md), [docs/guide/data.md](docs/guide/data.md),
+[docs/guide/absorption.md](docs/guide/absorption.md), [docs/guide/redshift.md](docs/guide/redshift.md),
+[docs/guide/multispec.md](docs/guide/multispec.md) and the roadmap below.
 
 | Phase | Outcome |
 |---|---|
@@ -25,7 +27,8 @@ See [docs/guide/canvas.md](docs/guide/canvas.md), [docs/guide/data.md](docs/guid
 | 03–04 | Canvas MVP (Vue Flow); data, transport, and visualization widgets |
 | 05 | rbcodes pack I: absorption-line EW pipeline (`launch_specgui` as a template), continuum-mask / range / line-picker editors, workflow templates API |
 | 06 | rbcodes pack II: `rb_zfind` redshift finding (line search, picket fence, MARZ templates, redrock PCA), z-accept editor, redshift-finder template |
-| 07–08 | rbcodes packs: multi-spectrum viewer, IFU cubes |
+| 07 | rbcodes pack III: multi-spectrum viewer (stacked panels, line identification, absorber catalogues, quick fits, rb_multispec file formats) |
+| 08 | rbcodes pack IV: IFU cubes |
 | 09–13 | Batch and subgraphs, app modes, pack manager and bundles, distribution, hardening and `v0.1.0` |
 
 ## Quick start (developers)

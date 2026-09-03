@@ -138,13 +138,14 @@ Binary frames: `u32 msg_type (1 = output) | u32 header_len | msgpack header | bu
 `{node_id, port, type_id, data, arrays: [{name, dtype, shape, offset, nbytes}]}`; each array is a
 C-contiguous little-endian buffer at `offset` in the payload (`dtype="bytes"` for raw parts).
 
-### Summary payloads (phase 04)
+### Summary payloads (phase 04, extended in 06 and 07)
 
 | Type | `summary` |
 |---|---|
 | `Spectrum1D` | `n, n_view, range, wave[], flux[], error?[], continuum?[], wave_unit, flux_unit, frame, z, v0_wrest` (all series sampled at the same MinMaxLTTB indices; non-finite values are `null`, since phase 06) |
 | `Image2D` | `shape, unit, wcs, object, tile: {width, height, step, dtype: "f4", b64, zscale, minmax, percentile}` (base64 little-endian float32 rows) |
 | `Cube3D` | `shape, instrument, wave_unit, wave_range, band, has_var, wcs, tile` (white light over `lo..hi`), `spectrum: {wave, flux}` (integrated, ≤ 512 points) |
+| `SpectrumCollection` | `count` (always the full length), `labels[]`, `items[]` (each a `Spectrum1D` summary at `n_out`, default 512; at most `max_items`, default 8, cap 64 — the multi-spectrum viewer raises it) |
 | `Table` | `n_rows, columns, units, dtypes, head: {col: values}` (first `rows`, default 50), `arrow_b64` (Arrow IPC of the head) |
 | `Figure` | `kind, size` plus `plotly` or `png_b64` when ≤ 400 kB |
 | `Continuum` | `n, index[], cont[]` (whole when ≤ `n_out`, default 20000, else strided with `index` on the spectrum grid), `masks`, `method`, `order`, `bic`, `params` (JSON-safe; `bic_results` rows) |
@@ -152,6 +153,7 @@ C-contiguous little-endian buffer at `offset` in the payload (`dtype="bytes"` fo
 | `rbcodes.ZFindResult` | `statistic` (`chi2`\|`score`), `n, z_range, z[], curves: [{label, values[]}]` (all sampled at the same MinMaxLTTB indices, `n_out` default 2000, non-finite → `null`), `solutions: [{z, z_err, chi2_dof, method, template_type, n_features}]`, `spectrum` (the searched spectrum's own summary), `warnings[]`, `linelist` |
 | `rbcodes.AbsorberResult` | same shape with `statistic: "significance"` and `candidates: [{z, significance, n_lines, is_doublet, linelist_name, lines_matched[]}]` |
 | `rbcodes.ZCandidates` | `n, accepted, statistics[], rows: [{index, source, rank, z, z_err, score, method, template_type, n_features}]` |
+| `rbcodes.MultispecView` | `count, labels[], range, z, linelist`, `panels[]` (each a `Spectrum1D` summary at `n_out`, default 400; at most `max_panels`, default 8, cap 64), `absorbers: [{zabs, linelist, color, visible, label}]`, `identified: [{name, wave_obs, zabs, wave_rest, spectrum}]` |
 | scalars, `File`, others | `{type, data: {...}}` (arrays summarised as shape/dtype/min/max) |
 
 ## CLI
