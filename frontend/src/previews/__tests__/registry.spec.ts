@@ -35,6 +35,8 @@ describe('preview registry', () => {
     expect(rendererFor(undefined, typeSpec('chip'), undefined)).toBe('kv-tile')
     expect(rendererFor(undefined, typeSpec('type-name'), undefined)).toBe('value-chip')
     expect(rendererFor(undefined, typeSpec('unknown-renderer'), undefined)).toBe('value-chip')
+    expect(rendererFor(undefined, typeSpec('zfind-curve'), undefined)).toBe('zfind-curve')
+    expect(rendererFor(undefined, typeSpec('candidates-table'), undefined)).toBe('candidates-table')
     const spec = { preview: 'figure' } as unknown as NodeSpec
     expect(rendererFor(spec, typeSpec('spectrum-thumb'), undefined)).toBe('figure')
     const bogus = { preview: 'nope' } as unknown as NodeSpec
@@ -43,6 +45,10 @@ describe('preview registry', () => {
 
   it('guesses from the summary shape', () => {
     expect(rendererFromSummary({ wave: [1], flux: [1] })).toBe('spectrum-thumb')
+    expect(rendererFromSummary({ z: [0, 1], curves: [{ label: 'a', values: [1, 2] }] })).toBe(
+      'zfind-curve',
+    )
+    expect(rendererFromSummary({ rows: [], accepted: null })).toBe('candidates-table')
     const tile = { width: 1, height: 1, step: 1, dtype: 'f4', b64: '', zscale: [0, 1] }
     expect(rendererFromSummary({ tile, shape: [2, 2] })).toBe('image-thumb')
     expect(rendererFromSummary({ tile, shape: [2, 2, 2] })).toBe('cube-thumb')

@@ -250,7 +250,16 @@
     "file": "{size} · {mime}",
     "band": "Band {lo}–{hi} Å",
     "white_light": "White light",
-    "error_summary": "Preview failed: {message}"
+    "error_summary": "Preview failed: {message}",
+    "zfind": {
+      "candidates": "{n} candidates",
+      "accepted": "accepted #{index}",
+      "statistic": {
+        "chi2": "χ²/dof",
+        "score": "score",
+        "significance": "σ"
+      }
+    }
   },
   "viewer": {
     "title": "{node} · {port}",
@@ -318,7 +327,8 @@
     "names": {
       "range-select": "Range",
       "line-picker": "Line picker",
-      "continuum-mask": "Continuum masks"
+      "continuum-mask": "Continuum masks",
+      "z-accept": "Accept redshift"
     },
     "range": {
       "hint": "Drag the orange handles or type the limits. Apply writes vmin/vmax to the node.",
@@ -355,6 +365,26 @@
       "click_first": "Click on the spectrum to see candidates.",
       "selected": "Selected",
       "doublet": "{species} doublet: partner at {partner} Å ({offset} km/s)."
+    },
+    "zaccept": {
+      "hint": "Click a candidate on the curve or in the table; the line list is overlaid on the spectrum at that redshift (hover a row to preview). Apply writes the accepted row index.",
+      "sources": "Scans",
+      "source": "Scan {n}",
+      "candidates": "Candidates",
+      "no_candidates": "No candidates yet: connect a redshift scan and let it finish.",
+      "no_spectrum": "The scan result carries no spectrum.",
+      "score": "Score",
+      "method": "Method",
+      "linelist": "Overlay line list",
+      "lines_shown": "{n} of {total} lines in range",
+      "selected": "Selected",
+      "features": "{n} features",
+      "will_write": "Apply writes accepted = {index}",
+      "statistic": {
+        "chi2": "χ²/dof",
+        "score": "score",
+        "significance": "significance"
+      }
     }
   }
 }
