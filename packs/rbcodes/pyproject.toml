@@ -17,6 +17,7 @@ dependencies = [
   # 3.10 until the patch in docs/dev/rbcodes-upstream.patch lands (fork/PR to be
   # confirmed by the maintainer). Drop the marker once the pin is relaxed upstream.
   "rbcodes @ git+https://github.com/rongmon/rbcodes@4499012e77eb3bbb9ca934b5b53909864581d060 ; python_full_version < '3.11'",
+  "scipy>=1.11",
 ]
 
 [project.entry-points."astro_canvas.nodes"]
@@ -30,14 +31,16 @@ astro-canvas-core = { workspace = true }
 display_name = "rbcodes: absorption and emission line spectroscopy"
 publisher = "rongmon"
 sample_data_dir = "sample_data"
+templates_dir = "templates"
 security = "standard"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/astro_canvas_rbcodes"]
 
 [tool.hatch.build.targets.wheel.force-include]
-# Bundled sample data (see sample_data/SOURCES.md) travels inside the package.
+# Bundled sample data (see sample_data/SOURCES.md) and workflow templates travel inside the package.
 "sample_data" = "astro_canvas_rbcodes/sample_data"
+"templates" = "astro_canvas_rbcodes/templates"
 
 [tool.hatch.metadata]
 # Needed for the `rbcodes @ git+...` direct reference above.

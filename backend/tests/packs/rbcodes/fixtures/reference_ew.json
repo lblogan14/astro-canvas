@@ -1,0 +1,210 @@
+{
+  "rbcodes_version": "2.4.0",
+  "python": "3.10.20",
+  "numpy": "2.2.6",
+  "astropy": "6.1.7",
+  "scipy": "1.15.3",
+  "generated_by": "tests/packs/rbcodes/fixtures/generate_reference.py",
+  "cases": {
+    "sdss1_mgii2796": {
+      "case": {
+        "id": "sdss1_mgii2796",
+        "file": "sdss1.fits",
+        "zabs": 1.3855,
+        "wrest": 2796.35,
+        "linelist": "atom",
+        "slice": [
+          -1500.0,
+          1500.0
+        ],
+        "masks": [
+          -300.0,
+          250.0,
+          500.0,
+          1000.0
+        ],
+        "order": 3,
+        "optimize": true,
+        "ew": [
+          -200.0,
+          200.0
+        ]
+      },
+      "expected": {
+        "transition": {
+          "name": "MgII 2796",
+          "wrest": 2796.352,
+          "fval": 0.6123
+        },
+        "n_slice": 44,
+        "velo_first": -1495.0371092995522,
+        "velo_last": 1473.0097302329218,
+        "legendre_order": 1,
+        "cont_median": 1.071310265134021,
+        "cont_first": 1.110390208377965,
+        "cont_last": 1.0320361607285968,
+        "fnorm_median": 0.9671510473172118,
+        "W": 2.071136310946613,
+        "W_e": 0.083638234877776,
+        "N": 96828319677756.7,
+        "N_e": 10036975193841.287,
+        "logN": 13.98600239533555,
+        "logN_e": 0.0449873265241407,
+        "vel_centroid": -84.75742388719445,
+        "vel_disp": 88.8871576072755,
+        "vel50_err": 36.288030137362185,
+        "SNR": null
+      }
+    },
+    "sdss1_mgii2803": {
+      "case": {
+        "id": "sdss1_mgii2803",
+        "file": "sdss1.fits",
+        "zabs": 1.3855,
+        "wrest": 2803.53,
+        "linelist": "atom",
+        "slice": [
+          -1500.0,
+          1500.0
+        ],
+        "masks": [
+          -1100.0,
+          -500.0,
+          -300.0,
+          250.0
+        ],
+        "order": 3,
+        "optimize": true,
+        "ew": [
+          -200.0,
+          200.0
+        ]
+      },
+      "expected": {
+        "transition": {
+          "name": "MgII 2803",
+          "wrest": 2803.531,
+          "fval": 0.3054
+        },
+        "n_slice": 43,
+        "velo_first": -1435.6585335976145,
+        "velo_last": 1463.6722663312855,
+        "legendre_order": 1,
+        "cont_median": 1.0661486152535202,
+        "cont_first": 1.1111556513888594,
+        "cont_last": 1.0209230194777794,
+        "fnorm_median": 0.9596212676044069,
+        "W": 1.7743887129776863,
+        "W_e": 0.08251403258012356,
+        "N": 127794533424043.52,
+        "N_e": 9096981426962.95,
+        "logN": 14.106512276713229,
+        "logN_e": 0.03089404400579093,
+        "vel_centroid": -78.09977004420756,
+        "vel_disp": 98.18173838560722,
+        "vel50_err": 40.082526850694386,
+        "SNR": null
+      }
+    },
+    "sdss1_feii2600_fixed_order": {
+      "case": {
+        "id": "sdss1_feii2600_fixed_order",
+        "file": "sdss1.fits",
+        "zabs": 1.3855,
+        "wrest": 2600.17,
+        "linelist": "atom",
+        "slice": [
+          -1200.0,
+          1200.0
+        ],
+        "masks": [
+          -250.0,
+          250.0
+        ],
+        "order": 2,
+        "optimize": false,
+        "ew": [
+          -150.0,
+          150.0
+        ]
+      },
+      "expected": {
+        "transition": {
+          "name": "FeII 2600",
+          "wrest": 2600.1729,
+          "fval": 0.213
+        },
+        "n_slice": 35,
+        "velo_first": -1158.568921995116,
+        "velo_last": 1188.5640336272775,
+        "legendre_order": 2,
+        "cont_median": 2.146282805652515,
+        "cont_first": 2.2597988441445147,
+        "cont_last": 2.0857817268413337,
+        "fnorm_median": 0.9900641497315334,
+        "W": 0.953083098371021,
+        "W_e": 0.0541608402726966,
+        "N": 97435333743666.31,
+        "N_e": 7235226828624.869,
+        "logN": 13.988716477075519,
+        "logN_e": 0.0322274099443654,
+        "vel_centroid": -63.21948998708348,
+        "vel_disp": 62.21572685825903,
+        "vel50_err": 31.107863429129516,
+        "SNR": null
+      }
+    },
+    "sdss1_mgii2796_weighted": {
+      "case": {
+        "id": "sdss1_mgii2796_weighted",
+        "file": "sdss1.fits",
+        "zabs": 1.3855,
+        "wrest": 2796.35,
+        "linelist": "atom",
+        "slice": [
+          -1500.0,
+          1500.0
+        ],
+        "masks": [
+          -300.0,
+          250.0,
+          500.0,
+          1000.0
+        ],
+        "order": 3,
+        "optimize": true,
+        "use_weights": true,
+        "ew": [
+          -200.0,
+          200.0
+        ],
+        "snr": true
+      },
+      "expected": {
+        "transition": {
+          "name": "MgII 2796",
+          "wrest": 2796.352,
+          "fval": 0.6123
+        },
+        "n_slice": 44,
+        "velo_first": -1495.0371092995522,
+        "velo_last": 1473.0097302329218,
+        "legendre_order": 1,
+        "cont_median": 1.068010166617674,
+        "cont_first": 1.1057459698214558,
+        "cont_last": 1.0300868803529861,
+        "fnorm_median": 0.9699783749394308,
+        "W": 2.065656482171444,
+        "W_e": 0.08390480460287858,
+        "N": 96547259591519.7,
+        "N_e": 10038167867732.865,
+        "logN": 13.984739951226013,
+        "logN_e": 0.04512365108060225,
+        "vel_centroid": -84.86718801352887,
+        "vel_disp": 88.70680561656073,
+        "vel50_err": 36.21440174547112,
+        "SNR": 16.36296860400357
+      }
+    }
+  }
+}

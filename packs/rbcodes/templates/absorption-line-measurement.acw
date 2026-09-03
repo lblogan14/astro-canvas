@@ -1,0 +1,96 @@
+{
+  "format": "astro-canvas/workflow",
+  "version": 1,
+  "id": "rbcodes-absorption-line-measurement",
+  "name": "Absorption Line Measurement",
+  "description": "rbcodes launch_specgui as a workflow: load an SDSS quasar, shift to the z = 1.3855 MgII absorber, slice around MgII 2796, fit a masked continuum, measure the equivalent width and save an rb_spec JSON.",
+  "nodes": {
+    "load": {
+      "type": "core.io.load_spectrum",
+      "title": "SDSS quasar (sdss1)",
+      "pos": [40, 200],
+      "params": { "path": "samples/rbcodes/sdss1.fits" }
+    },
+    "redshift": {
+      "type": "rbcodes.absorption.set_redshift",
+      "title": "Absorber z",
+      "pos": [360, 200],
+      "params": { "z": 1.3855 }
+    },
+    "transition": {
+      "type": "rbcodes.absorption.set_transition",
+      "title": "MgII 2796",
+      "pos": [660, 420],
+      "params": { "wrest": 2796.35, "linelist": "atom", "method": "closest" }
+    },
+    "slice": {
+      "type": "rbcodes.absorption.slice",
+      "title": "Slice +/- 1500 km/s",
+      "pos": [960, 200],
+      "params": { "vmin": -1500, "vmax": 1500, "use_vel": true }
+    },
+    "continuum": {
+      "type": "rbcodes.continuum.fit",
+      "title": "Continuum (masked)",
+      "pos": [1280, 200],
+      "params": {
+        "method": "polynomial",
+        "order": 3,
+        "optimize_order": true,
+        "masks": [[-300, 250], [500, 1000]],
+        "sigma_clip": true,
+        "n_sigma": 3.0,
+        "use_weights": false
+      }
+    },
+    "ew": {
+      "type": "rbcodes.absorption.compute_ew",
+      "title": "Equivalent width",
+      "pos": [1620, 200],
+      "params": { "vmin": -200, "vmax": 200, "snr": false }
+    },
+    "save": {
+      "type": "rbcodes.absorption.save_rbspec_json",
+      "title": "rb_spec JSON",
+      "pos": [1940, 260],
+      "params": { "path": "outputs/sdss1_MgII2796_z1.3855.json", "linelist": "atom" }
+    },
+    "doublet": {
+      "type": "rbcodes.absorption.doublet_check",
+      "title": "MgII doublet check",
+      "pos": [1620, 560],
+      "params": { "lam1": 2796.35, "lam2": 2803.53, "vmin": -600, "vmax": 600 }
+    },
+    "readme": {
+      "type": "core.note.markdown",
+      "pos": [40, 520],
+      "size": [560, 260],
+      "params": {
+        "text": "# Absorption line measurement\n\nThe `launch_specgui` pipeline from rbcodes as nodes.\n\n1. **Load** the SDSS quasar `sdss1.fits` (z_QSO = 3.01).\n2. **Set Redshift** to the intervening absorber at z = 1.3855.\n3. **Set Transition**: MgII 2796 from the `atom` list (open the editor to pick another line).\n4. **Slice** +/- 1500 km/s and **Fit Continuum** with masks over MgII 2796 and 2803 (open the editor to drag masks and watch the fit update).\n5. **Equivalent Width** over +/- 200 km/s and save an `rb_spec` JSON that `launch_specgui` can open.\n\nExpected: W = 2.07 A, log N = 13.99 (rbcodes 2.4.0)."
+      }
+    }
+  },
+  "edges": {
+    "e1": { "from": ["load", "out"], "to": ["redshift", "spec"] },
+    "e2": { "from": ["redshift", "out"], "to": ["transition", "spec"] },
+    "e3": { "from": ["redshift", "out"], "to": ["slice", "spec"] },
+    "e4": { "from": ["transition", "out"], "to": ["slice", "transition"] },
+    "e5": { "from": ["slice", "out"], "to": ["continuum", "spec"] },
+    "e6": { "from": ["continuum", "normalized"], "to": ["ew", "spec"] },
+    "e7": { "from": ["transition", "out"], "to": ["ew", "transition"] },
+    "e8": { "from": ["continuum", "normalized"], "to": ["save", "normalized"] },
+    "e9": { "from": ["continuum", "continuum"], "to": ["save", "continuum"] },
+    "e10": { "from": ["ew", "out"], "to": ["save", "measurement"] },
+    "e11": { "from": ["continuum", "normalized"], "to": ["doublet", "spec"] }
+  },
+  "views": [
+    { "id": "spectrum", "node": "slice", "port": "out", "kind": "spectrum" },
+    { "id": "continuum", "node": "continuum", "port": "normalized", "kind": "spectrum" },
+    { "id": "measurement", "node": "ew", "port": "out", "kind": "ew-summary" }
+  ],
+  "requires": {
+    "packs": { "astro-canvas-core": ">=0.1,<0.2", "astro-canvas-rbcodes": ">=0.1,<0.2" },
+    "python": ">=3.10"
+  },
+  "meta": { "author": "rbcodes pack", "tags": ["template", "rbcodes", "absorption"] }
+}
