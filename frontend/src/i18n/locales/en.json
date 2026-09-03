@@ -259,6 +259,9 @@
         "score": "score",
         "significance": "σ"
       }
+    },
+    "multispec": {
+      "caption": "{panels} spectra, {absorbers} systems, {lines} lines"
     }
   },
   "viewer": {
@@ -328,7 +331,8 @@
       "range-select": "Range",
       "line-picker": "Line picker",
       "continuum-mask": "Continuum masks",
-      "z-accept": "Accept redshift"
+      "z-accept": "Accept redshift",
+      "multispec-viewer": "Multi-spectrum viewer"
     },
     "range": {
       "hint": "Drag the orange handles or type the limits. Apply writes vmin/vmax to the node.",
@@ -384,6 +388,68 @@
         "chi2": "χ²/dof",
         "score": "score",
         "significance": "significance"
+      }
+    },
+    "multispec": {
+      "panel": "Spectrum {n}",
+      "snap": "Use z = {z}",
+      "add_absorber": "Add absorber",
+      "fit_gaussian": "Gaussian fit",
+      "fit_com": "CoM fit",
+      "reset": "Reset view",
+      "vstack": "Velocity stack",
+      "help": "Shortcuts",
+      "shortcuts": "Keyboard",
+      "absorbers": "Absorber systems",
+      "no_absorbers": "No systems yet: set a redshift and press Add absorber (or A).",
+      "identified": "Identified lines",
+      "no_lines": "No identifications yet: click a feature to match the nearest line of the list.",
+      "line": "Line",
+      "fit": "Quick fit",
+      "identify_fit": "Identify at the centroid",
+      "pixels": "{n} px",
+      "asymmetric": "truncated profile",
+      "visible": "Show this system",
+      "remove": "Remove",
+      "vstack_title": "Velocity stack at z = {z}",
+      "no_vstack": "No transition of the list falls inside this spectrum at the current redshift.",
+      "truncated": "Showing {shown} of {total} spectra.",
+      "summary": "{absorbers} absorber systems, {lines} identified lines",
+      "direction": {
+        "emission": "emission",
+        "absorption": "absorption"
+      },
+      "status": {
+        "reset": "View reset.",
+        "autoscale": "Autoscaled the flux axis.",
+        "smooth": "Boxcar kernel {n} px.",
+        "z": "z = {z}",
+        "no_last_z": "No previous redshift to go back to.",
+        "absorber_added": "Added an absorber at z = {z}.",
+        "identified": "{name} at {wave} A ({dv} km/s from the click).",
+        "no_lines": "The current line list is empty; pick another one.",
+        "quick_id": "{species}: z = {z}",
+        "fit_armed": "Click the two continuum anchors around the feature.",
+        "fit_anchor": "Anchor at {wave} A - click or press the key again on the other side.",
+        "fit_done": "Centroid {wave} A.",
+        "cleared": "Cleared the fit overlay."
+      },
+      "keys": {
+        "reset": "Reset the view",
+        "xlim": "Set the left / right wavelength limit at the cursor",
+        "ylim": "Set the top / bottom flux limit of the hovered panel",
+        "autoscale": "Autoscale every panel / add an absorber at the current z",
+        "page": "Page one window left / right",
+        "zoomout": "Zoom out",
+        "smooth": "More / less boxcar smoothing",
+        "labels": "Toggle the line labels",
+        "lastz": "Swap back to the previous redshift",
+        "absorber": "Add an absorber system at the current redshift",
+        "vstack": "Toggle the velocity stack",
+        "fit": "Gaussian / centre-of-mass fit between two cursor anchors",
+        "quickid": "Read the cursor as Lya, Lyb, SiIV, OVI, NeVIII, CIV, MgII or FeII",
+        "clear": "Clear the fit overlay",
+        "help": "Show or hide this list"
       }
     }
   }

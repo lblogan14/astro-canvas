@@ -37,6 +37,7 @@ describe('preview registry', () => {
     expect(rendererFor(undefined, typeSpec('unknown-renderer'), undefined)).toBe('value-chip')
     expect(rendererFor(undefined, typeSpec('zfind-curve'), undefined)).toBe('zfind-curve')
     expect(rendererFor(undefined, typeSpec('candidates-table'), undefined)).toBe('candidates-table')
+    expect(rendererFor(undefined, typeSpec('multispec-thumb'), undefined)).toBe('multispec-thumb')
     const spec = { preview: 'figure' } as unknown as NodeSpec
     expect(rendererFor(spec, typeSpec('spectrum-thumb'), undefined)).toBe('figure')
     const bogus = { preview: 'nope' } as unknown as NodeSpec
@@ -49,6 +50,9 @@ describe('preview registry', () => {
       'zfind-curve',
     )
     expect(rendererFromSummary({ rows: [], accepted: null })).toBe('candidates-table')
+    expect(rendererFromSummary({ panels: [], absorbers: [], identified: [] })).toBe(
+      'multispec-thumb',
+    )
     const tile = { width: 1, height: 1, step: 1, dtype: 'f4', b64: '', zscale: [0, 1] }
     expect(rendererFromSummary({ tile, shape: [2, 2] })).toBe('image-thumb')
     expect(rendererFromSummary({ tile, shape: [2, 2, 2] })).toBe('cube-thumb')
@@ -73,6 +77,7 @@ describe('preview registry', () => {
     expect(previewBudget('spectrum-thumb', 5000)).toBe(4000)
     expect(previewBudget('image-thumb', 20)).toBe(64)
     expect(previewBudget('cube-thumb', 900)).toBe(512)
+    expect(previewBudget('multispec-thumb', 300)).toBe(600)
     expect(previewBudget('kv-tile', 300)).toBeNull()
     expect(EXPANDABLE.has('table-head')).toBe(true)
     expect(EXPANDABLE.has('value-chip')).toBe(false)
