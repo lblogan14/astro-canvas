@@ -1338,8 +1338,25 @@
         "title": "WorkflowSaved",
         "type": "object"
       },
+      "WorkflowSettings": {
+        "description": "Per-workflow scheduler switches (kept in memory for the server's lifetime).",
+        "properties": {
+          "auto_run": {
+            "default": true,
+            "title": "Auto Run",
+            "type": "boolean"
+          }
+        },
+        "title": "WorkflowSettings",
+        "type": "object"
+      },
       "WorkflowStatus": {
         "properties": {
+          "auto_run": {
+            "default": true,
+            "title": "Auto Run",
+            "type": "boolean"
+          },
           "current_run": {
             "anyOf": [
               {
@@ -2164,6 +2181,100 @@
         "summary": "Start Run",
         "tags": [
           "runs"
+        ]
+      }
+    },
+    "/api/workflows/{workflow_id}/settings": {
+      "get": {
+        "description": "The scheduler switches for one workflow.",
+        "operationId": "get_settings_api_workflows__workflow_id__settings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowSettings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Settings",
+        "tags": [
+          "workflows"
+        ]
+      },
+      "post": {
+        "description": "Toggle auto-run; enabling it schedules any dirty cheap nodes right away.",
+        "operationId": "update_settings_api_workflows__workflow_id__settings_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowSettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowSettings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Settings",
+        "tags": [
+          "workflows"
         ]
       }
     },

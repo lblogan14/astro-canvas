@@ -19,6 +19,7 @@ const getHealth = vi.mocked(api.getHealth)
 
 describe('ui store', () => {
   beforeEach(() => {
+    window.localStorage.clear()
     setActivePinia(createPinia())
     getHealth.mockReset()
     document.documentElement.classList.remove('dark')
@@ -96,6 +97,7 @@ describe('ui store system theme', () => {
   const originalMatchMedia = window.matchMedia
 
   beforeEach(() => {
+    window.localStorage.clear()
     setActivePinia(createPinia())
     document.documentElement.classList.remove('dark')
   })

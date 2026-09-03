@@ -1,12 +1,29 @@
-import type { HealthResponse, NodeSpec, PackRecord, PortTypeSpec, SystemInfo } from './types'
+import type {
+  CancelResult,
+  HealthResponse,
+  NodeSpec,
+  PackRecord,
+  PortTypeSpec,
+  RunAccepted,
+  RunDetail,
+  SystemInfo,
+  WorkflowDoc,
+  WorkflowSaved,
+  WorkflowSettings,
+  WorkflowStatus,
+  WorkflowSummary,
+  WorkflowVersionInfo,
+} from './types'
 
 export class ApiError extends Error {
   readonly status: number
+  readonly detail: unknown
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, detail?: unknown) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.detail = detail
   }
 }
 
@@ -53,10 +70,33 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { Accept: 'application/json', ...authHeaders(), ...init?.headers },
   })
   if (!response.ok) {
-    throw new ApiError(response.status, `${response.status} ${response.statusText}`)
+    let detail: unknown
+    try {
+      detail = (await response.json()) as unknown
+    } catch {
+      detail = undefined
+    }
+    const message =
+      typeof detail === 'object' &&
+      detail !== null &&
+      typeof (detail as { detail?: unknown }).detail === 'string'
+        ? (detail as { detail: string }).detail
+        : `${response.status} ${response.statusText}`
+    throw new ApiError(response.status, message, detail)
   }
+  if (response.status === 204) return undefined as T
   return (await response.json()) as T
 }
+
+function json(method: string, body: unknown): RequestInit {
+  return {
+    method,
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' },
+  }
+}
+
+const enc = encodeURIComponent
 
 /** Thin typed wrapper over the REST API. Paths are relative so the Vite proxy and the wheel both work. */
 export const api = {
@@ -64,9 +104,40 @@ export const api = {
   getSystem: () => request<SystemInfo>('/api/system'),
   getNodes: (category?: string) =>
     request<NodeSpec[]>(
-      category === undefined ? '/api/nodes' : `/api/nodes?category=${encodeURIComponent(category)}`,
+      category === undefined ? '/api/nodes' : `/api/nodes?category=${enc(category)}`,
     ),
-  getNode: (id: string) => request<NodeSpec>(`/api/nodes/${encodeURIComponent(id)}`),
+  getNode: (id: string) => request<NodeSpec>(`/api/nodes/${enc(id)}`),
   getTypes: () => request<PortTypeSpec[]>('/api/types'),
   getPacks: () => request<PackRecord[]>('/api/packs'),
+
+  listWorkflows: () => request<WorkflowSummary[]>('/api/workflows'),
+  createWorkflow: (doc: WorkflowDoc) => request<WorkflowSaved>('/api/workflows', json('POST', doc)),
+  getWorkflow: (id: string) => request<WorkflowDoc>(`/api/workflows/${enc(id)}`),
+  putWorkflow: (doc: WorkflowDoc) =>
+    request<WorkflowSaved>(`/api/workflows/${enc(doc.id ?? '')}`, json('PUT', doc)),
+  deleteWorkflow: (id: string) => request<void>(`/api/workflows/${enc(id)}`, { method: 'DELETE' }),
+  listVersions: (id: string) =>
+    request<WorkflowVersionInfo[]>(`/api/workflows/${enc(id)}/versions`),
+  getVersion: (id: string, versionId: number) =>
+    request<WorkflowDoc>(`/api/workflows/${enc(id)}/versions/${versionId}`),
+  getWorkflowStatus: (id: string) => request<WorkflowStatus>(`/api/workflows/${enc(id)}/status`),
+  getWorkflowSettings: (id: string) =>
+    request<WorkflowSettings>(`/api/workflows/${enc(id)}/settings`),
+  setWorkflowSettings: (id: string, settings: WorkflowSettings) =>
+    request<WorkflowSettings>(`/api/workflows/${enc(id)}/settings`, json('POST', settings)),
+
+  startRun: (id: string, targets?: string[] | null) =>
+    request<RunAccepted>(
+      `/api/workflows/${enc(id)}/run`,
+      json('POST', { targets: targets ?? null }),
+    ),
+  listRuns: (workflowId?: string) =>
+    request<RunDetail[]>(
+      workflowId === undefined ? '/api/runs' : `/api/runs?workflow_id=${enc(workflowId)}`,
+    ),
+  getRun: (runId: string) => request<RunDetail>(`/api/runs/${enc(runId)}`),
+  cancelRun: (runId: string) =>
+    request<CancelResult>(`/api/runs/${enc(runId)}/cancel`, { method: 'POST' }),
 }
+
+export type Api = typeof api

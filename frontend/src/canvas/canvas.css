@@ -1,0 +1,154 @@
+/* Canvas theme: Vue Flow base styles plus tokens for both colour schemes. */
+@import '@vue-flow/core/dist/style.css';
+@import '@vue-flow/core/dist/theme-default.css';
+@import '@vue-flow/minimap/dist/style.css';
+@import '@vue-flow/controls/dist/style.css';
+@import '@vue-flow/node-resizer/dist/style.css';
+
+:root {
+  --ac-status-idle: var(--muted-foreground);
+  --ac-status-dirty: #d9a400;
+  --ac-status-queued: #8a8f98;
+  --ac-status-running: #2a7de1;
+  --ac-status-done: #1c9c5a;
+  --ac-status-error: #d64545;
+  --ac-status-cancelled: #8a8f98;
+  --ac-grid: oklch(0.85 0 0);
+  --ac-edge: oklch(0.6 0 0);
+  --ac-selection: oklch(0.6 0.15 250 / 60%);
+}
+
+.dark {
+  --ac-grid: oklch(0.3 0 0);
+  --ac-edge: oklch(0.65 0 0);
+  --ac-selection: oklch(0.75 0.12 250 / 70%);
+}
+
+.vue-flow {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.vue-flow__background pattern circle {
+  fill: var(--ac-grid);
+}
+
+.vue-flow__edge-path {
+  stroke: var(--ac-edge);
+  stroke-width: 2;
+}
+
+.vue-flow__edge.selected .vue-flow__edge-path,
+.vue-flow__edge:focus .vue-flow__edge-path {
+  stroke: var(--ac-selection) !important;
+  stroke-width: 3;
+}
+
+.vue-flow__connection-path {
+  stroke: var(--ac-selection);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+.vue-flow__node {
+  font-size: 12px;
+}
+
+.vue-flow__node.selected > .ac-node {
+  outline: 2px solid var(--ac-selection);
+  outline-offset: 1px;
+}
+
+.vue-flow__minimap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.vue-flow__controls {
+  box-shadow: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.vue-flow__controls-button {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  fill: var(--foreground);
+}
+
+.vue-flow__controls-button:hover {
+  background: var(--muted);
+}
+
+.vue-flow__selection,
+.vue-flow__nodesselection-rect {
+  background: oklch(0.6 0.15 250 / 8%);
+  border: 1px dashed var(--ac-selection);
+}
+
+/* Handles: coloured glyphs per port type (Okabe–Ito + shape). */
+.vue-flow__handle.ac-handle {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--background);
+  background: var(--ac-port, #999);
+  border-radius: 50%;
+  transition: transform 80ms ease-out;
+}
+
+.vue-flow__handle.ac-handle:hover,
+.vue-flow__handle.ac-handle.connecting {
+  transform: translate(0, -50%) scale(1.3);
+}
+
+.vue-flow__handle-left.ac-handle {
+  left: -7px;
+}
+
+.vue-flow__handle-right.ac-handle {
+  right: -7px;
+}
+
+.ac-handle.ac-glyph-diamond {
+  border-radius: 2px;
+  transform: translate(0, -50%) rotate(45deg);
+}
+
+.ac-handle.ac-glyph-diamond:hover,
+.ac-handle.ac-glyph-diamond.connecting {
+  transform: translate(0, -50%) rotate(45deg) scale(1.3);
+}
+
+.ac-handle.ac-glyph-square {
+  border-radius: 2px;
+}
+
+.ac-handle.ac-glyph-hexagon {
+  border-radius: 3px;
+  clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0 50%);
+  border-width: 0;
+}
+
+.ac-handle.ac-glyph-triangle {
+  border-width: 0;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.ac-handle.ac-glyph-ring {
+  background: var(--background);
+  border: 3px solid var(--ac-port, #999);
+}
+
+/* Node resizer controls follow the selection colour. */
+.vue-flow__resize-control.handle {
+  background: var(--ac-selection);
+  border-color: var(--background);
+  width: 8px;
+  height: 8px;
+}
+
+.vue-flow__resize-control.line {
+  border-color: transparent;
+}

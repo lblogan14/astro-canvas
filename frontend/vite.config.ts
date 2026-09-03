@@ -19,6 +19,7 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 5173,
     strictPort: true,
+    watch: { ignored: ['**/coverage/**', '**/test-results/**', '**/playwright-report/**'] },
     proxy: {
       '/api': { target: BACKEND, changeOrigin: true },
       '/ws': { target: BACKEND, ws: true, changeOrigin: true },
