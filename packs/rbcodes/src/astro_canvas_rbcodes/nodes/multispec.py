@@ -499,6 +499,14 @@ def import_linelist(
     return identified_table(lines, **source), absorbers_table(systems, **source)
 
 
+def _merged_count(value: Any) -> int:
+    """``MergedCount`` as an int; rbcodes' DataFrame leaves it NaN for unmerged rows."""
+    try:
+        return max(1, int(value))
+    except (TypeError, ValueError):
+        return 1
+
+
 def paths_fingerprint(
     paths: list[str] | None = None, *, workspace: Path | None = None, **_: object
 ) -> str:
@@ -558,7 +566,7 @@ def reconcile_linelists(
         )
         for row in rows
     ]
-    merged = np.array([int(row.get("MergedCount", 1)) for row in rows], dtype=np.int64)
+    merged = np.array([_merged_count(row.get("MergedCount")) for row in rows], dtype=np.int64)
     systems = [
         AbsorberSystem(
             zabs=float(row["Zabs"]),

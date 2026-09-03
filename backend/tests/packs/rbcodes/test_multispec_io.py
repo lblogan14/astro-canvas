@@ -256,7 +256,9 @@ def test_exported_files_open_in_multispec_io_manager(
     )
 
     if fmt == "json":
-        lines, absorbers, files, metadata = manager.load_combined_data(str(target))
+        # Upstream returns (line_list, absorbers, spectrum_files, metadata, error).
+        lines, absorbers, files, metadata, error = manager.load_combined_data(str(target))
+        assert error is None
         assert len(lines) == 3 and len(absorbers) == 2
         assert files == ["sdss1.fits", "sdss2.fits"]
         assert metadata["application_name"] == "MultispecViewer"
