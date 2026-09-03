@@ -1,5 +1,5 @@
 # Read-only rbcodes checkout used for the compatibility spike (not part of this repo)
-rbcodes/
+/rbcodes/
 
 # Design docs live only in the local checkout (owner's choice)
 docs/designs/
