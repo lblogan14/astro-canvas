@@ -8,11 +8,13 @@ headless nodes so undergrads and researchers can run the same tools in a browser
 
 ## Status
 
-**Pre-alpha, phase 02 of 13 (execution engine).** The repository builds, lints, tests, and runs a FastAPI + Vue
-shell on Windows, macOS, and Linux. Packs register nodes and port types through `astro_canvas.sdk`; the server lists
-their schemas at `/api/nodes`, `/api/types`, `/api/packs`, stores `workflow.json` documents, and executes them
-reactively (content-hash cache, cost gating, thread/process executors, cancellation) with events over `/ws`.
-`astro-canvas run workflow.json` executes a document headlessly. No canvas UI yet. See the roadmap below.
+**Pre-alpha, phase 03 of 13 (canvas MVP).** The repository builds, lints, tests, and runs a FastAPI + Vue app
+on Windows, macOS, and Linux. Packs register nodes and port types through `astro_canvas.sdk`; the server lists their
+schemas, stores `workflow.json` documents, and executes them reactively (content-hash cache, cost gating, thread/process
+executors, cancellation) with events over `/ws`. The browser canvas (Vue Flow) lets you browse nodes, place and connect
+them with type checking, edit parameters in schema-generated widgets, run, and watch status stream in, with undo/redo,
+copy/paste, groups, autosave and version restore. Previews, data loading and visualization widgets arrive in phase 04.
+See [docs/guide/canvas.md](docs/guide/canvas.md) and the roadmap below.
 
 | Phase | Outcome |
 |---|---|
@@ -71,10 +73,10 @@ workspace members) · `launcher/`, `deploy/` (phase 12) · `registry/` (pack ind
   `ParamSpec`, port types, packs, blobs).
 - [docs/formats/workflow.md](docs/formats/workflow.md): `workflow.json` format v1, compile rules, execution model,
   REST endpoints for workflows/runs/outputs, the `/ws` event protocol and binary frames.
+- [docs/guide/canvas.md](docs/guide/canvas.md): using the canvas (panels, nodes, connections, shortcuts).
 - [backend/sdk/README.md](backend/sdk/README.md): writing nodes with the SDK.
 - [docs/dev/rbcodes-compat.md](docs/dev/rbcodes-compat.md): rbcodes on Python 3.12, test results, and the
   proposed upstream patch ([docs/dev/rbcodes-upstream.patch](docs/dev/rbcodes-upstream.patch)).
-- User documentation (mkdocs) arrives with the first user-visible features.
 
 ## License
 
