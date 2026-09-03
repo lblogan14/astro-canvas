@@ -110,6 +110,7 @@ src = ["src", "sdk/src", "tests"]
 select = ["E", "F", "I", "UP", "B", "SIM", "PL"]
 ignore = [
   "PLR0913", # too many arguments (node functions legitimately take many params)
+  "PLR0917", # too many positional arguments (same reason)
   "PLR2004", # magic value comparison
   "PLR0912", # too many branches
   "PLR0915", # too many statements

@@ -11,11 +11,12 @@ def register(registry: PackRegistry) -> None:
     """Entry point (``astro_canvas.nodes`` -> ``core``): register types and nodes."""
     # Lazy so `import astro_canvas_core` stays cheap (astropy/pyarrow load on registration).
     from astro_canvas_core import types  # noqa: PLC0415
+    from astro_canvas_core.nodes import fetch, io, math, note, plot, spec  # noqa: PLC0415
     from astro_canvas_core.nodes import list as list_nodes  # noqa: PLC0415
-    from astro_canvas_core.nodes import math, note, spec  # noqa: PLC0415
 
+    registry.declare_security("needs-network")
     registry.add_module(types)
-    for module in (math, spec, list_nodes, note):
+    for module in (io, fetch, math, spec, plot, list_nodes, note):
         registry.add_module(module)
 
 

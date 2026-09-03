@@ -93,12 +93,12 @@ def arrays_equal(a: npt.ArrayLike, b: npt.ArrayLike) -> bool:
     return bool(np.array_equal(x, y))
 
 
-def decimate(
-    x: npt.ArrayLike, y: npt.ArrayLike, n_out: int = 4000
-) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
-    """Downsample ``(x, y)`` to at most ``n_out`` points with MinMaxLTTB, preserving extrema.
+def decimate_indices(x: npt.ArrayLike, y: npt.ArrayLike, n_out: int = 4000) -> npt.NDArray[np.intp]:
+    """Indices selecting at most ``n_out`` points of ``(x, y)`` with MinMaxLTTB (extrema kept).
 
     ``x`` must be one-dimensional and monotonically increasing; NaNs in ``y`` are kept as gaps.
+    Returns every index when the input is already small enough. Apply the result to companion
+    arrays (errors, continua) so all decimated series stay aligned.
     """
     # Lazy: keeps `import astro_canvas.sdk` fast; tsdownsample is only needed for previews.
     from tsdownsample import (  # noqa: PLC0415
@@ -111,7 +111,22 @@ def decimate(
     if xs.ndim != 1 or ys.shape != xs.shape:
         raise ValueError("decimate expects two 1-d arrays of equal length")
     if xs.size <= n_out or n_out < 4:
-        return xs, ys
+        return np.arange(xs.size, dtype=np.intp)
     sampler = NaNMinMaxLTTBDownsampler() if np.isnan(ys).any() else MinMaxLTTBDownsampler()
     idx = sampler.downsample(xs, ys, n_out=n_out)
+    return np.asarray(idx, dtype=np.intp)
+
+
+def decimate(
+    x: npt.ArrayLike, y: npt.ArrayLike, n_out: int = 4000
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """Downsample ``(x, y)`` to at most ``n_out`` points with MinMaxLTTB, preserving extrema.
+
+    ``x`` must be one-dimensional and monotonically increasing; NaNs in ``y`` are kept as gaps.
+    """
+    xs = np.asarray(x, dtype=np.float64)
+    ys = np.asarray(y, dtype=np.float64)
+    idx = decimate_indices(xs, ys, n_out=n_out)
+    if idx.size == xs.size:
+        return xs, ys
     return xs[idx], ys[idx]

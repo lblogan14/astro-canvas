@@ -153,9 +153,8 @@ def test_default_summary_and_collection_summary() -> None:
     summary = table.summary({"rows": 1})
     assert summary["n_rows"] == 2 and summary["head"]["name"] == ["HI 1215"]
     image = samples[9].summary()
-    assert image["data"]["data"] == {
-        "$ndarray": {"shape": [2, 3], "dtype": "float32", "min": 0.0, "max": 5.0}
-    }
+    assert image["shape"] == [2, 3] and image["tile"]["minmax"] == [0.0, 5.0]
+    assert image["tile"]["width"] == 3 and image["tile"]["height"] == 2
     assert summarize_arrays({"b": b"12", "l": (np.array([np.nan]),)}) == {
         "b": {"$bytes": 2},
         "l": [{"$ndarray": {"shape": [1], "dtype": "float64"}}],
