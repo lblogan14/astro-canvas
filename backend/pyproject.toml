@@ -149,6 +149,7 @@ module = [
   "scipy.*",
   "rbcodes.*",
   "pandas",
+  "matplotlib.*",
 ]
 ignore_missing_imports = true
 

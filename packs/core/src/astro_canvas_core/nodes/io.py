@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Annotated, Any, Literal
 
 from astro_canvas.sdk import NodeContext, Param, node
-from astro_canvas_core.io.image import read_cube, read_image
+from astro_canvas_core.io.image import CubeLoader, read_cube, read_image
 from astro_canvas_core.io.paths import describe_file, file_fingerprint, resolve_in_workspace
 from astro_canvas_core.io.spectrum import SPECTRUM_FORMATS, read_spectrum
 from astro_canvas_core.io.table import TABLE_FORMATS, read_table
@@ -139,6 +139,10 @@ def load_cube(
     var_ext: Annotated[
         str, Param(label="Variance extension", advanced=True, help="Empty: auto-detect.")
     ] = "",
+    loader: Annotated[
+        CubeLoader,
+        Param(label="Loader", help="Which reader interprets the file's instrument conventions."),
+    ] = "auto",
     ctx: NodeContext | None = None,
 ) -> Cube3D:
     """Read an IFU data cube (generic FITS, KCWI ``_icubes``/``_vcubes``, MUSE ``DATA``/``STAT``).
@@ -147,6 +151,9 @@ def load_cube(
         path: Workspace-relative FITS file.
         ext: Extension holding the flux cube (default: first 3-d HDU).
         var_ext: Extension holding the variance (default: ``VAR``/``STAT``/``IVAR`` or a sidecar).
+        loader: ``auto`` uses the readers in this pack (KCWI, MUSE, MaNGA and generic FITS);
+            ``rbcodes`` reads the file through ``rb_ifuview``'s own ``auto_cube.load_fits``
+            instrument dispatch, and needs the rbcodes distribution.
 
     Returns:
         The cube with wavelengths in Angstrom (when the header unit is known), variance and WCS.
@@ -154,7 +161,7 @@ def load_cube(
     if not path:
         raise ValueError("choose a file to load")
     target = resolve_in_workspace(_workspace(ctx), path)
-    return read_cube(target, _ext(ext), _ext(var_ext))
+    return read_cube(target, _ext(ext), _ext(var_ext), loader=loader)
 
 
 @node(id="core.io.save_spectrum", name="Save Spectrum", category="Data/Save", icon="save")

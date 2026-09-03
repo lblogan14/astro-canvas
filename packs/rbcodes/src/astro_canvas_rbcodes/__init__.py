@@ -1,4 +1,4 @@
-"""Astro Canvas node pack for rbcodes: absorption lines, redshift finding, multi-spectrum view.
+"""Astro Canvas node pack for rbcodes: absorption lines, redshifts, multispec and IFU cubes.
 
 Importing this package must never import ``rbcodes`` (some of its modules select a Qt matplotlib
 backend at import time). Node modules import rbcodes lazily inside the node functions, after
@@ -44,6 +44,7 @@ def register(registry: PackRegistry) -> None:
     from astro_canvas_rbcodes.nodes import (  # noqa: PLC0415
         absorption,
         continuum,
+        ifu,
         io,
         lines,
         multispec,
@@ -51,7 +52,7 @@ def register(registry: PackRegistry) -> None:
     )
 
     registry.declare_security("standard")
-    for module in (types, lines, absorption, continuum, io, zfind, multispec):
+    for module in (types, lines, absorption, continuum, io, zfind, multispec, ifu):
         registry.add_module(module)
     samples = sample_data_dir()
     if samples is not None:

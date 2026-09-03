@@ -92,7 +92,7 @@ def test_rbcodes_pack_registers_nodes_and_guards_qt() -> None:
     before = {m for m in sys.modules if m == "rbcodes" or m.startswith("rbcodes.")}
     reg = NodeRegistry()
     astro_canvas_rbcodes.register(reg.for_pack("rbcodes"))
-    assert len(reg) == 28 and all(i.startswith("rbcodes.") for i in reg.ids())
+    assert len(reg) == 38 and all(i.startswith("rbcodes.") for i in reg.ids())
     assert "rbcodes" in reg.sample_dirs and "rbcodes" in reg.template_dirs
     assert reg.security["rbcodes"] == "standard"
     assert os.environ["MPLBACKEND"] == "Agg"

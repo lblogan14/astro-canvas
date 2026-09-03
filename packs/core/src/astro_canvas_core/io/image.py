@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -14,6 +14,7 @@ from astro_canvas_core.io.fits_meta import header_to_dict, spectral_axis, wcs_di
 from astro_canvas_core.io.spectrum import wave_scale_to_angstrom
 from astro_canvas_core.types import Cube3D, Image2D
 
+CubeLoader = Literal["auto", "rbcodes"]
 DATA_NAMES = ("FLUX", "DATA", "SCI", "SCIENCE", "IMAGE", "PRIMARY")
 VAR_NAMES = ("VAR", "VARIANCE", "STAT", "IVAR", "ERR", "ERROR", "SIGMA", "UNCERT", "UNCERTAINTY")
 _KCWI_SIDECARS = (
@@ -132,13 +133,26 @@ def _instrument(header: fits.Header) -> str | None:
     return str(value).strip()
 
 
-def read_cube(path: Path, ext: int | str | None = None, var_ext: int | str | None = None) -> Cube3D:
+def read_cube(
+    path: Path,
+    ext: int | str | None = None,
+    var_ext: int | str | None = None,
+    *,
+    loader: CubeLoader = "auto",
+) -> Cube3D:
     """Read an IFU cube ``flux[nz, ny, nx]`` with its wavelength axis, variance, WCS and header.
 
     Conventions handled: generic FITS (first 3-d HDU), KCWI (``*_icube*.fits`` with variance in
     ``*_vcube*.fits`` sidecars), MUSE (``DATA`` + ``STAT`` extensions), MaNGA (``FLUX`` + ``IVAR``
     + ``WAVE``). Wavelengths are converted to Angstrom when the header unit allows.
+
+    ``loader="rbcodes"`` reads the file through ``rbcodes.GUIs.ifuviewer.io.auto_cube.load_fits``
+    instead, which dispatches on ``INSTRUME`` to its own KCWI/MUSE/generic classes; it raises when
+    rbcodes is not installed. ``auto`` (the default) always uses the readers here, which handle the
+    same conventions plus MaNGA and the KCWI variance sidecars.
     """
+    if loader == "rbcodes":
+        return _read_cube_with_rbcodes(path, var_ext)
     with fits.open(path, memmap=False) as hdul:
         hdu = _pick_hdu(hdul, ext, 3)
         header = _combined_header(hdul[0].header, hdu.header)
@@ -180,4 +194,39 @@ def read_cube(path: Path, ext: int | str | None = None, var_ext: int | str | Non
     )
 
 
-__all__ = ["ImageReadError", "read_cube", "read_image"]
+def _read_cube_with_rbcodes(path: Path, var_ext: int | str | None) -> Cube3D:
+    """``auto_cube.load_fits``: rbcodes' own KCWI/MUSE/generic dispatch, wrapped as ``Cube3D``.
+
+    rbcodes returns an ``IFUCube`` (or a ``FITSImage`` when the file has no 3-d extension) with
+    ``flux``/``var``/``wave``/``header``; the WCS dict and instrument label are derived from that
+    header here so the value looks the same whichever loader produced it.
+    """
+    try:
+        from rbcodes.GUIs.ifuviewer.io import auto_cube  # noqa: PLC0415 - optional dependency
+    except ImportError as exc:  # pragma: no cover - depends on the environment
+        raise ImageReadError(
+            "loader='rbcodes' needs the rbcodes distribution (it is only resolvable on "
+            "Python < 3.11 until its python_requires pin is relaxed)"
+        ) from exc
+    sidecar = None if var_ext is None else str(var_ext)
+    cube = auto_cube.load_fits(str(path), var=sidecar)
+    flux = getattr(cube, "flux", None)
+    if flux is None or np.ndim(flux) != 3:
+        raise ImageReadError(f"rbcodes read {path.name} as a 2-d image, not a cube")
+    header = cube.header if cube.header is not None else fits.Header()
+    header_dict = header_to_dict(header)
+    header_dict["_WAVEUNIT"] = "Angstrom"
+    header_dict["_EXTNAME"] = str(header.get("EXTNAME", ""))
+    header_dict["_SOURCE"] = path.name
+    header_dict["_LOADER"] = type(cube).__name__
+    return Cube3D(
+        flux=_native_float32(flux),
+        var=None if cube.var is None else _native_float32(cube.var),
+        wave=np.asarray(cube.wave, dtype=np.float64),
+        wcs=wcs_dict(header, 3) or wcs_dict(header, 2),
+        header=header_dict,
+        instrument=_instrument(header),
+    )
+
+
+__all__ = ["CubeLoader", "ImageReadError", "read_cube", "read_image"]

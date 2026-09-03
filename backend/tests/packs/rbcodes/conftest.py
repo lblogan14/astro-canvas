@@ -13,8 +13,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from astro_canvas_core.io.image import read_cube
 from astro_canvas_core.nodes.io import load_spectrum
-from astro_canvas_core.types import Spectrum1D
+from astro_canvas_core.types import Cube3D, Spectrum1D
 from astro_canvas_rbcodes import _rb, sample_data_dir
 
 from astro_canvas.sdk import NullContext
@@ -57,6 +58,12 @@ def reference() -> dict[str, Any]:
 def sdss1() -> Spectrum1D:
     """The z = 3.01 SDSS quasar with the z = 1.3855 MgII absorber, loaded once per session."""
     return load_spectrum(path="sdss1.fits", ctx=NullContext(workspace=SAMPLES))
+
+
+@pytest.fixture(scope="session")
+def ifu_cube() -> Cube3D:
+    """The bundled synthetic IFU cube (``sample_data/make_cube.py``): a rotating disc plus clump."""
+    return read_cube(SAMPLES / "synthetic_ifu_icubes.fits")
 
 
 @pytest.fixture(scope="session")

@@ -5,7 +5,9 @@ Line-by-line ports of ``rbcodes.IGM.compute_EW``, ``rbcodes.IGM.rb_setline``,
 ``rbcodes.IGM.rb_specbin``, ``rbcodes.utils.compute_SNR_1d`` and (phase 06) the ``rb_zfind``
 engine (``GUIs.zfind.engine``, ``picket_fence``, ``linelists``, ``adapters``) and (phase 07)
 the multi-spectrum viewer helpers (``GUIs.multispecviewer.LineFitter``, ``io_manager``,
-``utils.reconcile_linelists``) without their plotting, printing and Qt. The nodes prefer the
+``utils.reconcile_linelists``) and (phase 08) the IFU cube processing
+(``GUIs.ifuviewer.processing.{cube_collapse, aperture_extract, moment_maps}``) without their
+plotting, printing and Qt. The nodes prefer the
 installed ``rbcodes`` when it is importable and use these kernels otherwise;
 ``tests/packs/rbcodes/`` asserts both agree wherever rbcodes installs.
 """
@@ -20,6 +22,17 @@ from astro_canvas_rbcodes.kernels.contfit import (
 )
 from astro_canvas_rbcodes.kernels.ew import compute_ew
 from astro_canvas_rbcodes.kernels.fullspec import fit_quasar_continuum
+from astro_canvas_rbcodes.kernels.ifu import (
+    build_continuum_sub,
+    build_whitelight,
+    compute_snr_map,
+    extract_aperture,
+    extract_variance_weighted,
+    extract_with_method,
+    moment_map,
+    subtract_background,
+    subtract_linear_continuum,
+)
 from astro_canvas_rbcodes.kernels.line_fit import LineFit, fit_com, fit_gaussian
 from astro_canvas_rbcodes.kernels.multispec_io import (
     format_line_list,
@@ -40,10 +53,16 @@ __all__ = [
     "LineTable",
     "PicketFenceZ",
     "calculate_bic",
+    "build_continuum_sub",
+    "build_whitelight",
     "calculate_confidence_bounds",
     "compute_ew",
+    "compute_snr_map",
     "curated",
     "estimate_snr",
+    "extract_aperture",
+    "extract_variance_weighted",
+    "extract_with_method",
     "fit_com",
     "fit_gaussian",
     "fit_optimal_polynomial",
@@ -52,9 +71,12 @@ __all__ = [
     "load_any",
     "load_combined_data",
     "load_line_list",
+    "moment_map",
     "rb_iter_contfit",
     "rb_setline",
     "rb_specbin",
     "read_line_list",
     "reconcile_linelists",
+    "subtract_background",
+    "subtract_linear_continuum",
 ]

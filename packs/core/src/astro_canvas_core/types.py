@@ -620,12 +620,20 @@ class RangeMask(PortType):
 
 
 class Region(BaseModel):
-    """One aperture in pixel coordinates (and optionally sky coordinates in degrees)."""
+    """One aperture, in pixel coordinates and (when a WCS is known) sky coordinates.
+
+    ``pixel`` is 0-based and laid out per shape: ``circle`` ``[cx, cy, r]``, ``annulus``
+    ``[cx, cy, r_in, r_out]``, ``box`` ``[cx, cy, width, height, angle_deg]`` (counter-clockwise,
+    as ds9 writes it) and ``polygon`` ``[x1, y1, x2, y2, ...]``. ``sky`` mirrors it with the centre
+    in degrees and sizes in arcseconds (polygon vertices in degrees). ``role`` separates the
+    apertures a spectrum is extracted from (``source``) from the ones that estimate the background.
+    """
 
     shape: Literal["circle", "box", "annulus", "polygon"]
     pixel: list[float]
     sky: list[float] | None = None
     label: str | None = None
+    role: Literal["source", "background"] = "source"
 
 
 @port_type(id="astro.Region2D", color="#14B8A6", summary_renderer="region-overlay")
@@ -633,6 +641,17 @@ class Region2D(PortType):
     """A set of apertures drawn on an image."""
 
     regions: list[Region]
+
+    def __len__(self) -> int:
+        return len(self.regions)
+
+    def summary(self, viewport: Mapping[str, TypingAny] | None = None) -> dict[str, TypingAny]:
+        """Every aperture as a plain row: the list is small and the overlay needs all of it."""
+        return {
+            "type": self.type_id(),
+            "count": len(self.regions),
+            "regions": [r.model_dump(mode="json") for r in self.regions],
+        }
 
 
 @port_type(id="astro.EWMeasurement", color="#6366F1", summary_renderer="kv-tile")

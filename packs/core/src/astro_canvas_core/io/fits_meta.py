@@ -95,6 +95,56 @@ def wcs_dict(header: fits.Header, naxis: int | None = None) -> dict[str, Any] | 
     return out
 
 
+def celestial_wcs(wcs: dict[str, Any] | None) -> Any | None:
+    """An ``astropy.wcs.WCS`` over the two celestial axes of a ``wcs_dict``, or ``None``.
+
+    The inverse of ``wcs_dict`` for the spatial part: cube WCS dictionaries carry three axes, and
+    region round-trips (ds9 files, IAU names) only ever need the first two.
+    """
+    from astropy.wcs import WCS  # noqa: PLC0415 - lazy: only region/sky conversions need it
+
+    if not wcs or int(wcs.get("naxis", 0)) < 2:
+        return None
+    ctype = [str(c) for c in wcs.get("ctype", [])][:2]
+    if len(ctype) < 2 or not any("RA" in c or "GLON" in c or "ELON" in c for c in ctype):
+        return None
+    out = WCS(naxis=2)
+    out.wcs.ctype = ctype
+    out.wcs.crval = [float(v) for v in wcs.get("crval", [0.0, 0.0])][:2]
+    out.wcs.crpix = [float(v) for v in wcs.get("crpix", [1.0, 1.0])][:2]
+    cdelt = [float(v) for v in wcs.get("cdelt", [1.0, 1.0])][:2]
+    cunit = [str(v) for v in wcs.get("cunit", [])][:2]
+    if len(cunit) == 2 and all(cunit):
+        out.wcs.cunit = cunit
+    matrix = wcs.get("cd") or wcs.get("pc")
+    block = (
+        [[float(matrix[i][j]) for j in range(2)] for i in range(2)]
+        if matrix and len(matrix) >= 2
+        else None
+    )
+    # A cube written with CDELT1/2 for the sky and CD3_3 for the wavelength leaves the spatial 2x2
+    # block empty; rbcodes' _make_2d_wcs hits the same case and falls back to CDELT as well.
+    if block is not None and abs(block[0][0] * block[1][1] - block[0][1] * block[1][0]) > 0:
+        if wcs.get("cd"):
+            out.wcs.cd = block
+        else:
+            out.wcs.cdelt = cdelt
+            out.wcs.pc = block
+    else:
+        out.wcs.cdelt = cdelt
+        if "crota2" in wcs:
+            out.wcs.crota = [0.0, float(wcs["crota2"])]
+    for key in ("radesys", "equinox", "lonpole", "latpole"):
+        value = wcs.get(key)
+        if value is not None:
+            setattr(out.wcs, key, value)
+    try:
+        out.wcs.set()
+    except Exception:  # noqa: BLE001 - an unusable header degrades to "no WCS"
+        return None
+    return out
+
+
 def spectral_axis(header: fits.Header, npix: int | None = None, axis: int = 1) -> npt.NDArray[Any]:
     """World coordinates of a 1-d spectral axis from ``CRVAL/CDELT|CD/CRPIX`` (log when flagged).
 
@@ -165,6 +215,7 @@ __all__ = [
     "SPECTRAL_COLUMNS",
     "SPECTRAL_CTYPES",
     "Kind",
+    "celestial_wcs",
     "header_to_dict",
     "primary_shape_and_tables",
     "spectral_axis",
