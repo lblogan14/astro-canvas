@@ -1,4 +1,4 @@
-import type { HealthResponse, SystemInfo } from './types'
+import type { HealthResponse, NodeSpec, PackRecord, PortTypeSpec, SystemInfo } from './types'
 
 export class ApiError extends Error {
   readonly status: number
@@ -25,4 +25,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   getHealth: () => request<HealthResponse>('/api/health'),
   getSystem: () => request<SystemInfo>('/api/system'),
+  getNodes: (category?: string) =>
+    request<NodeSpec[]>(
+      category === undefined ? '/api/nodes' : `/api/nodes?category=${encodeURIComponent(category)}`,
+    ),
+  getNode: (id: string) => request<NodeSpec>(`/api/nodes/${encodeURIComponent(id)}`),
+  getTypes: () => request<PortTypeSpec[]>('/api/types'),
+  getPacks: () => request<PackRecord[]>('/api/packs'),
 }

@@ -1,26 +1,18 @@
 /**
- * Wire types mirroring the backend Pydantic models in `astro_canvas.server.health`.
- * Hand-written for phase 00; a generated client replaces this file once the API grows.
+ * Wire types for the REST API, derived from the generated OpenAPI schema (`schema.d.ts`).
+ * Regenerate with `task api:gen` after changing backend Pydantic models.
  */
+import type { components } from './schema'
 
-export interface HealthResponse {
-  status: 'ok'
-  version: string
-}
+type Schemas = components['schemas']
 
-export interface PackInfo {
-  name: string
-  version: string
-  enabled: boolean
-}
-
-export interface SystemInfo {
-  version: string
-  python: string
-  platform: string
-  workspace: string
-  workspace_exists: boolean
-  disk_free_bytes: number
-  disk_total_bytes: number
-  packs: PackInfo[]
-}
+export type HealthResponse = Schemas['HealthResponse']
+export type PackInfo = Schemas['PackInfo']
+export type SystemInfo = Schemas['SystemInfo']
+export type NodeSpec = Schemas['NodeSpec']
+export type PortSpec = Schemas['PortSpec']
+export type ParamSpec = Schemas['ParamSpec']
+export type PortTypeSpec = Schemas['PortTypeSpec']
+export type PackRecord = Schemas['PackRecord']
+export type PackLoadError = Schemas['PackLoadError']
+export type Cost = NodeSpec['cost']
