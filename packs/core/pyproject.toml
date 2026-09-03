@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "astro-canvas-core"
+version = "0.1.0a0"
+description = "Astro Canvas core node pack: IO, math, plotting, astroquery, code node"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10,<3.14"
+authors = [{ name = "Bin Liu" }]
+dependencies = []
+
+# Node entry points (`astro_canvas.nodes`) are registered in phase 01.
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/astro_canvas_core"]
