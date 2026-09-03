@@ -10,10 +10,47 @@ export class ApiError extends Error {
   }
 }
 
+const TOKEN_KEY = 'astro-canvas-token'
+
+/**
+ * The bearer token the backend generated at startup. The launcher opens the app with
+ * `?token=…`; it is moved into `sessionStorage` so reloads keep working (design §6.5).
+ */
+export function getToken(): string | null {
+  try {
+    const url = new URL(window.location.href)
+    const fromQuery = url.searchParams.get('token')
+    if (fromQuery) {
+      window.sessionStorage.setItem(TOKEN_KEY, fromQuery)
+      url.searchParams.delete('token')
+      window.history.replaceState(window.history.state, '', url.toString())
+      return fromQuery
+    }
+    return window.sessionStorage.getItem(TOKEN_KEY)
+  } catch {
+    return null
+  }
+}
+
+export function authHeaders(): Record<string, string> {
+  const token = getToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+/** `ws://…/ws?token=…` for the same origin the SPA was served from. */
+export function wsUrl(clientId?: string): string {
+  const url = new URL('/ws', window.location.href)
+  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+  const token = getToken()
+  if (token) url.searchParams.set('token', token)
+  if (clientId) url.searchParams.set('client_id', clientId)
+  return url.toString()
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
-    headers: { Accept: 'application/json', ...init?.headers },
+    headers: { Accept: 'application/json', ...authHeaders(), ...init?.headers },
   })
   if (!response.ok) {
     throw new ApiError(response.status, `${response.status} ${response.statusText}`)

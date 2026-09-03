@@ -41,7 +41,7 @@ def test_serve_passes_options_to_uvicorn(monkeypatch: pytest.MonkeyPatch, tmp_pa
     assert calls == [{"host": "0.0.0.0", "port": 9100, "log_level": "warning"}]
 
 
-def test_serve_open_spawns_browser_thread(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_serve_open_spawns_browser_thread(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     started: list[tuple[Any, ...]] = []
 
     class FakeThread:
@@ -53,12 +53,13 @@ def test_serve_open_spawns_browser_thread(monkeypatch: pytest.MonkeyPatch) -> No
 
     monkeypatch.setattr(cli.threading, "Thread", FakeThread)
     monkeypatch.setattr(cli.uvicorn, "run", lambda app, **kw: None)
+    settings = Settings(port=8123, auth=False, workspace=tmp_path / "ws", config_dir=tmp_path)
 
-    cli.run_server(Settings(port=8123), open_browser=True)
+    cli.run_server(settings, open_browser=True)
     assert started == [(cli.open_when_ready, ("http://127.0.0.1:8123",), True)]
 
     started.clear()
-    cli.run_server(Settings(port=8123), open_browser=False)
+    cli.run_server(settings, open_browser=False)
     assert started == []
 
 
