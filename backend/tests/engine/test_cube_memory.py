@@ -133,6 +133,35 @@ def test_summary_reads_only_a_bounded_slice(small_mmap: None, tmp_path: Path) ->
     assert peak < 4 * SUMMARY_BYTES, f"summary allocated {peak / 1e6:.0f} MB"
 
 
+def test_integrated_samples_channels_not_spaxels(small_mmap: None) -> None:
+    """Every point of a budgeted spectrum is a real channel's full spatial sum.
+
+    Striding spaxels instead would touch four times as many memory pages as it reads bytes (a
+    strided row still faults in its whole page), and would only approximate the amplitude.
+    """
+    cube = make_cube(200, 16, 16)
+    channels, values = cube.integrated()
+    assert channels.size == 200
+    assert np.allclose(values, np.nansum(np.asarray(cube.flux, np.float64), axis=(1, 2)))
+
+    budget = cube.plane_bytes() * 20
+    sampled, sampled_values = cube.integrated(max_bytes=budget)
+    assert sampled.size <= 20
+    assert np.array_equal(sampled, channels[:: channels.size // sampled.size or 1][: sampled.size])
+    expected = np.nansum(np.asarray(cube.flux[sampled], np.float64), axis=(1, 2))
+    assert np.allclose(sampled_values, expected)
+
+
+def test_summary_spectrum_uses_the_sampled_channels(small_mmap: None) -> None:
+    """The wavelengths in the summary must be the ones actually summed."""
+    cube = make_cube(600, 24, 24)
+    summary = cube.summary()
+    waves = [w for w in summary["spectrum"]["wave"] if w is not None]
+    assert waves == sorted(waves)
+    assert set(waves) <= set(cube.wave.tolist())
+    assert len(summary["spectrum"]["flux"]) == len(summary["spectrum"]["wave"])
+
+
 def test_summary_is_json_safe(small_mmap: None) -> None:
     """NaNs must travel as ``null``: ``json.dumps`` emits bare ``NaN``, which browsers reject."""
     import json

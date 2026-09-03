@@ -52,9 +52,12 @@ and the small-array tests rely on.
 Mapping solves the *cache* copy but not the *preview* copy: `np.nansum(flux, axis=(1, 2))` over a
 mapped cube still faults in every page. `Cube3D` therefore samples:
 
-- `Cube3D.integrated(max_bytes)` sums in wavelength chunks over spatially strided rows and rescales
-  by the stride, so the curve keeps its shape and amplitude.
-- `Cube3D.white_light(lo, hi, max_bytes)` strides the *channels* it averages.
+- `Cube3D.integrated(max_bytes)` returns `(channels, values)`: it sums whole *channels*, sampled
+  with an even stride, in chunks. Sampling the spectral axis rather than the spatial one matters
+  for the page cache as much as for the arithmetic — a strided *row* still faults in the whole
+  4 KB page it sits on, so striding rows by 16 reads a sixteenth of the bytes but a quarter of the
+  pages, while a sampled channel is contiguous and every point stays a true spatial sum.
+- `Cube3D.white_light(lo, hi, max_bytes)` strides the channels it averages the same way.
 - `Cube3D.summary()` passes `SUMMARY_BYTES` (32 MB) to both, so a preview reads a bounded slice
   however large the cube is. `tests/engine/test_cube_memory.py` asserts this with `tracemalloc`,
   which sees numpy's allocations (`np.lib.tracemalloc_domain`) but not mapped pages — precisely the
@@ -63,11 +66,25 @@ mapped cube still faults in every page. `Cube3D` therefore samples:
 A node that needs the real numbers (a collapse, an extraction, a moment map) does *not* pass
 `max_bytes`: it reads what it needs, and reading a mapped array is a page fault, not a copy.
 
+## Measured
+
+A 500 MB cube (2000 x 250 x 250 float32), Windows 11, Python 3.12, working set from
+`GetProcessMemoryInfo`:
+
+| Step | Time | RSS |
+|---|---|---|
+| `core.io.load_cube` | 0.26 s | +500 MB (the array itself) |
+| write to the blob store | 1.5 s | peak +504 MB |
+| drop the value | — | back to +4 MB |
+| read it back from the cache | 2 ms | +0 MB (mapped) |
+| `summary()` -> white-light preview | 0.10 s | +35 MB of mapped, reclaimable pages |
+
 ## What is still copied
 
 - **Writing.** `to_blob` builds the `.npy` bytes in memory and `Blob.pack()` copies them again into
-  the zip, so caching a cube briefly costs about twice its size. A streaming writer is the obvious
-  follow-up (see `handoffs/BACKLOG.md`).
+  the zip: `tracemalloc` puts the peak at **2.1x the array** while caching a 200 MB cube (the
+  working-set table above hides it because the transient is freed between samples). A streaming
+  writer is the obvious follow-up.
 - **Reading FITS.** `astropy.io.fits` is opened with `memmap=False` and the data is cast to float32,
   so loading a cube costs its size once, plus the source dtype's while converting.
 - **Process pool.** Only blob *references* cross the boundary, and the worker maps them the same

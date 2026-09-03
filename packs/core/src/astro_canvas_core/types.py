@@ -431,26 +431,27 @@ class Cube3D(PortType):
         """Bytes in one spectral plane (``ny * nx * 4``)."""
         return int(self.flux.shape[1]) * int(self.flux.shape[2]) * 4
 
-    def integrated(self, max_bytes: int | None = None) -> npt.NDArray[np.float64]:
-        """Spatially summed spectrum, read in wavelength chunks (never the whole cube at once).
+    def integrated(
+        self, max_bytes: int | None = None
+    ) -> tuple[npt.NDArray[np.intp], npt.NDArray[np.float64]]:
+        """Spatially summed spectrum as ``(channels, values)``, read in wavelength chunks.
 
-        With ``max_bytes`` the spatial rows are strided and the sum is rescaled, so the curve keeps
-        its shape and amplitude while only a fraction of the cube is paged in.
+        ``max_bytes`` caps the read by sampling *channels* with an even stride rather than spaxels:
+        every returned point is then a full spatial sum of a real channel, and the pages faulted in
+        are exactly the ones summed (striding rows instead would touch four times as many pages as
+        it reads bytes, because a strided row still pulls in its whole memory page).
         """
-        nz, ny, _ = self.shape
-        step = 1
-        if max_bytes is not None and max_bytes > 0:
-            per_row = int(self.flux.shape[2]) * 4 * nz
-            step = max(1, math.ceil(per_row * ny / max_bytes))
-        rows = np.arange(0, ny, step)
-        chunk = max(1, min(nz, (16 * 1024 * 1024) // max(1, len(rows) * int(self.shape[2]) * 4)))
-        out = np.empty(nz, dtype=np.float64)
+        nz = self.shape[0]
+        channels = _stride_to_budget(np.arange(nz), self.plane_bytes(), max_bytes)
+        out = np.empty(channels.size, dtype=np.float64)
+        chunk = max(1, (16 * 1024 * 1024) // max(1, self.plane_bytes()))
         with np.errstate(all="ignore"):
-            for start in range(0, nz, chunk):
-                stop = min(nz, start + chunk)
-                block = np.asarray(self.flux[start:stop, rows, :], dtype=np.float64)
-                out[start:stop] = np.nansum(block, axis=(1, 2))
-        return out * (ny / max(1, len(rows)))
+            for start in range(0, channels.size, chunk):
+                picked = channels[start : start + chunk]
+                out[start : start + picked.size] = np.nansum(
+                    np.asarray(self.flux[picked], dtype=np.float64), axis=(1, 2)
+                )
+        return channels, out
 
     def summary(self, viewport: Mapping[str, TypingAny] | None = None) -> dict[str, TypingAny]:
         """White-light thumbnail (``lo``/``hi`` restrict the band) plus the integrated spectrum.
@@ -462,8 +463,8 @@ class Cube3D(PortType):
         lo = viewport.get("lo") if viewport else None
         hi = viewport.get("hi") if viewport else None
         band = (float(lo) if lo is not None else None, float(hi) if hi is not None else None)
-        integrated = self.integrated(max_bytes=SUMMARY_BYTES)
-        pick = decimate_indices(self.wave, integrated, n_out=512)
+        channels, integrated = self.integrated(max_bytes=SUMMARY_BYTES)
+        pick = channels[decimate_indices(self.wave[channels], integrated, n_out=512)]
         return {
             "type": self.type_id(),
             "shape": list(self.shape),
@@ -477,7 +478,7 @@ class Cube3D(PortType):
             "tile": image_tile(self.white_light(*band, max_bytes=SUMMARY_BYTES), size),
             "spectrum": {
                 "wave": _json_list(self.wave[pick]),
-                "flux": _json_list(integrated[pick]),
+                "flux": _json_list(integrated[np.searchsorted(channels, pick)]),
             },
         }
 
