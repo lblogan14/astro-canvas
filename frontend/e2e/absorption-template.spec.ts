@@ -77,10 +77,13 @@ test.describe('absorption-line template', () => {
       // Add a third mask through the form: the preview re-fits within the 300 ms budget.
       await editor.getByTestId('mask-lo').fill('-1400')
       await editor.getByTestId('mask-hi').fill('-900')
+      const statusBefore = (await status.textContent()) ?? ''
       const started = Date.now()
       await editor.getByTestId('mask-add').click()
       await expect(editor.locator('[data-testid="mask-item"]')).toHaveCount(3)
-      await expect(status).toHaveAttribute('data-pending', 'true', { timeout: 2000 })
+      // The transient "Fitting" state can complete between polls (debounce 80 ms + fit ~10 ms),
+      // so wait for the new result rather than for the pending flag.
+      await expect(status).not.toHaveText(statusBefore, { timeout: 5000 })
       await expect(status).toHaveAttribute('data-pending', 'false', { timeout: 5000 })
       const roundTrip = Date.now() - started
       const serverMs = Number(/(\d+) ms/.exec((await status.textContent()) ?? '')?.[1] ?? 'NaN')
