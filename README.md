@@ -24,7 +24,8 @@ See [docs/guide/canvas.md](docs/guide/canvas.md), [docs/guide/data.md](docs/guid
 | 01–02 | Node SDK and registry; execution engine (cache, scheduler, cancellation, WebSocket events) |
 | 03–04 | Canvas MVP (Vue Flow); data, transport, and visualization widgets |
 | 05 | rbcodes pack I: absorption-line EW pipeline (`launch_specgui` as a template), continuum-mask / range / line-picker editors, workflow templates API |
-| 05–08 | rbcodes packs: absorption lines, redshift, multi-spectrum viewer, IFU cubes |
+| 06 | rbcodes pack II: `rb_zfind` redshift finding (line search, picket fence, MARZ templates, redrock PCA), z-accept editor, redshift-finder template |
+| 07–08 | rbcodes packs: multi-spectrum viewer, IFU cubes |
 | 09–13 | Batch and subgraphs, app modes, pack manager and bundles, distribution, hardening and `v0.1.0` |
 
 ## Quick start (developers)
