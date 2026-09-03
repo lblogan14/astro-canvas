@@ -1,0 +1,180 @@
+diff -ruN a/src/rbcodes/GUIs/PlotSpec_Integrated.py b/src/rbcodes/GUIs/PlotSpec_Integrated.py
+--- a/src/rbcodes/GUIs/PlotSpec_Integrated.py
++++ b/src/rbcodes/GUIs/PlotSpec_Integrated.py
+@@ -11,7 +11,9 @@
+ import os
+ from pathlib import Path
+ import matplotlib as mpl
+-mpl.use('Qt5Agg')
++import os
++if not os.environ.get('MPLBACKEND'):  # keep headless callers (MPLBACKEND=Agg) on their backend
++    mpl.use('Qt5Agg')
+ mpl.rcParams['lines.linewidth'] = .9
+ 
+ 
+diff -ruN a/src/rbcodes/GUIs/abstools/Metal_Plot.py b/src/rbcodes/GUIs/abstools/Metal_Plot.py
+--- a/src/rbcodes/GUIs/abstools/Metal_Plot.py
++++ b/src/rbcodes/GUIs/abstools/Metal_Plot.py
+@@ -3,7 +3,9 @@
+ Updated with improved signal-slot communication and error handling for greater stability.
+ """
+ import matplotlib
+-matplotlib.use('Qt5Agg')  # Set this before importing any matplotlib modules
++import os
++if not os.environ.get('MPLBACKEND'):  # keep headless callers (MPLBACKEND=Agg) on their backend
++    matplotlib.use('Qt5Agg')  # Set this before importing any matplotlib modules
+ import sys
+ import os
+ import numpy as np
+diff -ruN a/src/rbcodes/GUIs/ifuviewer/image_panel.py b/src/rbcodes/GUIs/ifuviewer/image_panel.py
+--- a/src/rbcodes/GUIs/ifuviewer/image_panel.py
++++ b/src/rbcodes/GUIs/ifuviewer/image_panel.py
+@@ -7,7 +7,9 @@
+ """
+ import numpy as np
+ import matplotlib as mpl
+-mpl.use('Qt5Agg')
++import os
++if not os.environ.get('MPLBACKEND'):  # keep headless callers (MPLBACKEND=Agg) on their backend
++    mpl.use('Qt5Agg')
+ 
+ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+ from matplotlib.figure import Figure
+diff -ruN a/src/rbcodes/GUIs/ifuviewer/spectrum_panel.py b/src/rbcodes/GUIs/ifuviewer/spectrum_panel.py
+--- a/src/rbcodes/GUIs/ifuviewer/spectrum_panel.py
++++ b/src/rbcodes/GUIs/ifuviewer/spectrum_panel.py
+@@ -8,7 +8,9 @@
+ """
+ import numpy as np
+ import matplotlib as mpl
+-mpl.use('Qt5Agg')
++import os
++if not os.environ.get('MPLBACKEND'):  # keep headless callers (MPLBACKEND=Agg) on their backend
++    mpl.use('Qt5Agg')
+ 
+ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+ from matplotlib.figure import Figure
+diff -ruN a/src/rbcodes/GUIs/interactive_continuum_fit.py b/src/rbcodes/GUIs/interactive_continuum_fit.py
+--- a/src/rbcodes/GUIs/interactive_continuum_fit.py
++++ b/src/rbcodes/GUIs/interactive_continuum_fit.py
+@@ -9,7 +9,9 @@
+ import numpy as np
+ import matplotlib
+ 
+-matplotlib.use('Qt5Agg')
++import os
++if not os.environ.get('MPLBACKEND'):  # keep headless callers (MPLBACKEND=Agg) on their backend
++    matplotlib.use('Qt5Agg')
+ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
+ from matplotlib.figure import Figure
+ from PyQt5 import QtCore, QtGui, QtWidgets
+diff -ruN a/src/rbcodes/GUIs/multispecviewer/AdvancedFitDialog.py b/src/rbcodes/GUIs/multispecviewer/AdvancedFitDialog.py
+--- a/src/rbcodes/GUIs/multispecviewer/AdvancedFitDialog.py
++++ b/src/rbcodes/GUIs/multispecviewer/AdvancedFitDialog.py
+@@ -20,7 +20,9 @@
+ from scipy.optimize import curve_fit
+ 
+ import matplotlib
+-matplotlib.use('Qt5Agg')
++import os
++if not os.environ.get('MPLBACKEND'):  # keep headless callers (MPLBACKEND=Agg) on their backend
++    matplotlib.use('Qt5Agg')
+ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+ from matplotlib.figure import Figure
+diff -ruN a/src/rbcodes/GUIs/multispecviewer/multispec.py b/src/rbcodes/GUIs/multispecviewer/multispec.py
+--- a/src/rbcodes/GUIs/multispecviewer/multispec.py
++++ b/src/rbcodes/GUIs/multispecviewer/multispec.py
+@@ -3,7 +3,9 @@
+ import numpy as np
+ 
+ import matplotlib
+-matplotlib.use('Qt5Agg')  # Set backend before importing pyplot
++import os
++if not os.environ.get('MPLBACKEND'):  # keep headless callers (MPLBACKEND=Agg) on their backend
++    matplotlib.use('Qt5Agg')  # Set backend before importing pyplot
+ import matplotlib.pyplot as plt
+ 
+ 
+diff -ruN a/src/rbcodes/GUIs/rb_cont.py b/src/rbcodes/GUIs/rb_cont.py
+--- a/src/rbcodes/GUIs/rb_cont.py
++++ b/src/rbcodes/GUIs/rb_cont.py
+@@ -38,7 +38,9 @@
+ import warnings
+ import numpy as np
+ import matplotlib
+-matplotlib.use('Qt5Agg')
++import os
++if not os.environ.get('MPLBACKEND'):  # keep headless callers (MPLBACKEND=Agg) on their backend
++    matplotlib.use('Qt5Agg')
+ import matplotlib.pyplot as plt
+ 
+ # Import the interactive continuum fitter class
+diff -ruN a/src/rbcodes/GUIs/rb_fit_interactive_continuum.py b/src/rbcodes/GUIs/rb_fit_interactive_continuum.py
+--- a/src/rbcodes/GUIs/rb_fit_interactive_continuum.py
++++ b/src/rbcodes/GUIs/rb_fit_interactive_continuum.py
+@@ -1,5 +1,7 @@
+ import matplotlib
+-matplotlib.use('Qt5Agg')
++import os
++if not os.environ.get('MPLBACKEND'):  # keep headless callers (MPLBACKEND=Agg) on their backend
++    matplotlib.use('Qt5Agg')
+ 
+ import matplotlib.pyplot as plt
+ import numpy as np
+diff -ruN a/src/rbcodes/GUIs/rb_interactive_mask.py b/src/rbcodes/GUIs/rb_interactive_mask.py
+--- a/src/rbcodes/GUIs/rb_interactive_mask.py
++++ b/src/rbcodes/GUIs/rb_interactive_mask.py
+@@ -8,7 +8,9 @@
+ import sys
+ import numpy as np
+ import matplotlib
+-matplotlib.use('Qt5Agg')
++import os
++if not os.environ.get('MPLBACKEND'):  # keep headless callers (MPLBACKEND=Agg) on their backend
++    matplotlib.use('Qt5Agg')
+ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
+ from matplotlib.figure import Figure
+ from PyQt5 import QtCore, QtGui, QtWidgets
+diff -ruN a/src/rbcodes/GUIs/zgui/spec_fit_gauss2d.py b/src/rbcodes/GUIs/zgui/spec_fit_gauss2d.py
+--- a/src/rbcodes/GUIs/zgui/spec_fit_gauss2d.py
++++ b/src/rbcodes/GUIs/zgui/spec_fit_gauss2d.py
+@@ -4,7 +4,9 @@
+ from PyQt5 import QtWidgets
+ 
+ import matplotlib
+-matplotlib.use('Qt5Agg')
++import os
++if not os.environ.get('MPLBACKEND'):  # keep headless callers (MPLBACKEND=Agg) on their backend
++    matplotlib.use('Qt5Agg')
+ 
+ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+ from matplotlib.figure import Figure
+diff -ruN a/src/rbcodes/GUIs/zgui/spec_plot.py b/src/rbcodes/GUIs/zgui/spec_plot.py
+--- a/src/rbcodes/GUIs/zgui/spec_plot.py
++++ b/src/rbcodes/GUIs/zgui/spec_plot.py
+@@ -19,7 +19,9 @@
+ from .spec_fit_gauss2d import Gaussfit_2d
+ from .utils import clear_artists
+ 
+-mpl.use('Qt5Agg')
++import os
++if not os.environ.get('MPLBACKEND'):  # keep headless callers (MPLBACKEND=Agg) on their backend
++    mpl.use('Qt5Agg')
+ 
+ class MplCanvas(FigureCanvasQTAgg):
+ 	send_message = pyqtSignal(str)
+diff -ruN a/src/rbcodes/IGM/ransac_contfit.py b/src/rbcodes/IGM/ransac_contfit.py
+--- a/src/rbcodes/IGM/ransac_contfit.py
++++ b/src/rbcodes/IGM/ransac_contfit.py
+@@ -4,7 +4,9 @@
+ import time
+ import numpy as np
+ import matplotlib
+-matplotlib.use('Qt5Agg') #python 3 only
++import os
++if not os.environ.get('MPLBACKEND'):  # keep headless callers (MPLBACKEND=Agg) on their backend
++    matplotlib.use('Qt5Agg') #python 3 only
+ #import ipdb
+ from linetools.spectra import io as tio
+ from scipy.signal import medfilt
