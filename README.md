@@ -1,0 +1,4 @@
+# Astro Canvas
+This repository is an inifite canvas application to allow scientists to visualize and explore astronomical data in a collaborative environment. The application will allow users to upload, view, and annotate astronomical images and datasets, enabling collaborative research and discovery. The canvas will support various data formats and provide tools for analysis, measurement, and sharing of findings.
+
+All computations and data processing will be performed on the `rbcodes` repository, which is a separate repository that contains the necessary code and algorithms for processing astronomical data. The `rbcodes` repository will be integrated with the Astro Canvas application to provide a seamless experience for users.
