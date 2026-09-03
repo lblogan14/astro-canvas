@@ -71,6 +71,8 @@ export interface NodeOutputSummaryEvent extends BaseEvent {
   port: string
   type_id: string
   summary: Record<string, unknown>
+  /** Echo of `viewport.tag` from a `preview.request`; tagged summaries belong to one view. */
+  tag?: string | null
 }
 
 export interface GraphValidationEvent extends BaseEvent {
@@ -179,6 +181,18 @@ export function parseServerMessage(payload: unknown): ServerMessage | null {
   return payload as ServerMessage
 }
 
+/**
+ * What a `preview.request` may ask for: an axis range (`lo`/`hi`), a point or tile budget
+ * (`n_out`), table rows, and a `tag` that the reply echoes (viewer-only summaries).
+ */
+export interface PreviewViewport {
+  lo?: number
+  hi?: number
+  n_out?: number
+  rows?: number
+  tag?: string
+}
+
 /** Commands the client sends; every one is a JSON object with a `type`. */
 export type ClientCommand =
   | { type: 'subscribe'; workflow_id: string }
@@ -188,7 +202,7 @@ export type ClientCommand =
       type: 'preview.request'
       node_id: string
       port: string
-      viewport: { lo?: number; hi?: number; n_out?: number }
+      viewport: PreviewViewport
     }
   | { type: 'output.request'; node_id: string; port: string }
   | { type: 'ping' }

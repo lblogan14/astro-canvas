@@ -5,8 +5,14 @@ import { api } from '@/api/client'
 
 export type Theme = 'system' | 'light' | 'dark'
 export type BackendStatus = 'idle' | 'connecting' | 'online' | 'offline'
-export type SidebarPanel = 'library' | 'workflows'
+export type SidebarPanel = 'library' | 'workflows' | 'workspace'
 export type DrawerTab = 'log' | 'errors' | 'system'
+
+/** The node output shown in the full-size viewer sheet. */
+export interface ViewerTarget {
+  nodeId: string
+  port: string
+}
 
 /** Why the command palette opened: a plain quick-add, or a connection dropped on empty canvas. */
 export interface PaletteContext {
@@ -60,6 +66,7 @@ export const useUiStore = defineStore('ui', () => {
   const drawerTab = ref<DrawerTab>('log')
   const paletteOpen = ref(false)
   const paletteContext = ref<PaletteContext | null>(null)
+  const viewer = ref<ViewerTarget | null>(null)
   const backendStatus = ref<BackendStatus>('idle')
   const backendVersion = ref<string | null>(null)
   const backendError = ref<string | null>(null)
@@ -126,6 +133,14 @@ export const useUiStore = defineStore('ui', () => {
     paletteContext.value = null
   }
 
+  function openViewer(target: ViewerTarget): void {
+    viewer.value = target
+  }
+
+  function closeViewer(): void {
+    viewer.value = null
+  }
+
   function toggleFavorite(typeId: string): void {
     favorites.value = favoriteSet.value.has(typeId)
       ? favorites.value.filter((id) => id !== typeId)
@@ -179,6 +194,7 @@ export const useUiStore = defineStore('ui', () => {
     drawerTab,
     paletteOpen,
     paletteContext,
+    viewer,
     backendStatus,
     backendVersion,
     backendError,
@@ -195,6 +211,8 @@ export const useUiStore = defineStore('ui', () => {
     toggleDrawer,
     openPalette,
     closePalette,
+    openViewer,
+    closeViewer,
     toggleFavorite,
     notify,
     dismissToast,

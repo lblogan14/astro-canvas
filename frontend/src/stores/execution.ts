@@ -19,7 +19,17 @@ export interface NodeExecution {
   progress: { frac: number; message: string | null } | null
   error: { message: string; traceback: string; hint: string | null } | null
   /** Latest summary per output port (`$preview` for `ctx.preview` payloads). */
-  summaries: Record<string, { typeId: string; summary: Record<string, unknown>; ts: number }>
+  summaries: Record<string, SummaryEntry>
+}
+
+export interface SummaryEntry {
+  typeId: string
+  summary: Record<string, unknown>
+  ts: number
+}
+
+export function viewKey(nodeId: string, port: string, tag: string): string {
+  return `${nodeId}/${port}#${tag}`
 }
 
 export interface LogEntry {
@@ -66,6 +76,8 @@ export const useExecutionStore = defineStore('execution', () => {
   const currentRunId = ref<string | null>(null)
   const autoRun = ref(true)
   const lastServerError = ref<string | null>(null)
+  /** Tagged summaries (`preview.request` with `viewport.tag`), keyed `node/port#tag`. */
+  const views = shallowRef<Record<string, SummaryEntry>>({})
   let logSeq = 0
 
   const isRunning = computed(() => currentRunId.value !== null)
@@ -103,8 +115,19 @@ export const useExecutionStore = defineStore('execution', () => {
     log.value = next.length > MAX_LOG ? next.slice(next.length - MAX_LOG) : next
   }
 
+  function view(nodeId: string, port: string, tag: string): SummaryEntry | undefined {
+    return views.value[viewKey(nodeId, port, tag)]
+  }
+
+  function clearView(nodeId: string, port: string, tag: string): void {
+    const rest = { ...views.value }
+    delete rest[viewKey(nodeId, port, tag)]
+    views.value = rest
+  }
+
   function reset(): void {
     nodes.value = {}
+    views.value = {}
     issues.value = {}
     log.value = []
     runs.value = {}
@@ -188,6 +211,17 @@ export const useExecutionStore = defineStore('execution', () => {
         break
       }
       case 'node.output.summary': {
+        if (event.tag) {
+          views.value = {
+            ...views.value,
+            [viewKey(event.node_id, event.port, event.tag)]: {
+              typeId: event.type_id,
+              summary: event.summary,
+              ts: event.ts,
+            },
+          }
+          break
+        }
         const record = ensure(event.node_id)
         nodes.value[event.node_id] = {
           ...record,
@@ -287,7 +321,10 @@ export const useExecutionStore = defineStore('execution', () => {
     isRunning,
     issueCount,
     errorNodeIds,
+    views,
     node,
+    view,
+    clearView,
     issuesFor,
     reset,
     setIssues,

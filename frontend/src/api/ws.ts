@@ -5,7 +5,12 @@
  *
  * The client is framework-free; the stores wrap its callbacks in reactive state.
  */
-import { type ClientCommand, type ServerMessage, parseServerMessage } from './events'
+import {
+  type ClientCommand,
+  type PreviewViewport,
+  type ServerMessage,
+  parseServerMessage,
+} from './events'
 import { type DecodedFrame, decodeFrame } from './frames'
 import { wsUrl } from './client'
 
@@ -128,11 +133,7 @@ export class WsClient {
     return this.send({ type: 'output.request', node_id: nodeId, port })
   }
 
-  requestPreview(
-    nodeId: string,
-    port: string,
-    viewport: { lo?: number; hi?: number; n_out?: number } = {},
-  ): boolean {
+  requestPreview(nodeId: string, port: string, viewport: PreviewViewport = {}): boolean {
     return this.send({ type: 'preview.request', node_id: nodeId, port, viewport })
   }
 
