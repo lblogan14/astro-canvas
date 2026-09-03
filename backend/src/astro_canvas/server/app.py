@@ -21,7 +21,7 @@ from astro_canvas.server.templates import router as templates_router
 from astro_canvas.server.workflows import router as workflows_router
 from astro_canvas.server.workspace import router as workspace_router
 from astro_canvas.server.ws import router as ws_router
-from astro_canvas.settings import Settings, get_settings
+from astro_canvas.settings import Settings, apply_array_settings, get_settings
 
 log = structlog.get_logger("astro_canvas.server")
 
@@ -36,6 +36,7 @@ def create_app(
         discovery: Pre-built node registry; defaults to loading every installed pack.
     """
     settings = settings or get_settings()
+    apply_array_settings(settings)
     discovery = discovery if discovery is not None else discover()
     for pack in discovery.packs:
         if pack.error is not None:

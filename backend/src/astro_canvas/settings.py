@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import platformdirs
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from astro_canvas.sdk.memmap import MMAP_MIN_BYTES_ENV
 
 
 def default_workspace() -> Path:
@@ -47,9 +50,17 @@ class Settings(BaseSettings):
     run_timeout_s: float | None = Field(default=3600.0, gt=0)
     debounce_ms: int = Field(default=250, ge=0)
     auto_threshold_ms: int = Field(default=2000, ge=0)
+    mmap_min_mb: int = Field(default=8, ge=0)
+    """Arrays this big (IFU cubes) are stored as mappable blob parts and never copied into the
+    memory cache; ``0`` disables mapping and keeps everything inline."""
 
     # Workspace (design 6.5): publish ``workspace.changed`` events from a file watcher.
     watch_workspace: bool = True
+
+
+def apply_array_settings(settings: Settings) -> None:
+    """Publish ``mmap_min_mb`` to the SDK (and to worker processes) as an environment variable."""
+    os.environ[MMAP_MIN_BYTES_ENV] = str(settings.mmap_min_mb * 1024 * 1024)
 
 
 def get_settings(**overrides: object) -> Settings:

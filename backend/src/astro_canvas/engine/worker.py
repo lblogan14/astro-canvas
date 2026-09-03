@@ -19,7 +19,7 @@ from typing import Any
 from astro_canvas.engine.cache import BlobStore, OutputRef
 from astro_canvas.engine.context import WorkerContext
 from astro_canvas.engine.outputs import unwrap_linked, wrap_outputs
-from astro_canvas.sdk import Blob, NodeRegistry, PortType, discover
+from astro_canvas.sdk import NodeRegistry, PortType, discover
 
 
 @dataclass
@@ -68,8 +68,9 @@ def load_registry(factory: str) -> NodeRegistry:
 def rehydrate(
     refs: Mapping[str, OutputRef], blobs: BlobStore, registry: NodeRegistry
 ) -> dict[str, PortType]:
+    """Load inputs from the shared blob store, memory-mapping whatever the type marks mappable."""
     return {
-        port: registry.types.get(ref.type_id).from_blob(Blob.unpack(blobs.get(ref.blob_hash)))
+        port: registry.types.get(ref.type_id).from_blob_file(blobs.path(ref.blob_hash))
         for port, ref in refs.items()
     }
 

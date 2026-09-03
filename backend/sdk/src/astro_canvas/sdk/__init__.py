@@ -43,6 +43,7 @@ from astro_canvas.sdk.errors import (
     UnknownTypeError,
 )
 from astro_canvas.sdk.expand import ExpandNode, Expansion
+from astro_canvas.sdk.memmap import is_memmapped, memmap_part, mmap_min_bytes
 from astro_canvas.sdk.node import NodeDef, node, validate_call
 from astro_canvas.sdk.params import Param, Widget
 from astro_canvas.sdk.porttype import (
@@ -122,7 +123,10 @@ __all__ = [
     "discover",
     "errors",
     "is_compatible",
+    "is_memmapped",
     "is_port_type",
+    "memmap_part",
+    "mmap_min_bytes",
     "node",
     "parse_docstring",
     "port_type",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -12,6 +13,7 @@ from astro_canvas.sdk import (
     Blob,
     BlobError,
     DuplicateNodeError,
+    Float32_3D,
     NodeDefinitionError,
     PortType,
     TypeRegistry,
@@ -219,3 +221,31 @@ def test_port_type_decorator_validation() -> None:
     reg.add(T.Float)  # idempotent
     with pytest.raises(DuplicateNodeError):
         reg.add(Impostor)
+
+
+def test_mappable_parts_roundtrip_through_every_reader(tmp_path: Path) -> None:
+    """``__mmap_fields__`` splits big arrays out; all three readers return the same values."""
+    from astro_canvas.sdk import is_memmapped
+    from astro_canvas.sdk.memmap import MMAP_MIN_BYTES_ENV, memmap_part
+
+    @port_type(id="test.Big")
+    class Big(PortType):
+        __mmap_fields__ = ("data", "missing")
+
+        data: Float32_3D
+        label: str = "x"
+
+    array = np.arange(4 * 8 * 8, dtype=np.float32).reshape(4, 8, 8)
+    value = Big(data=array)
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setenv(MMAP_MIN_BYTES_ENV, "128")
+        blob = value.to_blob()
+        assert blob.manifest["mmap"] == {"data": "data.npy"}
+        path = tmp_path / "big.blob"
+        path.write_bytes(blob.pack())
+        assert np.array_equal(Big.from_blob(blob).data, array)
+        mapped = Big.from_blob_file(path)
+    assert is_memmapped(mapped.data) and np.array_equal(mapped.data, array)
+    assert memmap_part(path, "nope.npy") is None
+    with pytest.raises(BlobError, match="missing array part"):
+        Big.from_blob(Blob(manifest=blob.manifest, parts={}))

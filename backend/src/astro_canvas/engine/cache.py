@@ -27,7 +27,7 @@ from pydantic_core import to_jsonable_python
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session, sessionmaker
 
-from astro_canvas.sdk import Blob, BlobError, PortType, TypeRegistry
+from astro_canvas.sdk import BlobError, PortType, TypeRegistry, is_memmapped
 from astro_canvas.store.models import Output, utcnow
 
 
@@ -269,12 +269,20 @@ class OutputIndex:
 # --- memory LRU --------------------------------------------------------------------------------
 
 
+MMAP_HANDLE_BYTES = 4096
+"""What a memory-mapped array costs the LRU: the mapping, not the data."""
+
+
 def value_nbytes(value: Any) -> int:
-    """Rough memory footprint of a port value (array bytes + a small constant per leaf)."""
+    """Rough memory footprint of a port value (array bytes + a small constant per leaf).
+
+    Memory-mapped arrays (an IFU cube read back through ``PortType.from_blob_file``) live in the
+    page cache, not in the process, so they count as a handle rather than as their size.
+    """
     if isinstance(value, PortType):
         value = value.model_dump(mode="python")
     if isinstance(value, np.ndarray):
-        return int(value.nbytes)
+        return MMAP_HANDLE_BYTES if is_memmapped(value) else int(value.nbytes)
     if isinstance(value, bytes | bytearray | memoryview):
         return len(value)
     if isinstance(value, Mapping):
@@ -390,8 +398,12 @@ class OutputCache:
         return {p: r for p, r in refs.items() if p != NO_OUTPUTS}
 
     def load(self, ref: OutputRef) -> PortType:
+        """Rehydrate one cached output, memory-mapping the parts the type marked mappable."""
         cls = self.types.get(ref.type_id)
-        return cls.from_blob(Blob.unpack(self.blobs.get(ref.blob_hash)))
+        path = self.blobs.path(ref.blob_hash)
+        if not path.is_file():
+            raise KeyError(ref.blob_hash)
+        return cls.from_blob_file(path)
 
     def store(
         self, key: str, node_type: str, outputs: Mapping[str, PortType]

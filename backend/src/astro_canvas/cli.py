@@ -18,7 +18,7 @@ import uvicorn
 from astro_canvas._version import __version__
 from astro_canvas.logging import configure_logging
 from astro_canvas.server.app import create_app
-from astro_canvas.settings import Settings, get_settings
+from astro_canvas.settings import Settings, apply_array_settings, get_settings
 
 app = typer.Typer(
     name="astro-canvas",
@@ -96,6 +96,7 @@ async def run_headless(
     settings: Settings, doc_path: Path, targets: list[str] | None
 ) -> dict[str, Any]:
     """Compile and execute ``doc_path`` to completion; returns a JSON-able summary."""
+    apply_array_settings(settings)
     # Lazy imports keep ``astro-canvas version`` fast.
     from astro_canvas.engine.graph import WorkflowDoc  # noqa: PLC0415
     from astro_canvas.sdk import discover  # noqa: PLC0415

@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import builtins
+import json
 import re
+import zipfile
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, ClassVar, TypeGuard, TypeVar
 
 import numpy as np
@@ -13,6 +16,7 @@ from pydantic import BaseModel, ConfigDict
 
 from astro_canvas.sdk.blob import (
     ARRAYS_PART,
+    MANIFEST_NAME,
     Blob,
     decode_npz,
     encode_npz,
@@ -26,7 +30,31 @@ from astro_canvas.sdk.errors import (
     NodeDefinitionError,
     UnknownTypeError,
 )
+from astro_canvas.sdk.memmap import (
+    NPY_SUFFIX,
+    PART_PREFIX,
+    decode_npy,
+    encode_npy,
+    memmap_part,
+    mmap_min_bytes,
+)
 from astro_canvas.sdk.spec import PortTypeSpec
+
+MMAP_KEY = "mmap"
+"""Manifest key mapping a field name to the ``.npy`` part holding its (mappable) array."""
+
+
+class _Unmappable(Exception):
+    """Internal: this blob has no mappable parts, so read it the ordinary way."""
+
+
+def mmap_manifest(manifest: Mapping[str, Any]) -> dict[str, str]:
+    """``{field: part}`` written by ``to_blob`` for arrays stored as standalone ``.npy`` parts."""
+    mapped = manifest.get(MMAP_KEY)
+    if not isinstance(mapped, Mapping):
+        return {}
+    return {str(k): str(v) for k, v in mapped.items()}
+
 
 ANY_TYPE = "astro.Any"
 JSON_TYPE = "astro.Json"
@@ -62,6 +90,9 @@ class PortType(BaseModel):
 
     __astro_port_type__: ClassVar[PortTypeMeta | None] = None
 
+    __mmap_fields__: ClassVar[tuple[str, ...]] = ()
+    """Fields whose big arrays get their own ``.npy`` part so ``from_blob_file`` can map them."""
+
     @classmethod
     def type_id(cls) -> str:
         """The registered id (``astro.Spectrum1D``)."""
@@ -70,12 +101,28 @@ class PortType(BaseModel):
         return cls.__astro_port_type__.id
 
     def to_blob(self) -> Blob:
-        """Default: arrays into one npz part, bytes into parts, the rest into the manifest."""
+        """Default: arrays into one npz part, bytes into parts, the rest into the manifest.
+
+        Arrays named in ``__mmap_fields__`` that are at least ``mmap_min_bytes()`` large are
+        written as their own uncompressed ``.npy`` part instead, so a reader can memory-map them.
+        """
         data, arrays, binaries = split_binary(self.model_dump(mode="python"))
         parts: dict[str, bytes] = dict(binaries)
+        mapped: dict[str, str] = {}
+        threshold = mmap_min_bytes()
+        for name in self.__mmap_fields__:
+            array = arrays.get(name)
+            if array is None or threshold <= 0 or array.nbytes < threshold:
+                continue
+            part = f"{name}{NPY_SUFFIX}"
+            parts[part] = encode_npy(array)
+            mapped[name] = part
+            del arrays[name]
         if arrays:
             parts[ARRAYS_PART] = encode_npz(arrays)
-        manifest = {"type": self.type_id(), "data": to_manifest_data(data)}
+        manifest: dict[str, Any] = {"type": self.type_id(), "data": to_manifest_data(data)}
+        if mapped:
+            manifest[MMAP_KEY] = mapped
         return Blob(manifest=manifest, parts=parts)
 
     @classmethod
@@ -83,9 +130,47 @@ class PortType(BaseModel):
         """Inverse of the default ``to_blob``."""
         if blob.manifest.get("type") != cls.type_id():
             raise BlobError(f"blob holds {blob.manifest.get('type')!r}, expected {cls.type_id()!r}")
+        mapped = mmap_manifest(blob.manifest)
         arrays = decode_npz(blob.parts[ARRAYS_PART]) if ARRAYS_PART in blob.parts else {}
-        binaries = {k: v for k, v in blob.parts.items() if k != ARRAYS_PART}
+        for name, part in mapped.items():
+            if part not in blob.parts:
+                raise BlobError(f"missing array part {part!r}")
+            arrays[name] = decode_npy(blob.parts[part])
+        skip = {ARRAYS_PART, *mapped.values()}
+        binaries = {k: v for k, v in blob.parts.items() if k not in skip}
         return cls.model_validate(join_binary(blob.manifest.get("data"), arrays, binaries))
+
+    @classmethod
+    def from_blob_file(cls: type[P], path: Path) -> P:
+        """Like ``from_blob``, but big arrays are mapped from ``path`` instead of copied.
+
+        The value holds read-only ``numpy.memmap`` views into the blob file, so an IFU cube costs
+        page cache rather than resident memory. Types without ``__mmap_fields__`` -- and any part
+        that cannot be mapped -- go through ``from_blob`` unchanged.
+        """
+        try:
+            with zipfile.ZipFile(path) as zf:
+                names = set(zf.namelist())
+                manifest: dict[str, Any] = json.loads(zf.read(MANIFEST_NAME))
+                mapped = mmap_manifest(manifest)
+                if not mapped:
+                    raise _Unmappable
+                npz = f"{PART_PREFIX}{ARRAYS_PART}"
+                arrays = decode_npz(zf.read(npz)) if npz in names else {}
+                skip = {npz, *(f"{PART_PREFIX}{p}" for p in mapped.values())}
+                binaries = {
+                    n.removeprefix(PART_PREFIX): zf.read(n)
+                    for n in names
+                    if n.startswith(PART_PREFIX) and n not in skip
+                }
+            for name, part in mapped.items():
+                view = memmap_part(path, part)
+                if view is None:
+                    raise _Unmappable
+                arrays[name] = view
+        except (_Unmappable, KeyError, OSError, ValueError, zipfile.BadZipFile):
+            return cls.from_blob(Blob.unpack(path.read_bytes()))
+        return cls.model_validate(join_binary(manifest.get("data"), arrays, binaries))
 
     def summary(self, viewport: Mapping[str, Any] | None = None) -> dict[str, Any]:
         """Small JSON payload for the node's inline preview; arrays become shape/range stats."""
