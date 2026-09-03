@@ -41,6 +41,7 @@ from astro_canvas.sdk.errors import (
     UnknownNodeError,
     UnknownTypeError,
 )
+from astro_canvas.sdk.expand import ExpandNode, Expansion
 from astro_canvas.sdk.node import NodeDef, node, validate_call
 from astro_canvas.sdk.params import Param, Widget
 from astro_canvas.sdk.porttype import (
@@ -83,6 +84,8 @@ __all__ = [
     "DiscoveryResult",
     "DocInfo",
     "DuplicateNodeError",
+    "ExpandNode",
+    "Expansion",
     "Float1D",
     "Float2D",
     "Float3D",

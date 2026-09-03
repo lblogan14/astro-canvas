@@ -64,6 +64,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/outputs/{node_id}/{port}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get Output
+     * @description A finished node's output. ``decimate``/``range`` apply to 1-d spectrum-like values.
+     */
+    get: operations['get_output_api_outputs__node_id___port__get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/packs': {
     parameters: {
       query?: never
@@ -78,6 +98,63 @@ export interface paths {
     get: operations['list_packs_api_packs_get']
     put?: never
     post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/runs': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List Runs
+     * @description Recent runs (persisted across restarts), newest first.
+     */
+    get: operations['list_runs_api_runs_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/runs/{run_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get Run */
+    get: operations['get_run_api_runs__run_id__get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/runs/{run_id}/cancel': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Cancel Run
+     * @description Cancel the run if it is still executing (kills process workers, flags threads).
+     */
+    post: operations['cancel_run_api_runs__run_id__cancel_post']
     delete?: never
     options?: never
     head?: never
@@ -124,10 +201,162 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/workflows': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List Workflows
+     * @description Stored workflows, most recently modified first.
+     */
+    get: operations['list_workflows_api_workflows_get']
+    put?: never
+    /**
+     * Create Workflow
+     * @description Store a new document (a fresh id is assigned when the given one already exists).
+     */
+    post: operations['create_workflow_api_workflows_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workflows/{workflow_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get Workflow */
+    get: operations['get_workflow_api_workflows__workflow_id__get']
+    /**
+     * Put Workflow
+     * @description Replace the document; the engine recompiles it and auto-runs cheap dirty nodes.
+     */
+    put: operations['put_workflow_api_workflows__workflow_id__put']
+    post?: never
+    /** Delete Workflow */
+    delete: operations['delete_workflow_api_workflows__workflow_id__delete']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workflows/{workflow_id}/run': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Start Run
+     * @description Queue a run (stale expensive nodes included) and return its id immediately.
+     */
+    post: operations['start_run_api_workflows__workflow_id__run_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workflows/{workflow_id}/status': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Workflow Status
+     * @description Compile issues and the state of every node (what a reconnecting client needs).
+     */
+    get: operations['workflow_status_api_workflows__workflow_id__status_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workflows/{workflow_id}/versions': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List Versions
+     * @description Auto-snapshots (every changed save) and labelled versions, newest first.
+     */
+    get: operations['list_versions_api_workflows__workflow_id__versions_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workflows/{workflow_id}/versions/{version_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get Version */
+    get: operations['get_version_api_workflows__workflow_id__versions__version_id__get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
 }
 export type webhooks = Record<string, never>
 export interface components {
   schemas: {
+    /** CancelResult */
+    CancelResult: {
+      /** Cancelled */
+      cancelled: boolean
+    }
+    /**
+     * EdgeDoc
+     * @description ``{"from": [node, port], "to": [node, port]}``.
+     */
+    EdgeDoc: {
+      /** From */
+      from: [string, string]
+      /** To */
+      to: [string, string]
+    }
+    /** GroupDoc */
+    GroupDoc: {
+      /** Color */
+      color?: string | null
+      /** Nodes */
+      nodes?: string[]
+      /**
+       * Title
+       * @default
+       */
+      title: string
+    } & {
+      [key: string]: unknown
+    }
     /** HTTPValidationError */
     HTTPValidationError: {
       /** Detail */
@@ -145,6 +374,78 @@ export interface components {
       status: 'ok'
       /** Version */
       version: string
+    }
+    /**
+     * NodeDoc
+     * @description One node instance on the canvas.
+     */
+    NodeDoc: {
+      /** Cost */
+      cost?: ('cheap' | 'expensive' | 'auto') | null
+      /**
+       * Disabled
+       * @default false
+       */
+      disabled: boolean
+      /** Linked */
+      linked?: string[]
+      /**
+       * Notes
+       * @default
+       */
+      notes: string
+      /** Params */
+      params?: {
+        [key: string]: unknown
+      }
+      /** Pos */
+      pos?: [number, number] | null
+      /** Size */
+      size?: [number, number] | null
+      /** Title */
+      title?: string | null
+      /** Type */
+      type: string
+      /** Ui */
+      ui?: {
+        [key: string]: unknown
+      }
+      /** Version */
+      version?: string | null
+    } & {
+      [key: string]: unknown
+    }
+    /**
+     * NodeIssue
+     * @description One compile-time problem on a node (returned per node like ComfyUI's ``node_errors``).
+     */
+    NodeIssue: {
+      /** Code */
+      code: string
+      /** Message */
+      message: string
+      /** Param */
+      param?: string | null
+      /** Port */
+      port?: string | null
+    }
+    /** NodeRunInfo */
+    NodeRunInfo: {
+      /**
+       * Cache Hit
+       * @default false
+       */
+      cache_hit: boolean
+      /** Elapsed Ms */
+      elapsed_ms?: number | null
+      /** Error */
+      error?: string | null
+      /** Key */
+      key: string
+      /** Node Id */
+      node_id: string
+      /** Status */
+      status: string
     }
     /**
      * NodeSpec
@@ -234,6 +535,46 @@ export interface components {
        * @default 1.0.0
        */
       version: string
+    }
+    /** NodeStatus */
+    NodeStatus: {
+      /**
+       * Cache Hit
+       * @default false
+       */
+      cache_hit: boolean
+      /**
+       * Cost Class
+       * @default cheap
+       * @enum {string}
+       */
+      cost_class: 'cheap' | 'expensive' | 'auto'
+      /** Elapsed Ms */
+      elapsed_ms?: number | null
+      /** Node Id */
+      node_id: string
+      /** Run Id */
+      run_id?: string | null
+      /**
+       * Stale
+       * @default false
+       */
+      stale: boolean
+      /**
+       * State
+       * @enum {string}
+       */
+      state: 'idle' | 'dirty' | 'queued' | 'running' | 'done' | 'error' | 'cancelled'
+      /** Ts */
+      ts?: number
+      /**
+       * Type
+       * @default node.status
+       * @constant
+       */
+      type: 'node.status'
+      /** Workflow Id */
+      workflow_id: string
     }
     /**
      * PackInfo
@@ -426,6 +767,93 @@ export interface components {
       /** Summary Renderer */
       summary_renderer?: string | null
     }
+    /** PromotedDoc */
+    PromotedDoc: {
+      /** Group */
+      group?: string | null
+      /** Label */
+      label?: string | null
+      /** Node */
+      node: string
+      /**
+       * Order
+       * @default 0
+       */
+      order: number
+      /** Param */
+      param: string
+    } & {
+      [key: string]: unknown
+    }
+    /** RunAccepted */
+    RunAccepted: {
+      /** Run Id */
+      run_id: string
+      /** Workflow Id */
+      workflow_id: string
+    }
+    /** RunDetail */
+    RunDetail: {
+      /** Finished */
+      finished?: string | null
+      /** Id */
+      id: string
+      /**
+       * Nodes
+       * @default []
+       */
+      nodes: components['schemas']['NodeRunInfo'][]
+      /** Started */
+      started: string
+      /** Status */
+      status: string
+      /** Targets */
+      targets?: string[] | null
+      /** Workflow Id */
+      workflow_id: string
+    }
+    /** RunRequest */
+    RunRequest: {
+      /**
+       * Targets
+       * @description Node ids to run to (default: every leaf node).
+       */
+      targets?: string[] | null
+    }
+    /** SubgraphDoc */
+    SubgraphDoc: {
+      /** Edges */
+      edges?: {
+        [key: string]: components['schemas']['EdgeDoc']
+      }
+      /** Inputs */
+      inputs?: components['schemas']['SubgraphPort'][]
+      /**
+       * Name
+       * @default
+       */
+      name: string
+      /** Nodes */
+      nodes?: {
+        [key: string]: components['schemas']['NodeDoc']
+      }
+      /** Outputs */
+      outputs?: components['schemas']['SubgraphPort'][]
+    } & {
+      [key: string]: unknown
+    }
+    /**
+     * SubgraphPort
+     * @description An exposed port of a subgraph: ``name`` outside maps to ``node.port`` inside.
+     */
+    SubgraphPort: {
+      /** Name */
+      name: string
+      /** Node */
+      node: string
+      /** Port */
+      port: string
+    }
     /**
      * SystemInfo
      * @description Environment report shown in the shell's About panel.
@@ -460,6 +888,138 @@ export interface components {
       msg: string
       /** Error Type */
       type: string
+    }
+    /** ViewDoc */
+    ViewDoc: {
+      /** Id */
+      id: string
+      /** Kind */
+      kind?: string | null
+      /** Node */
+      node: string
+      /** Port */
+      port: string
+    } & {
+      [key: string]: unknown
+    }
+    /**
+     * WorkflowDoc
+     * @description The canvas document. Unknown top-level fields are preserved.
+     */
+    WorkflowDoc: {
+      /**
+       * Description
+       * @default
+       */
+      description: string
+      /** Edges */
+      edges?: {
+        [key: string]: components['schemas']['EdgeDoc']
+      }
+      /**
+       * Format
+       * @default astro-canvas/workflow
+       * @constant
+       */
+      format: 'astro-canvas/workflow'
+      /** Groups */
+      groups?: {
+        [key: string]: components['schemas']['GroupDoc']
+      }
+      /** Id */
+      id?: string
+      /** Layouts */
+      layouts?: {
+        [key: string]: unknown
+      }
+      /** Meta */
+      meta?: {
+        [key: string]: unknown
+      }
+      /**
+       * Name
+       * @default Untitled
+       */
+      name: string
+      /** Nodes */
+      nodes?: {
+        [key: string]: components['schemas']['NodeDoc']
+      }
+      /** Promoted */
+      promoted?: components['schemas']['PromotedDoc'][]
+      /** Requires */
+      requires?: {
+        [key: string]: unknown
+      }
+      /** Subgraphs */
+      subgraphs?: {
+        [key: string]: components['schemas']['SubgraphDoc']
+      }
+      /**
+       * Version
+       * @default 1
+       * @constant
+       */
+      version: 1
+      /** Views */
+      views?: components['schemas']['ViewDoc'][]
+    } & {
+      [key: string]: unknown
+    }
+    /**
+     * WorkflowSaved
+     * @description A stored document plus the compile result for its current content.
+     */
+    WorkflowSaved: {
+      doc: components['schemas']['WorkflowDoc']
+      /** Node Errors */
+      node_errors: {
+        [key: string]: components['schemas']['NodeIssue'][]
+      }
+    }
+    /** WorkflowStatus */
+    WorkflowStatus: {
+      /** Current Run */
+      current_run?: string | null
+      /** Node Errors */
+      node_errors: {
+        [key: string]: components['schemas']['NodeIssue'][]
+      }
+      /** Nodes */
+      nodes: {
+        [key: string]: components['schemas']['NodeStatus']
+      }
+      /** Workflow Id */
+      workflow_id: string
+    }
+    /** WorkflowSummary */
+    WorkflowSummary: {
+      /** Created */
+      created: string
+      /**
+       * Description
+       * @default
+       */
+      description: string
+      /** Hash */
+      hash: string
+      /** Id */
+      id: string
+      /** Modified */
+      modified: string
+      /** Name */
+      name: string
+      /** Node Count */
+      node_count: number
+    }
+    /** WorkflowVersionInfo */
+    WorkflowVersionInfo: {
+      /** Created */
+      created: string
+      /** Id */
+      id: number
+      /** Label */
+      label?: string | null
     }
   }
   responses: never
@@ -552,6 +1112,45 @@ export interface operations {
       }
     }
   }
+  get_output_api_outputs__node_id___port__get: {
+    parameters: {
+      query: {
+        /** @description Workflow the node belongs to. */
+        workflow_id: string
+        fmt?: 'json' | 'msgpack' | 'arrow' | 'npz'
+        decimate?: number | null
+        /** @description ``lo,hi`` on the x axis. */
+        range?: string | null
+      }
+      header?: never
+      path: {
+        node_id: string
+        port: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
   list_packs_api_packs_get: {
     parameters: {
       query?: never
@@ -568,6 +1167,100 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['PackRecord'][]
+        }
+      }
+    }
+  }
+  list_runs_api_runs_get: {
+    parameters: {
+      query?: {
+        workflow_id?: string | null
+        limit?: number
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RunDetail'][]
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_run_api_runs__run_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        run_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RunDetail']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  cancel_run_api_runs__run_id__cancel_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        run_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['CancelResult']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
         }
       }
     }
@@ -608,6 +1301,283 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['PortTypeSpec'][]
+        }
+      }
+    }
+  }
+  list_workflows_api_workflows_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['WorkflowSummary'][]
+        }
+      }
+    }
+  }
+  create_workflow_api_workflows_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['WorkflowDoc']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['WorkflowSaved']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_workflow_api_workflows__workflow_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['WorkflowDoc']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  put_workflow_api_workflows__workflow_id__put: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['WorkflowDoc']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['WorkflowSaved']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  delete_workflow_api_workflows__workflow_id__delete: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  start_run_api_workflows__workflow_id__run_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['RunRequest'] | null
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RunAccepted']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  workflow_status_api_workflows__workflow_id__status_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['WorkflowStatus']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  list_versions_api_workflows__workflow_id__versions_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['WorkflowVersionInfo'][]
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_version_api_workflows__workflow_id__versions__version_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+        version_id: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['WorkflowDoc']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
         }
       }
     }

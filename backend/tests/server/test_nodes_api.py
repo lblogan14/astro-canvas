@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from astro_canvas.sdk import discover
 from astro_canvas.server.app import create_app
 from astro_canvas.settings import Settings
-from tests.conftest import fixture_entry_point
+from tests.conftest import authed_client, fixture_entry_point
 
 
 def test_list_nodes(client: TestClient) -> None:
@@ -57,7 +57,7 @@ def test_list_types(client: TestClient) -> None:
 
 def test_packs_and_system_report_load_errors(settings: Settings) -> None:
     discovery = discover([fixture_entry_point("broken"), fixture_entry_point("good")])
-    client = TestClient(create_app(settings, discovery))
+    client = authed_client(create_app(settings, discovery))
 
     packs = client.get("/api/packs").json()
     assert [p["name"] for p in packs] == ["broken", "good"]

@@ -13,9 +13,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 REPORT = ROOT / "backend" / "coverage.json"
 
-# Package fragment (posix path) -> minimum line coverage in percent (CONVENTIONS §5; phase 01).
+# Package fragment (posix path) -> minimum line coverage in percent (CONVENTIONS §5; phases 01-02).
 GATES: dict[str, float] = {
     "astro_canvas/sdk/": 90.0,
+    "astro_canvas/engine/": 85.0,
+    "astro_canvas/store/": 85.0,
 }
 
 

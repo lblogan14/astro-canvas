@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -20,7 +21,8 @@ def render() -> str:
     from astro_canvas.server.app import create_app  # noqa: PLC0415
     from astro_canvas.settings import Settings  # noqa: PLC0415
 
-    app = create_app(Settings(workspace=ROOT), discover())
+    workspace = Path(tempfile.mkdtemp(prefix="astro-canvas-openapi-"))
+    app = create_app(Settings(workspace=workspace, auth=False), discover())
     return json.dumps(app.openapi(), indent=2, sort_keys=True) + "\n"
 
 

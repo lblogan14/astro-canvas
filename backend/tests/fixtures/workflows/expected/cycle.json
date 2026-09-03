@@ -1,0 +1,24 @@
+{
+  "node_errors": {
+    "a": [
+      {
+        "code": "cycle",
+        "message": "node is part of a cycle",
+        "port": null,
+        "param": null
+      }
+    ],
+    "b": [
+      {
+        "code": "cycle",
+        "message": "node is part of a cycle",
+        "port": null,
+        "param": null
+      }
+    ]
+  },
+  "runnable": [
+    "c"
+  ],
+  "blocked": []
+}

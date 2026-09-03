@@ -1,0 +1,28 @@
+{
+  "node_errors": {
+    "c": [
+      {
+        "code": "bad_param",
+        "message": "value: Input should be a valid number, unable to parse string as a number",
+        "port": null,
+        "param": "value"
+      }
+    ],
+    "e": [
+      {
+        "code": "unknown_param",
+        "message": "unknown param 'nope'",
+        "port": null,
+        "param": "nope"
+      },
+      {
+        "code": "unknown_param",
+        "message": "linked param 'ghost' does not exist",
+        "port": null,
+        "param": "ghost"
+      }
+    ]
+  },
+  "runnable": [],
+  "blocked": []
+}

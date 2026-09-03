@@ -31,10 +31,12 @@ def test_system_reports_environment(client: TestClient, settings: Settings) -> N
     assert body["python"].count(".") == 2
 
 
-def test_system_tolerates_missing_workspace(tmp_path: Path) -> None:
+def test_system_creates_missing_workspace(tmp_path: Path) -> None:
     missing = tmp_path / "does" / "not" / "exist"
-    body = TestClient(create_app(Settings(workspace=missing))).get("/api/system").json()
-    assert body["workspace_exists"] is False
+    settings = Settings(workspace=missing, auth=False, config_dir=tmp_path / "cfg")
+    body = TestClient(create_app(settings)).get("/api/system").json()
+    assert body["workspace_exists"] is True  # the engine runtime creates it at startup
+    assert (missing / ".astro-canvas" / "app.db").is_file()
     assert body["disk_total_bytes"] > 0
 
 

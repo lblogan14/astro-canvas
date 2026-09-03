@@ -1,0 +1,9 @@
+{
+  "format": "astro-canvas/workflow", "version": 1, "id": "fx-unknown-node", "name": "Unknown node",
+  "nodes": {
+    "c": {"type": "core.math.constant", "params": {"value": 1.0}},
+    "ghost": {"type": "core.nope.missing", "params": {}},
+    "e": {"type": "core.math.expr", "params": {"expression": "x"}, "linked": ["x"]}
+  },
+  "edges": {"e1": {"from": ["ghost", "out"], "to": ["e", "x"]}}
+}

@@ -1,0 +1,8 @@
+{
+  "format": "astro-canvas/workflow", "version": 1, "id": "fx-type-mismatch", "name": "Type mismatch",
+  "nodes": {
+    "c": {"type": "core.math.constant", "params": {"value": 1.0}},
+    "collect": {"type": "core.list.collect"}
+  },
+  "edges": {"e1": {"from": ["c", "out"], "to": ["collect", "a"]}}
+}

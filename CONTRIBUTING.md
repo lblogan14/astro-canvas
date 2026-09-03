@@ -38,7 +38,7 @@ Open http://127.0.0.1:5173. The Vite dev server proxies `/api` and `/ws` to the 
 |---|---|
 | `task lint` | ruff (backend, sdk, packs, scripts), oxlint, eslint, prettier check, tooling rule |
 | `task typecheck` | mypy (strict on `sdk/` and `engine/`) and vue-tsc |
-| `task test` | `test:py` (pytest with coverage and per-package gates: `sdk/` >= 90 %), `test:fe` (Vitest), `test:e2e` (Playwright against a real backend) |
+| `task test` | `test:py` (pytest with coverage and per-package gates: `sdk/` >= 90 %, `engine/` and `store/` >= 85 %), `test:fe` (Vitest), `test:e2e` (Playwright against a real backend) |
 | `task fmt` | ruff format/fix, oxlint/eslint fix, prettier write |
 | `task build` | `pnpm build` → copy `dist/` into `backend/src/astro_canvas/static/` → build the `astro-canvas-sdk` and `astro-canvas` wheels → verify the app wheel bundles `index.html` |
 | `task build:smoke` | install both wheels in a throwaway env and check `astro-canvas serve` serves the SPA |

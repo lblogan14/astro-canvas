@@ -1,0 +1,12 @@
+{
+  "format": "astro-canvas/workflow", "version": 1, "id": "fx-cycle", "name": "Cycle",
+  "nodes": {
+    "a": {"type": "core.math.expr", "params": {"expression": "x + 1"}, "linked": ["x"]},
+    "b": {"type": "core.math.expr", "params": {"expression": "x * 2"}, "linked": ["x"]},
+    "c": {"type": "core.math.constant", "params": {"value": 1.0}}
+  },
+  "edges": {
+    "e1": {"from": ["a", "out"], "to": ["b", "x"]},
+    "e2": {"from": ["b", "out"], "to": ["a", "x"]}
+  }
+}

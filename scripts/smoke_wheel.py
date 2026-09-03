@@ -8,6 +8,7 @@ Intended to run against a fresh environment containing only the built wheel:
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import tempfile
@@ -17,10 +18,14 @@ import urllib.request
 
 PORT = 8799
 BASE = f"http://127.0.0.1:{PORT}"
+TOKEN = "smoke-token"
 
 
-def fetch(path: str) -> str:
-    with urllib.request.urlopen(BASE + path, timeout=2) as response:  # noqa: S310
+def fetch(path: str, *, token: str | None = TOKEN) -> str:
+    request = urllib.request.Request(BASE + path)  # noqa: S310
+    if token is not None:
+        request.add_header("Authorization", f"Bearer {token}")
+    with urllib.request.urlopen(request, timeout=2) as response:  # noqa: S310
         return response.read().decode()
 
 
@@ -28,7 +33,7 @@ def wait_ready(deadline_s: float = 30.0) -> None:
     deadline = time.monotonic() + deadline_s
     while time.monotonic() < deadline:
         try:
-            if '"status":"ok"' in fetch("/api/health"):
+            if '"status":"ok"' in fetch("/api/health", token=None):
                 return
         except (urllib.error.URLError, ConnectionError, TimeoutError):
             time.sleep(0.25)
@@ -47,7 +52,8 @@ def main() -> int:
             "--workspace",
             workspace,
         ]
-        proc = subprocess.Popen(cmd)
+        env = {**os.environ, "ASTRO_CANVAS_TOKEN": TOKEN, "ASTRO_CANVAS_CONFIG_DIR": workspace}
+        proc = subprocess.Popen(cmd, env=env)
         try:
             wait_ready()
             index = fetch("/")
@@ -60,6 +66,13 @@ def main() -> int:
             assert fetch("/api/nodes") == "[]", "node catalogue should be empty without packs"
             assert fetch("/api/types") == "[]"
             assert fetch("/api/packs") == "[]"
+            assert fetch("/api/workflows") == "[]", "workflow store should start empty"
+            try:
+                fetch("/api/workflows", token=None)
+            except urllib.error.HTTPError as exc:
+                assert exc.code == 401, "API must reject requests without the token"
+            else:
+                raise AssertionError("API answered without a token")
             sys.stdout.write("ok: wheel serves SPA and API\n")
             return 0
         finally:
