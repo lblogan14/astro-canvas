@@ -36,12 +36,13 @@ Open http://127.0.0.1:5173. The Vite dev server proxies `/api` and `/ws` to the 
 
 | Command | What it does |
 |---|---|
-| `task lint` | ruff, oxlint, eslint, prettier check, tooling rule |
+| `task lint` | ruff (backend, sdk, packs, scripts), oxlint, eslint, prettier check, tooling rule |
 | `task typecheck` | mypy (strict on `sdk/` and `engine/`) and vue-tsc |
-| `task test` | `test:py` (pytest with coverage), `test:fe` (Vitest), `test:e2e` (Playwright against a real backend) |
+| `task test` | `test:py` (pytest with coverage and per-package gates: `sdk/` >= 90 %), `test:fe` (Vitest), `test:e2e` (Playwright against a real backend) |
 | `task fmt` | ruff format/fix, oxlint/eslint fix, prettier write |
-| `task build` | `pnpm build` → copy `dist/` into `backend/src/astro_canvas/static/` → `uv build` → verify the wheel bundles `index.html` |
-| `task build:smoke` | install the wheel in a throwaway env and check `astro-canvas serve` serves the SPA |
+| `task build` | `pnpm build` → copy `dist/` into `backend/src/astro_canvas/static/` → build the `astro-canvas-sdk` and `astro-canvas` wheels → verify the app wheel bundles `index.html` |
+| `task build:smoke` | install both wheels in a throwaway env and check `astro-canvas serve` serves the SPA |
+| `task api:gen` | export `/api/openapi.json` to `backend/src/astro_canvas/server/openapi/` and regenerate `frontend/src/api/schema.d.ts` (CI fails if the snapshot is stale) |
 
 Headless runs set `MPLBACKEND=Agg` and `QT_QPA_PLATFORM=offscreen` (the Taskfile and CI do this for you).
 Point the server at a scratch workspace with `ASTRO_CANVAS_WORKSPACE=<dir>`.
@@ -49,7 +50,8 @@ Point the server at a scratch workspace with `ASTRO_CANVAS_WORKSPACE=<dir>`.
 ## Repository layout
 
 ```
-backend/    uv project → PyPI "astro-canvas" (sdk, engine, server, store, manager, cli)
+backend/    uv workspace root → PyPI "astro-canvas" (engine, server, store, manager, cli)
+backend/sdk uv workspace member → PyPI "astro-canvas-sdk" (the `astro_canvas.sdk` namespace portion packs depend on)
 frontend/   pnpm + Vite + Vue 3 + TypeScript (Pinia, Vue Router, Tailwind 4, shadcn-vue, vue-i18n)
 packs/      node packs, uv workspace members: core/ and rbcodes/
 launcher/   installers and PyApp launcher (phase 12)

@@ -8,8 +8,9 @@ headless nodes so undergrads and researchers can run the same tools in a browser
 
 ## Status
 
-**Pre-alpha, phase 00 of 13 (foundation).** The repository builds, lints, tests, and runs an empty FastAPI + Vue
-shell on Windows, macOS, and Linux. No nodes, engine, or canvas yet. See the roadmap below.
+**Pre-alpha, phase 01 of 13 (node SDK and registry).** The repository builds, lints, tests, and runs a FastAPI + Vue
+shell on Windows, macOS, and Linux. Packs register nodes and port types through `astro_canvas.sdk`; the server lists
+their schemas at `/api/nodes`, `/api/types`, `/api/packs`. No execution engine or canvas yet. See the roadmap below.
 
 | Phase | Outcome |
 |---|---|
@@ -36,7 +37,7 @@ task build                   # SPA → wheel with bundled static/ → backend/di
 Run the built wheel anywhere with uv:
 
 ```sh
-uv run --with backend/dist/astro_canvas-*.whl astro-canvas serve --open
+uv run --with backend/dist/astro_canvas_sdk-*.whl --with backend/dist/astro_canvas-*.whl astro-canvas serve --open
 ```
 
 Configuration is via `ASTRO_CANVAS_*` environment variables (`HOST`, `PORT`, `WORKSPACE`, `LOG_LEVEL`) or the
@@ -55,6 +56,9 @@ workspace members) · `launcher/`, `deploy/` (phase 12) · `registry/` (pack ind
 ## Documentation
 
 - [CONTRIBUTING.md](CONTRIBUTING.md): toolchain, tasks, conventions.
+- [docs/formats/node-schema.md](docs/formats/node-schema.md): the `/api/nodes` JSON contract (`NodeSpec`,
+  `ParamSpec`, port types, packs, blobs).
+- [backend/sdk/README.md](backend/sdk/README.md): writing nodes with the SDK.
 - [docs/dev/rbcodes-compat.md](docs/dev/rbcodes-compat.md): rbcodes on Python 3.12, test results, and the
   proposed upstream patch ([docs/dev/rbcodes-upstream.patch](docs/dev/rbcodes-upstream.patch)).
 - User documentation (mkdocs) arrives with the first user-visible features.
