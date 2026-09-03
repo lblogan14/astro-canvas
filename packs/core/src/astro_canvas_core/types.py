@@ -32,6 +32,8 @@ DEFAULT_TILE = 128
 """Default edge length of image thumbnails in summaries (``n_out`` in the viewport raises it)."""
 MAX_TILE = 1024
 DEFAULT_TABLE_ROWS = 50
+SUMMARY_BYTES = 32 * 1024 * 1024
+"""How much of a cube a summary may read; larger cubes are sampled with a stride."""
 
 
 def _viewport_int(
@@ -58,6 +60,16 @@ def zscale_limits(data: npt.NDArray[TypingAny]) -> tuple[float, float]:
     if not (math.isfinite(lo) and math.isfinite(hi)) or lo == hi:
         return float(finite.min()), float(finite.max())
     return float(lo), float(hi)
+
+
+def _stride_to_budget(
+    index: npt.NDArray[np.intp], item_bytes: int, max_bytes: int | None
+) -> npt.NDArray[np.intp]:
+    """Thin ``index`` with an even stride so ``len(index) * item_bytes <= max_bytes``."""
+    if max_bytes is None or max_bytes <= 0 or item_bytes <= 0 or index.size == 0:
+        return index
+    step = max(1, math.ceil(index.size * item_bytes / max_bytes))
+    return index[::step]
 
 
 def image_tile(data: npt.NDArray[TypingAny], max_size: int) -> dict[str, TypingAny]:
@@ -358,7 +370,15 @@ class Image2D(PortType):
 
 @port_type(id="astro.Cube3D", color="#DB2777", summary_renderer="cube-thumb")
 class Cube3D(PortType):
-    """An IFU data cube ``flux[nz, ny, nx]`` with its wavelength axis."""
+    """An IFU data cube ``flux[nz, ny, nx]`` with its wavelength axis.
+
+    ``flux`` and ``var`` are stored as their own blob parts, so a cube read back from the cache is
+    a read-only ``numpy.memmap`` over the content-addressed store rather than a copy in the
+    server's heap (``PortType.from_blob_file``). Collapses and summaries therefore touch only the
+    channels they need; nothing here reads the whole array.
+    """
+
+    __mmap_fields__ = ("flux", "var")
 
     flux: Float32_3D
     var: Float32_3D | None = None
@@ -379,10 +399,8 @@ class Cube3D(PortType):
     def shape(self) -> tuple[int, int, int]:
         return int(self.flux.shape[0]), int(self.flux.shape[1]), int(self.flux.shape[2])
 
-    def white_light(
-        self, lo: float | None = None, hi: float | None = None
-    ) -> npt.NDArray[np.float32]:
-        """Mean over the spectral axis (optionally restricted to ``[lo, hi]``), NaN-aware."""
+    def band(self, lo: float | None = None, hi: float | None = None) -> npt.NDArray[np.bool_]:
+        """Channel mask for ``[lo, hi]`` (every channel when the window selects nothing)."""
         keep = np.ones(self.wave.shape[0], dtype=bool)
         if lo is not None:
             keep &= self.wave >= lo
@@ -390,19 +408,63 @@ class Cube3D(PortType):
             keep &= self.wave <= hi
         if not keep.any():
             keep[:] = True
+        return keep
+
+    def white_light(
+        self,
+        lo: float | None = None,
+        hi: float | None = None,
+        max_bytes: int | None = None,
+    ) -> npt.NDArray[np.float32]:
+        """Mean over the spectral axis (optionally restricted to ``[lo, hi]``), NaN-aware.
+
+        ``max_bytes`` caps how much of the cube is read: channels are then sampled with an even
+        stride, which is what summaries use so a 500 MB cube never lands in memory at once.
+        """
+        keep = np.flatnonzero(self.band(lo, hi))
+        keep = _stride_to_budget(keep, self.plane_bytes(), max_bytes)
         with np.errstate(all="ignore"):
             image = np.nanmean(self.flux[keep], axis=0)
         return np.asarray(image, dtype=np.float32)
 
+    def plane_bytes(self) -> int:
+        """Bytes in one spectral plane (``ny * nx * 4``)."""
+        return int(self.flux.shape[1]) * int(self.flux.shape[2]) * 4
+
+    def integrated(
+        self, max_bytes: int | None = None
+    ) -> tuple[npt.NDArray[np.intp], npt.NDArray[np.float64]]:
+        """Spatially summed spectrum as ``(channels, values)``, read in wavelength chunks.
+
+        ``max_bytes`` caps the read by sampling *channels* with an even stride rather than spaxels:
+        every returned point is then a full spatial sum of a real channel, and the pages faulted in
+        are exactly the ones summed (striding rows instead would touch four times as many pages as
+        it reads bytes, because a strided row still pulls in its whole memory page).
+        """
+        nz = self.shape[0]
+        channels = _stride_to_budget(np.arange(nz), self.plane_bytes(), max_bytes)
+        out = np.empty(channels.size, dtype=np.float64)
+        chunk = max(1, (16 * 1024 * 1024) // max(1, self.plane_bytes()))
+        with np.errstate(all="ignore"):
+            for start in range(0, channels.size, chunk):
+                picked = channels[start : start + chunk]
+                out[start : start + picked.size] = np.nansum(
+                    np.asarray(self.flux[picked], dtype=np.float64), axis=(1, 2)
+                )
+        return channels, out
+
     def summary(self, viewport: Mapping[str, TypingAny] | None = None) -> dict[str, TypingAny]:
-        """White-light thumbnail (``lo``/``hi`` restrict the band) plus the integrated spectrum."""
+        """White-light thumbnail (``lo``/``hi`` restrict the band) plus the integrated spectrum.
+
+        Both are computed from a strided sample capped at ``SUMMARY_BYTES``: previewing a cube
+        must stay cheap however large it is.
+        """
         size = _viewport_int(viewport, "n_out", DEFAULT_TILE, MAX_TILE)
         lo = viewport.get("lo") if viewport else None
         hi = viewport.get("hi") if viewport else None
         band = (float(lo) if lo is not None else None, float(hi) if hi is not None else None)
-        with np.errstate(all="ignore"):
-            integrated = np.nansum(self.flux, axis=(1, 2)).astype(np.float64)
-        pick = decimate_indices(self.wave, integrated, n_out=512)
+        channels, integrated = self.integrated(max_bytes=SUMMARY_BYTES)
+        pick = channels[decimate_indices(self.wave[channels], integrated, n_out=512)]
         return {
             "type": self.type_id(),
             "shape": list(self.shape),
@@ -413,8 +475,11 @@ class Cube3D(PortType):
             "band": [band[0], band[1]],
             "has_var": self.var is not None,
             "wcs": self.wcs,
-            "tile": image_tile(self.white_light(*band), size),
-            "spectrum": {"wave": self.wave[pick].tolist(), "flux": integrated[pick].tolist()},
+            "tile": image_tile(self.white_light(*band, max_bytes=SUMMARY_BYTES), size),
+            "spectrum": {
+                "wave": _json_list(self.wave[pick]),
+                "flux": _json_list(integrated[np.searchsorted(channels, pick)]),
+            },
         }
 
 
@@ -519,7 +584,7 @@ class Continuum(PortType):
             "type": self.type_id(),
             "n": n,
             "index": index.tolist(),
-            "cont": self.cont[index].tolist(),
+            "cont": _json_list(self.cont[index]),
             "masks": [[float(lo), float(hi)] for lo, hi in self.masks],
             "method": self.method,
             "order": self.order,
@@ -556,12 +621,20 @@ class RangeMask(PortType):
 
 
 class Region(BaseModel):
-    """One aperture in pixel coordinates (and optionally sky coordinates in degrees)."""
+    """One aperture, in pixel coordinates and (when a WCS is known) sky coordinates.
+
+    ``pixel`` is 0-based and laid out per shape: ``circle`` ``[cx, cy, r]``, ``annulus``
+    ``[cx, cy, r_in, r_out]``, ``box`` ``[cx, cy, width, height, angle_deg]`` (counter-clockwise,
+    as ds9 writes it) and ``polygon`` ``[x1, y1, x2, y2, ...]``. ``sky`` mirrors it with the centre
+    in degrees and sizes in arcseconds (polygon vertices in degrees). ``role`` separates the
+    apertures a spectrum is extracted from (``source``) from the ones that estimate the background.
+    """
 
     shape: Literal["circle", "box", "annulus", "polygon"]
     pixel: list[float]
     sky: list[float] | None = None
     label: str | None = None
+    role: Literal["source", "background"] = "source"
 
 
 @port_type(id="astro.Region2D", color="#14B8A6", summary_renderer="region-overlay")
@@ -569,6 +642,17 @@ class Region2D(PortType):
     """A set of apertures drawn on an image."""
 
     regions: list[Region]
+
+    def __len__(self) -> int:
+        return len(self.regions)
+
+    def summary(self, viewport: Mapping[str, TypingAny] | None = None) -> dict[str, TypingAny]:
+        """Every aperture as a plain row: the list is small and the overlay needs all of it."""
+        return {
+            "type": self.type_id(),
+            "count": len(self.regions),
+            "regions": [r.model_dump(mode="json") for r in self.regions],
+        }
 
 
 @port_type(id="astro.EWMeasurement", color="#6366F1", summary_renderer="kv-tile")

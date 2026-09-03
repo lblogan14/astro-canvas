@@ -82,8 +82,14 @@ export class Wcs2D {
     const cdelt: [number, number] = [dict.cdelt?.[0] ?? 1, dict.cdelt?.[1] ?? 1]
 
     let m: [number, number, number, number]
-    if (dict.cd && dict.cd.length >= 2) {
-      m = [dict.cd[0]?.[0] ?? 0, dict.cd[0]?.[1] ?? 0, dict.cd[1]?.[0] ?? 0, dict.cd[1]?.[1] ?? 0]
+    // A cube written with CDELT1/2 for the sky and CD3_3 for the wavelength leaves the spatial 2x2
+    // block of `cd` empty; falling through to CDELT is what astropy and rbcodes both do.
+    const cd = dict.cd && dict.cd.length >= 2 ? dict.cd : null
+    const spatialCd = cd
+      ? ([cd[0]?.[0] ?? 0, cd[0]?.[1] ?? 0, cd[1]?.[0] ?? 0, cd[1]?.[1] ?? 0] as const)
+      : null
+    if (spatialCd && spatialCd[0] * spatialCd[3] - spatialCd[1] * spatialCd[2] !== 0) {
+      m = [spatialCd[0], spatialCd[1], spatialCd[2], spatialCd[3]]
     } else if (dict.pc && dict.pc.length >= 2) {
       m = [
         cdelt[0] * (dict.pc[0]?.[0] ?? 1),

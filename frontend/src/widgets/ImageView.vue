@@ -20,6 +20,7 @@ import {
   sampleTile,
 } from '@/lib/tile'
 import { type WcsDict, formatDec, formatRa, wcsFromDict } from '@/lib/wcs'
+import { formatCompact as formatValue } from './formatValue'
 
 const props = withDefaults(
   defineProps<{
@@ -57,6 +58,7 @@ const view = ref({ scale: 1, tx: 0, ty: 0 })
 const hover = ref<{ x: number; y: number; value: number } | null>(null)
 let dragging: { x: number; y: number; tx: number; ty: number } | null = null
 let observer: ResizeObserver | null = null
+let frame: number | null = null
 let fitted = false
 
 const wcs = computed(() => wcsFromDict(props.wcs ?? null))
@@ -219,25 +221,27 @@ const readout = computed(() => {
   return parts
 })
 
-function formatValue(value: number): string {
-  if (!Number.isFinite(value)) return 'NaN'
-  const abs = Math.abs(value)
-  if (abs !== 0 && (abs < 1e-3 || abs >= 1e6)) return value.toExponential(3)
-  return value.toPrecision(5).replace(/\.?0+$/, '')
-}
-
 onMounted(() => {
   repaint()
   if (typeof ResizeObserver !== 'undefined' && container.value) {
+    // Resizing the canvas inside the callback would re-trigger the observer ("loop completed with
+    // undelivered notifications"), so the redraw is deferred to the next frame.
     observer = new ResizeObserver(() => {
-      if (!fitted) fit()
-      draw()
+      if (frame !== null) return
+      frame = requestAnimationFrame(() => {
+        frame = null
+        if (!fitted) fit()
+        draw()
+      })
     })
     observer.observe(container.value)
   }
 })
 
-onBeforeUnmount(() => observer?.disconnect())
+onBeforeUnmount(() => {
+  if (frame !== null) cancelAnimationFrame(frame)
+  observer?.disconnect()
+})
 
 watch(
   () => props.tile,

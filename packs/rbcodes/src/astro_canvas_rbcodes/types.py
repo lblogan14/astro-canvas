@@ -3,10 +3,11 @@
 ``ZFindResult``/``AbsorberResult``/``ZSolution`` mirror the dataclasses in
 ``rbcodes.GUIs.zfind.io``; the searched spectrum travels inside the result (``input_spec``) so
 the ``z-accept`` editor can overlay lines on it without another request. ``ZCandidates`` is the
-ranked candidate table produced by ``rbcodes.zfind.rank``, and ``MultispecView`` is what
+ranked candidate table produced by ``rbcodes.zfind.rank``, ``MultispecView`` is what
 ``rbcodes.multispec.view`` draws (the stacked panels plus the absorber and identified-line
-catalogues). Summaries are JSON-safe (non-finite
-numbers become ``null``) and decimate the curves to the viewport's ``n_out``.
+catalogues) and ``MomentMaps`` is what ``rbcodes.ifu.moment_maps`` produces. Summaries are
+JSON-safe (non-finite numbers become ``null``) and decimate the curves to the viewport's
+``n_out``.
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ import numpy.typing as npt
 from astro_canvas_core.types import Spectrum1D
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from astro_canvas.sdk import Float1D, PortType, decimate_indices, port_type
+from astro_canvas.sdk import Float1D, Float32_2D, PortType, decimate_indices, port_type
 
 Statistic = Literal["chi2", "score", "significance"]
 """What the curve measures: reduced chi-square (templates, PCA), the negative SNR-like score of
@@ -357,11 +358,76 @@ class MultispecView(PortType):
         }
 
 
+@port_type(id="rbcodes.MomentMaps", color="#F472B6", summary_renderer="moment-thumbs")
+class MomentMaps(PortType):
+    """The moment maps of one emission line: integrated flux, velocity, dispersion and SNR.
+
+    ``m0`` is the integrated flux over ``window``; ``m1`` and ``m2`` are the flux-weighted velocity
+    centroid and dispersion in km/s relative to ``lambda_rest`` (both NaN where ``m0 <= 0``), and
+    ``snr`` is the per-spaxel signal-to-noise of ``m0``. Spatial ``wcs`` is the cube's celestial
+    part, so the maps overlay the same apertures the spectra were extracted from.
+    """
+
+    m0: Float32_2D
+    m1: Float32_2D | None = None
+    m2: Float32_2D | None = None
+    snr: Float32_2D | None = None
+    wcs: dict[str, Any] | None = None
+    unit: str | None = None
+    lambda_rest: float | None = None
+    window: tuple[float, float] | None = None
+    meta: dict[str, Any] = {}
+
+    @model_validator(mode="after")
+    def _same_shape(self) -> MomentMaps:
+        for name in ("m1", "m2", "snr"):
+            array = getattr(self, name)
+            if array is not None and array.shape != self.m0.shape:
+                raise ValueError(f"{name} must have the same shape as m0")
+        return self
+
+    @property
+    def shape(self) -> tuple[int, int]:
+        return int(self.m0.shape[0]), int(self.m0.shape[1])
+
+    def maps(self) -> list[tuple[str, npt.NDArray[np.float32], str]]:
+        """The present maps as ``(key, data, unit)``, in display order."""
+        out: list[tuple[str, npt.NDArray[np.float32], str]] = [("m0", self.m0, self.unit or "")]
+        if self.m1 is not None:
+            out.append(("m1", self.m1, "km/s"))
+        if self.m2 is not None:
+            out.append(("m2", self.m2, "km/s"))
+        if self.snr is not None:
+            out.append(("snr", self.snr, ""))
+        return out
+
+    def summary(self, viewport: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        """One tile per map (edge <= ``n_out``, default 96) sharing the preview's colour map."""
+        from astro_canvas_core.types import image_tile  # noqa: PLC0415 - avoids an import cycle
+
+        size = _viewport_int(viewport, "n_out", 96, 512)
+        return {
+            "type": self.type_id(),
+            "shape": list(self.shape),
+            "unit": self.unit,
+            "lambda_rest": json_float(self.lambda_rest),
+            "window": [json_float(self.window[0]), json_float(self.window[1])]
+            if self.window
+            else None,
+            "wcs": self.wcs,
+            "maps": [
+                {"key": key, "unit": unit, "tile": image_tile(data, size)}
+                for key, data, unit in self.maps()
+            ],
+        }
+
+
 __all__ = [
     "AbsorberCandidate",
     "AbsorberResult",
     "AbsorberSystem",
     "IdentifiedLine",
+    "MomentMaps",
     "MultispecView",
     "Statistic",
     "ZCandidateRow",

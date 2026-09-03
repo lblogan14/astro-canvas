@@ -3,7 +3,7 @@ export { default as PlotlyView } from './PlotlyView.vue'
 export { default as ImageView } from './ImageView.vue'
 export { default as DataTable } from './DataTable.vue'
 export { default as KeyValueTile } from './KeyValueTile.vue'
-export { formatKvValue } from './formatValue'
+export { formatCompact, formatKvValue } from './formatValue'
 export type { PlotlyFigure } from './PlotlyView.vue'
 export type { TableHead } from './DataTable.vue'
 export {

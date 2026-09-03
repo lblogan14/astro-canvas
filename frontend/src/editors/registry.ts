@@ -6,6 +6,7 @@ import type { Component } from 'vue'
 
 import type { NodeSpec } from '@/api/types'
 
+import ApertureEditor from './ApertureEditor.vue'
 import ContinuumMaskEditor from './ContinuumMaskEditor.vue'
 import LinePickerEditor from './LinePickerEditor.vue'
 import MultispecViewerEditor from './MultispecViewerEditor.vue'
@@ -13,7 +14,12 @@ import RangeSelectEditor from './RangeSelectEditor.vue'
 import ZAcceptEditor from './ZAcceptEditor.vue'
 
 export type EditorId =
-  'range-select' | 'line-picker' | 'continuum-mask' | 'z-accept' | 'multispec-viewer'
+  | 'range-select'
+  | 'line-picker'
+  | 'continuum-mask'
+  | 'z-accept'
+  | 'multispec-viewer'
+  | 'aperture-editor'
 
 /** Tag used for every `preview.request` / `preview.compute` an editor issues. */
 export const EDITOR_TAG = 'editor'
@@ -30,6 +36,7 @@ const COMPONENTS: Record<EditorId, Component> = {
   'continuum-mask': ContinuumMaskEditor,
   'z-accept': ZAcceptEditor,
   'multispec-viewer': MultispecViewerEditor,
+  'aperture-editor': ApertureEditor,
 }
 
 export function isEditorId(value: unknown): value is EditorId {
