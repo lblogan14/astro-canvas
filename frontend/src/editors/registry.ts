@@ -9,8 +9,9 @@ import type { NodeSpec } from '@/api/types'
 import ContinuumMaskEditor from './ContinuumMaskEditor.vue'
 import LinePickerEditor from './LinePickerEditor.vue'
 import RangeSelectEditor from './RangeSelectEditor.vue'
+import ZAcceptEditor from './ZAcceptEditor.vue'
 
-export type EditorId = 'range-select' | 'line-picker' | 'continuum-mask'
+export type EditorId = 'range-select' | 'line-picker' | 'continuum-mask' | 'z-accept'
 
 /** Tag used for every `preview.request` / `preview.compute` an editor issues. */
 export const EDITOR_TAG = 'editor'
@@ -25,6 +26,7 @@ const COMPONENTS: Record<EditorId, Component> = {
   'range-select': RangeSelectEditor,
   'line-picker': LinePickerEditor,
   'continuum-mask': ContinuumMaskEditor,
+  'z-accept': ZAcceptEditor,
 }
 
 export function isEditorId(value: unknown): value is EditorId {

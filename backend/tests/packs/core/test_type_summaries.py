@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 from astro_canvas_core.types import Continuum, LineList
 
 
@@ -45,3 +46,27 @@ def test_linelist_summary_lists_transitions_up_to_rows() -> None:
     assert summary["wrest"][2] == 2796.35 and summary["gamma"][0] == 6.265e8
     head = lines.summary({"rows": 2})
     assert len(head["wrest"]) == 2 and head["n"] == 3
+
+
+def test_linelist_optional_weight_and_kind_columns() -> None:
+    lines = LineList(
+        wrest=np.array([3727.09, 3934.78]),
+        name=np.array(["[OII] 3727", "CaII K"]),
+        fval=np.array([2.0, 0.635]),
+        weight=np.array([2.0, 0.635]),
+        kind=np.array(["emission", "absorption"]),
+        source="zfind_galaxy",
+    )
+    summary = lines.summary()
+    assert summary["weight"] == [2.0, 0.635] and summary["kind"] == ["emission", "absorption"]
+    assert (
+        "weight"
+        not in LineList(wrest=np.array([1.0]), name=np.array(["a"]), fval=np.array([0.1])).summary()
+    )
+    with pytest.raises(ValueError, match="kind must have the same length"):
+        LineList(
+            wrest=np.array([1.0, 2.0]),
+            name=np.array(["a", "b"]),
+            fval=np.array([0.1, 0.2]),
+            kind=np.array(["emission"]),
+        )

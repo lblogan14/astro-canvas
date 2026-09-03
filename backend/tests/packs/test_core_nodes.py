@@ -87,7 +87,7 @@ def test_rbcodes_pack_registers_nodes_and_guards_qt() -> None:
 
     reg = NodeRegistry()
     astro_canvas_rbcodes.register(reg.for_pack("rbcodes"))
-    assert len(reg) == 11 and all(i.startswith("rbcodes.") for i in reg.ids())
+    assert len(reg) == 21 and all(i.startswith("rbcodes.") for i in reg.ids())
     assert "rbcodes" in reg.sample_dirs and "rbcodes" in reg.template_dirs
     assert reg.security["rbcodes"] == "standard"
     assert os.environ["MPLBACKEND"] == "Agg"

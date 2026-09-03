@@ -189,13 +189,15 @@ class Spectrum1D(PortType):
             index = index[(self.wave >= min(lo, hi)) & (self.wave <= max(lo, hi))]
         wave, flux = self.wave[index], self.flux[index]
         pick = index[decimate_indices(wave, flux, n_out=n_out)]
+        # Non-finite values become ``null``: ``json.dumps`` would emit ``NaN``, which browsers
+        # reject (SDSS pixels with ``ivar = 0`` have an infinite/NaN error).
         out: dict[str, TypingAny] = {
             "type": self.type_id(),
             "n": len(self),
             "n_view": int(index.size),
             "range": [float(self.wave[0]), float(self.wave[-1])] if len(self) else None,
-            "wave": self.wave[pick].tolist(),
-            "flux": self.flux[pick].tolist(),
+            "wave": _json_list(self.wave[pick]),
+            "flux": _json_list(self.flux[pick]),
             "wave_unit": self.wave_unit,
             "flux_unit": self.flux_unit,
             "frame": self.frame,
@@ -203,9 +205,9 @@ class Spectrum1D(PortType):
             "v0_wrest": self.v0_wrest,
         }
         if self.error is not None:
-            out["error"] = self.error[pick].tolist()
+            out["error"] = _json_list(self.error[pick])
         if self.continuum is not None:
-            out["continuum"] = self.continuum[pick].tolist()
+            out["continuum"] = _json_list(self.continuum[pick])
         return out
 
 
@@ -425,12 +427,18 @@ class Transition(PortType):
 
 @port_type(id="astro.LineList", color="#FB923C", summary_renderer="linelist-chip")
 class LineList(PortType):
-    """A list of transitions as parallel arrays."""
+    """A list of transitions as parallel arrays.
+
+    ``weight`` and ``kind`` (``emission``/``absorption``) are optional columns used by redshift
+    finders (rbcodes' curated zfind presets carry both); atomic lists leave them unset.
+    """
 
     wrest: Float1D
     name: StrArray
     fval: Float1D
     gamma: Float1D | None = None
+    weight: Float1D | None = None
+    kind: StrArray | None = None
     source: str | None = None
 
     @model_validator(mode="after")
@@ -438,8 +446,10 @@ class LineList(PortType):
         n = self.wrest.shape[0]
         if self.name.shape[0] != n or self.fval.shape[0] != n:
             raise ValueError("wrest, name and fval must have the same length")
-        if self.gamma is not None and self.gamma.shape[0] != n:
-            raise ValueError("gamma must have the same length as wrest")
+        for column in ("gamma", "weight", "kind"):
+            arr = getattr(self, column)
+            if arr is not None and arr.shape[0] != n:
+                raise ValueError(f"{column} must have the same length as wrest")
         return self
 
     def __len__(self) -> int:
@@ -458,6 +468,10 @@ class LineList(PortType):
         }
         if self.gamma is not None:
             out["gamma"] = self.gamma[:rows].tolist()
+        if self.weight is not None:
+            out["weight"] = self.weight[:rows].tolist()
+        if self.kind is not None:
+            out["kind"] = [str(v) for v in self.kind[:rows].tolist()]
         return out
 
 

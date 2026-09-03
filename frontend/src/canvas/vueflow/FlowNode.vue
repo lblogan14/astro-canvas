@@ -94,7 +94,13 @@ function openEditor(): void {
     />
     <NodeToolbar :is-visible="singleSelected && !lod" :position="Position.Top" :offset="8">
       <div class="flex items-center gap-0.5 rounded-md border bg-popover p-0.5 shadow-sm">
-        <button type="button" class="ac-toolbar-btn" :title="t('node.run_here')" @click="runHere">
+        <button
+          type="button"
+          class="ac-toolbar-btn"
+          :title="t('node.run_here')"
+          data-testid="node-run"
+          @click="runHere"
+        >
           <Play class="size-3.5" />
         </button>
         <button

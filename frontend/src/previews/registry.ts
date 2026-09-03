@@ -7,6 +7,7 @@ import type { Component } from 'vue'
 import type { NodeSpec, PortTypeSpec } from '@/api/types'
 import { isTileSummary } from '@/lib/tile'
 
+import CandidatesTable from './renderers/CandidatesTable.vue'
 import CubeThumb from './renderers/CubeThumb.vue'
 import FigurePreview from './renderers/FigurePreview.vue'
 import FileChip from './renderers/FileChip.vue'
@@ -15,6 +16,7 @@ import KvTile from './renderers/KvTile.vue'
 import SpectrumThumb from './renderers/SpectrumThumb.vue'
 import TableHead from './renderers/TableHead.vue'
 import ValueChip from './renderers/ValueChip.vue'
+import ZFindCurve from './renderers/ZFindCurve.vue'
 
 export type PreviewId =
   | 'spectrum-thumb'
@@ -26,6 +28,8 @@ export type PreviewId =
   | 'figure'
   | 'file-chip'
   | 'value-chip'
+  | 'zfind-curve'
+  | 'candidates-table'
 
 /** Props every renderer receives. */
 export interface PreviewProps {
@@ -47,6 +51,8 @@ const COMPONENTS: Record<PreviewId, Component> = {
   figure: FigurePreview,
   'file-chip': FileChip,
   'value-chip': ValueChip,
+  'zfind-curve': ZFindCurve,
+  'candidates-table': CandidatesTable,
 }
 
 /** Backend `summary_renderer` ids → frontend preview ids. */
@@ -66,6 +72,8 @@ const RENDERER_ALIASES: Record<string, PreviewId> = {
   'file-chip': 'file-chip',
   'value-chip': 'value-chip',
   'type-name': 'value-chip',
+  'zfind-curve': 'zfind-curve',
+  'candidates-table': 'candidates-table',
 }
 
 /** Renderers that have a full-size view in the viewer sheet. */
@@ -86,6 +94,8 @@ export function isPreviewId(value: unknown): value is PreviewId {
 /** Guess a renderer from the payload when no metadata says otherwise. */
 export function rendererFromSummary(summary: Record<string, unknown>): PreviewId {
   if (Array.isArray(summary['wave']) && Array.isArray(summary['flux'])) return 'spectrum-thumb'
+  if (Array.isArray(summary['z']) && Array.isArray(summary['curves'])) return 'zfind-curve'
+  if (Array.isArray(summary['rows']) && 'accepted' in summary) return 'candidates-table'
   if (isTileSummary(summary['tile'])) {
     return Array.isArray(summary['shape']) && summary['shape'].length === 3
       ? 'cube-thumb'
@@ -127,6 +137,7 @@ export function previewBudget(id: PreviewId, width: number): number | null {
   switch (id) {
     case 'spectrum-thumb':
     case 'spectrum-stack':
+    case 'zfind-curve':
       return Math.min(4000, Math.max(200, w * 2))
     case 'image-thumb':
     case 'cube-thumb':

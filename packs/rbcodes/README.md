@@ -21,6 +21,24 @@ never imports `rbcodes` itself (Qt side effects); node modules import it lazily 
 Template: `templates/absorption-line-measurement.acw` (SDSS quasar `sdss1.fits`, MgII 2796 at z = 1.3855),
 served through `GET /api/templates` and the Workflows panel.
 
+## Phase 06: redshift finding (`rb_zfind` as a workflow)
+
+| Node | rbcodes | Notes |
+|---|---|---|
+| `rbcodes.zfind.curated_linelist` | `GUIs.zfind.linelists` | the five presets with `weight`/`kind` columns |
+| `rbcodes.zfind.line_search`, `absorber_search` | `GUIs.zfind.engine.line_search` | emission mode -> `ZFindResult`; absorption mode -> `AbsorberResult` |
+| `rbcodes.zfind.picket_fence_search` | `GUIs.zfind.engine.picket_fence_search`, `picket_fence.PicketFenceZ` | weighted matched filter, Mode A/B |
+| `rbcodes.zfind.template_search`, `multi_template_search` | `GUIs.zfind.engine.template_search` | bundled MARZ templates (`kernels/zfind_templates/marz`) |
+| `rbcodes.zfind.pca_search`, `multi_pca_search` | `GUIs.zfind.engine.pca_search` | bundled redrock eigenvectors (`kernels/zfind_templates/pca`); `cost="expensive"`, progress, cancel |
+| `rbcodes.zfind.rank` | `GUIs.zfind.adapters` | up to four scans -> `Redshift` + `ZCandidates`; editor **z-accept** |
+| `rbcodes.zfind.absorbers_to_catalog` | `GUIs.zfind.adapters.absorbers_to_multispec` | `Table` of accepted absorbers |
+
+Port types `rbcodes.ZFindResult`, `rbcodes.AbsorberResult`, `rbcodes.ZSolution`, `rbcodes.ZCandidates`
+(`astro_canvas_rbcodes/types.py`). Template: `templates/redshift-finder.acw` (SDSS galaxy at z = 0.0059 and
+quasar at z = 3.01). The kernels are ports of `GUIs/zfind/{engine,picket_fence,linelists,adapters}.py`;
+`tests/packs/rbcodes/test_zfind_matches_rbcodes.py` asserts 1e-9 agreement where rbcodes is importable and
+`fixtures/reference_zfind.json` (from `generate_reference_zfind.py`) pins rbcodes' numbers for the 3.12 tests.
+
 ### rbcodes or the vendored kernels
 
 `rbcodes` still pins `python_requires <3.11`, so it installs only on Python 3.10 (the marker in
