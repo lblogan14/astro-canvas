@@ -514,7 +514,7 @@ def rbcodes_available() -> bool:
 def _read_with_rbcodes(path: Path) -> RawSpectrum | None:
     os.environ.setdefault("MPLBACKEND", "Agg")
     try:
-        from rbcodes.utils.rb_spectrum import (  # type: ignore[import-not-found]  # noqa: PLC0415
+        from rbcodes.utils.rb_spectrum import (  # noqa: PLC0415
             rb_read_spectrum,
         )
     except Exception:  # noqa: BLE001 - optional dependency with heavy imports

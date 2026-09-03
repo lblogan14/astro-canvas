@@ -140,7 +140,16 @@ module = ["astro_canvas.sdk.*", "astro_canvas.engine.*"]
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["astropy.*", "pyarrow.*", "msgpack", "msgpack.*", "scipy", "scipy.*"]
+module = [
+  "astropy.*",
+  "pyarrow.*",
+  "msgpack",
+  "msgpack.*",
+  "scipy",
+  "scipy.*",
+  "rbcodes.*",
+  "pandas",
+]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
