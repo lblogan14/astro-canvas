@@ -10,9 +10,18 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10,<3.14"
 authors = [{ name = "Bin Liu" }]
-dependencies = []
+dependencies = [
+  "astro-canvas-sdk",
+  "numpy>=1.26",
+  "astropy>=6",
+  "pyarrow>=16",
+]
 
-# Node entry points (`astro_canvas.nodes`) are registered in phase 01.
+[project.entry-points."astro_canvas.nodes"]
+core = "astro_canvas_core:register"
+
+[tool.uv.sources]
+astro-canvas-sdk = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/astro_canvas_core"]

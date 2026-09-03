@@ -11,7 +11,7 @@ from typing import Literal
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
-from astro_canvas import __version__
+from astro_canvas._version import __version__
 from astro_canvas.settings import Settings
 
 router = APIRouter(tags=["system"])
@@ -25,11 +25,13 @@ class HealthResponse(BaseModel):
 
 
 class PackInfo(BaseModel):
-    """Summary of an installed node pack (populated from phase 01 onwards)."""
+    """Summary of a discovered node pack (full detail at ``/api/packs``)."""
 
     name: str
     version: str
     enabled: bool = True
+    node_count: int = 0
+    error: str | None = None
 
 
 class SystemInfo(BaseModel):
@@ -73,5 +75,14 @@ def system(request: Request) -> SystemInfo:
         workspace_exists=settings.workspace.is_dir(),
         disk_free_bytes=free,
         disk_total_bytes=total,
-        packs=[],
+        packs=[
+            PackInfo(
+                name=p.name,
+                version=p.version,
+                enabled=p.enabled,
+                node_count=p.node_count,
+                error=p.error.error if p.error else None,
+            )
+            for p in request.app.state.packs
+        ],
     )

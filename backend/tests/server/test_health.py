@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from astro_canvas import __version__
+from astro_canvas._version import __version__
 from astro_canvas.server.app import create_app
-from astro_canvas.server.static import mount_static
+from astro_canvas.server.static import STATIC_DIR, mount_static
 from astro_canvas.settings import Settings
 
 
@@ -25,7 +26,8 @@ def test_system_reports_environment(client: TestClient, settings: Settings) -> N
     assert body["workspace"] == str(settings.workspace)
     assert body["workspace_exists"] is True
     assert body["disk_total_bytes"] >= body["disk_free_bytes"] > 0
-    assert body["packs"] == []
+    assert [p["name"] for p in body["packs"]] == ["core", "rbcodes"]
+    assert body["packs"][0]["node_count"] == 7 and body["packs"][0]["error"] is None
     assert body["python"].count(".") == 2
 
 
@@ -42,6 +44,8 @@ def test_openapi_lives_under_api(client: TestClient) -> None:
 
 
 def test_no_static_build_means_no_root_route(client: TestClient) -> None:
+    if STATIC_DIR.joinpath("index.html").is_file():
+        pytest.skip("a built SPA is present in astro_canvas/static (run `task clean`)")
     assert client.get("/").status_code == 404
 
 

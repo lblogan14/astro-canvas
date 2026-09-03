@@ -1,0 +1,86 @@
+{
+  "category": "Spectra/Transform",
+  "cost": "cheap",
+  "deprecated": false,
+  "description": "Convert the wavelength axis to velocity (km/s) relative to a transition at redshift ``z``.\n\nUses ``v = c (lambda / (wrest (1 + z)) - 1)`` like rbcodes' ``rb_spec``. Rest-frame input is\nhandled by treating ``z`` as already applied.",
+  "editor": null,
+  "expand": false,
+  "experimental": false,
+  "fingerprint": false,
+  "icon": "gauge",
+  "id": "core.spec.to_velocity",
+  "inputs": [
+    {
+      "description": "Observed- or rest-frame spectrum.",
+      "lazy": false,
+      "name": "spec",
+      "required": true,
+      "type": "astro.Spectrum1D"
+    }
+  ],
+  "is_async": false,
+  "module": "astro_canvas_core.nodes.spec",
+  "name": "To Velocity",
+  "outputs": [
+    {
+      "description": "The spectrum on a velocity axis (``frame='velocity'``, ``wave_unit='km / s'``).",
+      "lazy": false,
+      "name": "out",
+      "required": true,
+      "type": "astro.Spectrum1D"
+    }
+  ],
+  "pack": null,
+  "param_docs": {
+    "spec": "Observed- or rest-frame spectrum.",
+    "wrest": "Rest wavelength of the transition.",
+    "z": "Redshift of the absorber (ignored for rest-frame input)."
+  },
+  "params": [
+    {
+      "advanced": false,
+      "default": null,
+      "description": "Rest wavelength of the transition.",
+      "json_schema": {
+        "description": "Rest wavelength of the transition.",
+        "minimum": 0.0,
+        "title": "Wrest",
+        "type": "number",
+        "x-unit": "Angstrom",
+        "x-widget": "wavelength"
+      },
+      "label": "Wrest",
+      "link_type": "astro.Float",
+      "linkable": true,
+      "name": "wrest",
+      "required": true,
+      "step": null,
+      "unit": "Angstrom",
+      "widget": "wavelength"
+    },
+    {
+      "advanced": false,
+      "default": 0.0,
+      "description": "Redshift of the absorber (ignored for rest-frame input).",
+      "json_schema": {
+        "default": 0.0,
+        "description": "Redshift of the absorber (ignored for rest-frame input).",
+        "maximum": 20.0,
+        "minimum": -0.1,
+        "title": "Z",
+        "type": "number",
+        "x-widget": "redshift"
+      },
+      "label": "Z",
+      "link_type": "astro.Float",
+      "linkable": true,
+      "name": "z",
+      "required": false,
+      "step": null,
+      "unit": null,
+      "widget": "redshift"
+    }
+  ],
+  "preview": null,
+  "version": "1.0.0"
+}
