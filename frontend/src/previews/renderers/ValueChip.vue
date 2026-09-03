@@ -33,6 +33,7 @@ const text = computed(() => {
   <span
     class="inline-flex max-w-full items-center gap-1 rounded bg-muted px-1.5 py-0.5 font-mono text-[11px]"
     data-preview="value-chip"
+    :data-summary-port="port"
   >
     <span class="text-muted-foreground">{{ port }}</span>
     <span class="truncate" :title="text">{{ text }}</span>
