@@ -9,7 +9,8 @@ import httpx
 import pytest
 from typer.testing import CliRunner
 
-from astro_canvas import __version__, cli
+from astro_canvas import cli
+from astro_canvas._version import __version__
 from astro_canvas.settings import Settings
 
 runner = CliRunner()

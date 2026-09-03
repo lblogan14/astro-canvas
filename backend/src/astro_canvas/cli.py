@@ -13,7 +13,7 @@ import structlog
 import typer
 import uvicorn
 
-from astro_canvas import __version__
+from astro_canvas._version import __version__
 from astro_canvas.logging import configure_logging
 from astro_canvas.server.app import create_app
 from astro_canvas.settings import Settings, get_settings

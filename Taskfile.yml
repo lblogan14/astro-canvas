@@ -40,8 +40,8 @@ tasks:
   lint:
     desc: ruff + oxlint + eslint + prettier check + tooling rule
     cmds:
-      - uv run --directory {{.BE}} ruff check . ../scripts
-      - uv run --directory {{.BE}} ruff format --check . ../scripts
+      - uv run --directory {{.BE}} ruff check . ../packs ../scripts
+      - uv run --directory {{.BE}} ruff format --check . ../packs ../scripts
       - pnpm -C {{.FE}} lint
       - pnpm -C {{.FE}} format:check
       - task: check:tooling
@@ -60,9 +60,10 @@ tasks:
       - task: test:e2e
 
   test:py:
-    desc: Backend pytest with coverage
+    desc: Backend pytest with coverage and per-package gates (sdk >= 90%)
     cmds:
       - uv run --directory {{.BE}} pytest
+      - uv run --directory {{.BE}} python ../scripts/check_coverage.py
 
   test:fe:
     desc: Frontend Vitest
@@ -77,23 +78,31 @@ tasks:
   fmt:
     desc: Format and auto-fix backend and frontend
     cmds:
-      - uv run --directory {{.BE}} ruff format . ../scripts
-      - uv run --directory {{.BE}} ruff check --fix . ../scripts
+      - uv run --directory {{.BE}} ruff format . ../packs ../scripts
+      - uv run --directory {{.BE}} ruff check --fix . ../packs ../scripts
       - pnpm -C {{.FE}} lint:fix
       - pnpm -C {{.FE}} format
 
   build:
-    desc: Build the SPA, copy it into the wheel, build the wheel, verify it
+    desc: Build the SPA, copy it into the app wheel, build the SDK and app wheels, verify
     cmds:
       - pnpm -C {{.FE}} build
       - uv run --directory {{.BE}} python ../scripts/copy_static.py
+      - uv build {{.BE}}/sdk --out-dir {{.BE}}/dist
       - uv build {{.BE}}
       - uv run --directory {{.BE}} python ../scripts/check_wheel.py
 
   build:smoke:
     desc: Install the built wheel in a throwaway env and check it serves the SPA
     cmds:
-      - uv run --isolated --no-project --with {{.BE}}/dist/astro_canvas-*.whl python scripts/smoke_wheel.py
+      - uv run --isolated --no-project --with {{.BE}}/dist/astro_canvas_sdk-*.whl --with {{.BE}}/dist/astro_canvas-*.whl python scripts/smoke_wheel.py
+
+  api:gen:
+    desc: Export /api/openapi.json and regenerate the typed frontend client (src/api/schema.d.ts)
+    cmds:
+      - uv run --directory {{.BE}} python ../scripts/export_openapi.py
+      - pnpm -C {{.FE}} exec openapi-typescript ../backend/src/astro_canvas/server/openapi/openapi.json -o src/api/schema.d.ts
+      - pnpm -C {{.FE}} exec prettier --write src/api/schema.d.ts
 
   check:tooling:
     desc: Fail if npm/npx/yarn/bun/pip/poetry/conda are invoked anywhere
@@ -103,4 +112,4 @@ tasks:
   clean:
     desc: Remove build outputs
     cmds:
-      - uv run --directory {{.BE}} python -c "import shutil,pathlib; [shutil.rmtree(p, ignore_errors=True) for p in ('dist', '../frontend/dist')]; [p.unlink() for p in pathlib.Path('src/astro_canvas/static').rglob('*') if p.is_file() and p.name != '.gitkeep']"
+      - uv run --directory {{.BE}} python -c "import shutil,pathlib; [shutil.rmtree(p, ignore_errors=True) for p in ('dist', 'sdk/dist', '../frontend/dist')]; [p.unlink() for p in pathlib.Path('src/astro_canvas/static').rglob('*') if p.is_file() and p.name != '.gitkeep']"

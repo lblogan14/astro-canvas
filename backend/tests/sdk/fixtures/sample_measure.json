@@ -1,0 +1,265 @@
+{
+  "category": "Samples/Measure",
+  "cost": "expensive",
+  "deprecated": false,
+  "description": "Measure a sample quantity on a spectrum.\n\nThe long description survives in ``NodeSpec.description``.",
+  "editor": "range-editor",
+  "expand": false,
+  "experimental": true,
+  "fingerprint": false,
+  "icon": "ruler",
+  "id": "sample.spec.measure",
+  "inputs": [
+    {
+      "description": "Continuum-normalized spectrum slice in velocity space.",
+      "lazy": false,
+      "name": "spec",
+      "required": true,
+      "type": "astro.Spectrum1D"
+    },
+    {
+      "description": "Optional reference spectrum, only fetched when needed.",
+      "lazy": true,
+      "name": "reference",
+      "required": false,
+      "type": "astro.Spectrum1D"
+    }
+  ],
+  "is_async": false,
+  "module": "tests.sdk.sample_nodes",
+  "name": "Measure Sample",
+  "outputs": [
+    {
+      "description": "A redshift estimate.",
+      "lazy": false,
+      "name": "out",
+      "required": true,
+      "type": "astro.Redshift"
+    }
+  ],
+  "pack": null,
+  "param_docs": {
+    "method": "Integration method.",
+    "reference": "Optional reference spectrum, only fetched when needed.",
+    "smoothing": "Kernel applied before measuring.",
+    "snr": "Also estimate the signal-to-noise ratio.",
+    "spec": "Continuum-normalized spectrum slice in velocity space.",
+    "tag": "Ignored because ``Param.help`` is set.",
+    "vmax": "Upper integration limit.",
+    "vmin": "Lower integration limit.",
+    "weights": "Optional per-pixel weights.",
+    "wrest": "Rest wavelength of the line."
+  },
+  "params": [
+    {
+      "advanced": false,
+      "default": -200.0,
+      "description": "Lower integration limit.",
+      "json_schema": {
+        "default": -200.0,
+        "description": "Lower integration limit.",
+        "maximum": 0,
+        "minimum": -5000,
+        "title": "Vmin",
+        "type": "number",
+        "x-step": 10,
+        "x-unit": "km/s",
+        "x-widget": "slider"
+      },
+      "label": "Vmin",
+      "link_type": "astro.Float",
+      "linkable": true,
+      "name": "vmin",
+      "required": false,
+      "step": 10.0,
+      "unit": "km/s",
+      "widget": "slider"
+    },
+    {
+      "advanced": false,
+      "default": 200.0,
+      "description": "Upper integration limit.",
+      "json_schema": {
+        "default": 200.0,
+        "description": "Upper integration limit.",
+        "maximum": 5000,
+        "minimum": 0,
+        "title": "Upper limit",
+        "type": "number",
+        "x-unit": "km/s"
+      },
+      "label": "Upper limit",
+      "link_type": "astro.Float",
+      "linkable": true,
+      "name": "vmax",
+      "required": false,
+      "step": null,
+      "unit": "km/s",
+      "widget": null
+    },
+    {
+      "advanced": false,
+      "default": "direct",
+      "description": "Integration method.",
+      "json_schema": {
+        "default": "direct",
+        "description": "Integration method.",
+        "enum": [
+          "direct",
+          "aod"
+        ],
+        "title": "Method",
+        "type": "string"
+      },
+      "label": "Method",
+      "link_type": "astro.Str",
+      "linkable": true,
+      "name": "method",
+      "required": false,
+      "step": null,
+      "unit": null,
+      "widget": null
+    },
+    {
+      "advanced": false,
+      "default": null,
+      "description": "Optional per-pixel weights.",
+      "json_schema": {
+        "anyOf": [
+          {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Optional per-pixel weights.",
+        "title": "Weights"
+      },
+      "label": "Weights",
+      "link_type": "astro.Json",
+      "linkable": true,
+      "name": "weights",
+      "required": false,
+      "step": null,
+      "unit": null,
+      "widget": null
+    },
+    {
+      "advanced": false,
+      "default": false,
+      "description": "Also estimate the signal-to-noise ratio.",
+      "json_schema": {
+        "default": false,
+        "description": "Also estimate the signal-to-noise ratio.",
+        "title": "Snr",
+        "type": "boolean"
+      },
+      "label": "Snr",
+      "link_type": "astro.Bool",
+      "linkable": true,
+      "name": "snr",
+      "required": false,
+      "step": null,
+      "unit": null,
+      "widget": null
+    },
+    {
+      "advanced": true,
+      "default": "a",
+      "description": "Custom help wins.",
+      "json_schema": {
+        "default": "a",
+        "description": "Custom help wins.",
+        "enum": [
+          "a",
+          "b"
+        ],
+        "title": "Tag",
+        "type": "string",
+        "x-advanced": true
+      },
+      "label": "Tag",
+      "link_type": "astro.Str",
+      "linkable": true,
+      "name": "tag",
+      "required": false,
+      "step": null,
+      "unit": null,
+      "widget": null
+    },
+    {
+      "advanced": false,
+      "default": {
+        "kernel": "boxcar",
+        "width": 3
+      },
+      "description": "Kernel applied before measuring.",
+      "json_schema": {
+        "$defs": {
+          "Smoothing": {
+            "description": "Kernel settings.",
+            "properties": {
+              "kernel": {
+                "default": "boxcar",
+                "enum": [
+                  "boxcar",
+                  "gaussian"
+                ],
+                "title": "Kernel",
+                "type": "string"
+              },
+              "width": {
+                "default": 3,
+                "title": "Width",
+                "type": "integer"
+              }
+            },
+            "title": "Smoothing",
+            "type": "object"
+          }
+        },
+        "$ref": "#/$defs/Smoothing",
+        "default": {
+          "kernel": "boxcar",
+          "width": 3
+        },
+        "description": "Kernel applied before measuring."
+      },
+      "label": "smoothing",
+      "link_type": "astro.Json",
+      "linkable": true,
+      "name": "smoothing",
+      "required": false,
+      "step": null,
+      "unit": null,
+      "widget": null
+    },
+    {
+      "advanced": false,
+      "default": 1215.67,
+      "description": "Rest wavelength of the line.",
+      "json_schema": {
+        "default": 1215.67,
+        "description": "Rest wavelength of the line.",
+        "title": "Wrest",
+        "type": "number",
+        "x-unit": "Angstrom"
+      },
+      "label": "Wrest",
+      "link_type": "astro.Float",
+      "linkable": true,
+      "name": "wrest",
+      "required": false,
+      "step": null,
+      "unit": "Angstrom",
+      "widget": null
+    }
+  ],
+  "preview": "ew-summary",
+  "version": "1.2.0"
+}

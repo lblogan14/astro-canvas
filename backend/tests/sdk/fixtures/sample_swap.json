@@ -1,0 +1,73 @@
+{
+  "category": "Samples/Transform",
+  "cost": "cheap",
+  "deprecated": false,
+  "description": "Swap two numbers.",
+  "editor": null,
+  "expand": false,
+  "experimental": false,
+  "fingerprint": false,
+  "icon": null,
+  "id": "sample.pair.swap",
+  "inputs": [],
+  "is_async": false,
+  "module": "tests.sdk.sample_nodes",
+  "name": "Swap",
+  "outputs": [
+    {
+      "description": "The second input.",
+      "lazy": false,
+      "name": "second",
+      "required": true,
+      "type": "astro.Float"
+    },
+    {
+      "description": "The first input.",
+      "lazy": false,
+      "name": "first",
+      "required": true,
+      "type": "astro.Float"
+    }
+  ],
+  "pack": null,
+  "param_docs": {},
+  "params": [
+    {
+      "advanced": false,
+      "default": null,
+      "description": "",
+      "json_schema": {
+        "title": "A",
+        "type": "number"
+      },
+      "label": "A",
+      "link_type": "astro.Float",
+      "linkable": true,
+      "name": "a",
+      "required": true,
+      "step": null,
+      "unit": null,
+      "widget": null
+    },
+    {
+      "advanced": false,
+      "default": 1.0,
+      "description": "",
+      "json_schema": {
+        "default": 1.0,
+        "title": "B",
+        "type": "number"
+      },
+      "label": "B",
+      "link_type": "astro.Float",
+      "linkable": true,
+      "name": "b",
+      "required": false,
+      "step": null,
+      "unit": null,
+      "widget": null
+    }
+  ],
+  "preview": null,
+  "version": "1.0.0"
+}

@@ -1,0 +1,52 @@
+{
+  "category": "Samples/Stats",
+  "cost": "cheap",
+  "deprecated": false,
+  "description": "Basic statistics of the flux.",
+  "editor": null,
+  "expand": false,
+  "experimental": false,
+  "fingerprint": false,
+  "icon": null,
+  "id": "sample.stats.describe",
+  "inputs": [
+    {
+      "description": "",
+      "lazy": false,
+      "name": "spec",
+      "required": true,
+      "type": "astro.Spectrum1D"
+    }
+  ],
+  "is_async": false,
+  "module": "tests.sdk.sample_nodes",
+  "name": "Describe",
+  "outputs": [
+    {
+      "description": "",
+      "lazy": false,
+      "name": "mean",
+      "required": true,
+      "type": "astro.Float"
+    },
+    {
+      "description": "",
+      "lazy": false,
+      "name": "count",
+      "required": true,
+      "type": "astro.Int"
+    },
+    {
+      "description": "",
+      "lazy": false,
+      "name": "label",
+      "required": true,
+      "type": "astro.Str"
+    }
+  ],
+  "pack": null,
+  "param_docs": {},
+  "params": [],
+  "preview": null,
+  "version": "1.0.0"
+}

@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "astro-canvas-sdk"
+dynamic = ["version"]
+description = "Node SDK for Astro Canvas packs: @node, Param, port types, NodeSpec, registry"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10,<3.14"
+authors = [{ name = "Bin Liu" }]
+keywords = ["astronomy", "workflow", "nodes", "sdk"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Astronomy",
+]
+# Deliberately small: packs depend on this distribution, not on the FastAPI app.
+dependencies = [
+  "pydantic>=2",
+  "numpy>=1.26",
+  "griffe>=1.0",
+  "tsdownsample>=0.1.3",
+]
+
+[project.optional-dependencies]
+astropy = ["astropy>=6"]
+
+[project.urls]
+Homepage = "https://github.com/bkoservices/astro-canvas"
+
+[tool.hatch.version]
+path = "src/astro_canvas/sdk/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+# `astro_canvas` is a PEP 420 namespace package shared with the `astro-canvas` app wheel.
+packages = ["src/astro_canvas"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/astro_canvas", "README.md"]

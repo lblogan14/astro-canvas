@@ -1,0 +1,804 @@
+{
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "description": "Liveness probe payload.",
+        "properties": {
+          "status": {
+            "const": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "version"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "NodeSpec": {
+        "description": "Everything the frontend and engine need to know about a node type.",
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "cost": {
+            "default": "cheap",
+            "enum": [
+              "cheap",
+              "expensive",
+              "auto"
+            ],
+            "title": "Cost",
+            "type": "string"
+          },
+          "deprecated": {
+            "default": false,
+            "title": "Deprecated",
+            "type": "boolean"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "editor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Editor"
+          },
+          "expand": {
+            "default": false,
+            "title": "Expand",
+            "type": "boolean"
+          },
+          "experimental": {
+            "default": false,
+            "title": "Experimental",
+            "type": "boolean"
+          },
+          "fingerprint": {
+            "default": false,
+            "description": "True when the node declares a ``fingerprint`` callable.",
+            "title": "Fingerprint",
+            "type": "boolean"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "inputs": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PortSpec"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "is_async": {
+            "default": false,
+            "title": "Is Async",
+            "type": "boolean"
+          },
+          "module": {
+            "default": "",
+            "title": "Module",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "outputs": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PortSpec"
+            },
+            "title": "Outputs",
+            "type": "array"
+          },
+          "pack": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pack"
+          },
+          "param_docs": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "title": "Param Docs",
+            "type": "object"
+          },
+          "params": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ParamSpec"
+            },
+            "title": "Params",
+            "type": "array"
+          },
+          "preview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview"
+          },
+          "version": {
+            "default": "1.0.0",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category"
+        ],
+        "title": "NodeSpec",
+        "type": "object"
+      },
+      "PackInfo": {
+        "description": "Summary of a discovered node pack (full detail at ``/api/packs``).",
+        "properties": {
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "node_count": {
+            "default": 0,
+            "title": "Node Count",
+            "type": "integer"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "version"
+        ],
+        "title": "PackInfo",
+        "type": "object"
+      },
+      "PackLoadError": {
+        "description": "Recorded (not raised) when a pack's entry point fails to import or register.",
+        "properties": {
+          "entry_point": {
+            "title": "Entry Point",
+            "type": "string"
+          },
+          "error": {
+            "title": "Error",
+            "type": "string"
+          },
+          "pack": {
+            "title": "Pack",
+            "type": "string"
+          },
+          "traceback": {
+            "default": "",
+            "title": "Traceback",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pack",
+          "entry_point",
+          "error"
+        ],
+        "title": "PackLoadError",
+        "type": "object"
+      },
+      "PackRecord": {
+        "description": "A discovered pack (entry point in the ``astro_canvas.nodes`` group).",
+        "properties": {
+          "distribution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distribution"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "entry_point": {
+            "title": "Entry Point",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PackLoadError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "node_count": {
+            "default": 0,
+            "title": "Node Count",
+            "type": "integer"
+          },
+          "type_count": {
+            "default": 0,
+            "title": "Type Count",
+            "type": "integer"
+          },
+          "version": {
+            "default": "unknown",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "entry_point"
+        ],
+        "title": "PackRecord",
+        "type": "object"
+      },
+      "ParamSpec": {
+        "description": "A widget-rendered parameter. Any param can be linked to become an input port.",
+        "properties": {
+          "advanced": {
+            "default": false,
+            "title": "Advanced",
+            "type": "boolean"
+          },
+          "default": {
+            "title": "Default"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "json_schema": {
+            "additionalProperties": true,
+            "description": "Self-contained JSON Schema (draft 2020-12) including default/constraints.",
+            "title": "Json Schema",
+            "type": "object"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "link_type": {
+            "description": "Port type id the param becomes when linked (``astro.Float`` etc.).",
+            "title": "Link Type",
+            "type": "string"
+          },
+          "linkable": {
+            "default": true,
+            "title": "Linkable",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "title": "Required",
+            "type": "boolean"
+          },
+          "step": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Step"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "widget": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Widget"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "json_schema",
+          "link_type"
+        ],
+        "title": "ParamSpec",
+        "type": "object"
+      },
+      "PortSpec": {
+        "description": "An input or output port.",
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "lazy": {
+            "default": false,
+            "title": "Lazy",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "required": {
+            "default": true,
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "description": "Port type id, e.g. ``astro.Spectrum1D``.",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "title": "PortSpec",
+        "type": "object"
+      },
+      "PortTypeSpec": {
+        "description": "A registered port type.",
+        "properties": {
+          "color": {
+            "default": "#888888",
+            "title": "Color",
+            "type": "string"
+          },
+          "compatible_with": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Compatible With",
+            "type": "array"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "json_schema": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Json Schema",
+            "type": "object"
+          },
+          "module": {
+            "default": "",
+            "title": "Module",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "pack": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pack"
+          },
+          "summary_renderer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary Renderer"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "PortTypeSpec",
+        "type": "object"
+      },
+      "SystemInfo": {
+        "description": "Environment report shown in the shell's About panel.",
+        "properties": {
+          "disk_free_bytes": {
+            "title": "Disk Free Bytes",
+            "type": "integer"
+          },
+          "disk_total_bytes": {
+            "title": "Disk Total Bytes",
+            "type": "integer"
+          },
+          "packs": {
+            "items": {
+              "$ref": "#/components/schemas/PackInfo"
+            },
+            "title": "Packs",
+            "type": "array"
+          },
+          "platform": {
+            "title": "Platform",
+            "type": "string"
+          },
+          "python": {
+            "title": "Python",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          },
+          "workspace": {
+            "title": "Workspace",
+            "type": "string"
+          },
+          "workspace_exists": {
+            "title": "Workspace Exists",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "version",
+          "python",
+          "platform",
+          "workspace",
+          "workspace_exists",
+          "disk_free_bytes",
+          "disk_total_bytes",
+          "packs"
+        ],
+        "title": "SystemInfo",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Astro Canvas",
+    "version": "0.1.0a0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/health": {
+      "get": {
+        "description": "Return ``ok`` and the server version.",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/nodes": {
+      "get": {
+        "description": "Every registered node schema, sorted by id; optionally filtered by exact category.",
+        "operationId": "list_nodes_api_nodes_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NodeSpec"
+                  },
+                  "title": "Response List Nodes Api Nodes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Nodes",
+        "tags": [
+          "nodes"
+        ]
+      }
+    },
+    "/api/nodes/{node_id}": {
+      "get": {
+        "description": "One node schema by id.",
+        "operationId": "get_node_api_nodes__node_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "node_id",
+            "required": true,
+            "schema": {
+              "title": "Node Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeSpec"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Node",
+        "tags": [
+          "nodes"
+        ]
+      }
+    },
+    "/api/packs": {
+      "get": {
+        "description": "Discovered packs, including the ones that failed to load (with their error).",
+        "operationId": "list_packs_api_packs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PackRecord"
+                  },
+                  "title": "Response List Packs Api Packs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Packs",
+        "tags": [
+          "nodes"
+        ]
+      }
+    },
+    "/api/system": {
+      "get": {
+        "description": "Describe the running server: versions, workspace, disk, packs.",
+        "operationId": "system_api_system_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "System",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/types": {
+      "get": {
+        "description": "Every registered port type, sorted by id.",
+        "operationId": "list_types_api_types_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PortTypeSpec"
+                  },
+                  "title": "Response List Types Api Types Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Types",
+        "tags": [
+          "nodes"
+        ]
+      }
+    }
+  }
+}

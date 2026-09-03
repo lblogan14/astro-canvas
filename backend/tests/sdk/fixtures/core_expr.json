@@ -1,0 +1,113 @@
+{
+  "category": "Math",
+  "cost": "cheap",
+  "deprecated": false,
+  "description": "Evaluate an arithmetic expression of ``x``, ``y`` and ``z``.\n\nSupports ``+ - * / // % **``, parentheses, the constants ``pi`` and ``e``, and the functions\n``abs, min, max, round, sqrt, exp, log, log10, sin, cos, tan, atan2, floor, ceil``.",
+  "editor": null,
+  "expand": false,
+  "experimental": false,
+  "fingerprint": false,
+  "icon": "function-square",
+  "id": "core.math.expr",
+  "inputs": [],
+  "is_async": false,
+  "module": "astro_canvas_core.nodes.math",
+  "name": "Expression",
+  "outputs": [
+    {
+      "description": "The evaluated number.",
+      "lazy": false,
+      "name": "out",
+      "required": true,
+      "type": "astro.Float"
+    }
+  ],
+  "pack": null,
+  "param_docs": {
+    "expression": "The expression, for example ``sqrt(x**2 + y**2)``.",
+    "x": "Value bound to ``x``.",
+    "y": "Value bound to ``y``.",
+    "z": "Value bound to ``z``."
+  },
+  "params": [
+    {
+      "advanced": false,
+      "default": "x",
+      "description": "The expression, for example ``sqrt(x**2 + y**2)``.",
+      "json_schema": {
+        "default": "x",
+        "description": "The expression, for example ``sqrt(x**2 + y**2)``.",
+        "title": "Expression",
+        "type": "string",
+        "x-widget": "code"
+      },
+      "label": "Expression",
+      "link_type": "astro.Str",
+      "linkable": true,
+      "name": "expression",
+      "required": false,
+      "step": null,
+      "unit": null,
+      "widget": "code"
+    },
+    {
+      "advanced": false,
+      "default": 0.0,
+      "description": "Value bound to ``x``.",
+      "json_schema": {
+        "default": 0.0,
+        "description": "Value bound to ``x``.",
+        "title": "X",
+        "type": "number"
+      },
+      "label": "X",
+      "link_type": "astro.Float",
+      "linkable": true,
+      "name": "x",
+      "required": false,
+      "step": null,
+      "unit": null,
+      "widget": null
+    },
+    {
+      "advanced": false,
+      "default": 0.0,
+      "description": "Value bound to ``y``.",
+      "json_schema": {
+        "default": 0.0,
+        "description": "Value bound to ``y``.",
+        "title": "Y",
+        "type": "number"
+      },
+      "label": "Y",
+      "link_type": "astro.Float",
+      "linkable": true,
+      "name": "y",
+      "required": false,
+      "step": null,
+      "unit": null,
+      "widget": null
+    },
+    {
+      "advanced": false,
+      "default": 0.0,
+      "description": "Value bound to ``z``.",
+      "json_schema": {
+        "default": 0.0,
+        "description": "Value bound to ``z``.",
+        "title": "Z",
+        "type": "number"
+      },
+      "label": "Z",
+      "link_type": "astro.Float",
+      "linkable": true,
+      "name": "z",
+      "required": false,
+      "step": null,
+      "unit": null,
+      "widget": null
+    }
+  ],
+  "preview": null,
+  "version": "1.0.0"
+}

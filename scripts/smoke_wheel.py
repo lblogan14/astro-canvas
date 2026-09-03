@@ -56,6 +56,10 @@ def main() -> int:
             assert "Astro Canvas" in fetch("/workflows/x"), "history fallback failed"
             system = fetch("/api/system")
             assert '"python"' in system
+            # No packs are installed in the smoke env: the catalogue is empty but must answer.
+            assert fetch("/api/nodes") == "[]", "node catalogue should be empty without packs"
+            assert fetch("/api/types") == "[]"
+            assert fetch("/api/packs") == "[]"
             sys.stdout.write("ok: wheel serves SPA and API\n")
             return 0
         finally:

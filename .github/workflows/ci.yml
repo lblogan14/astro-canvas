@@ -38,12 +38,16 @@ jobs:
         run: uv sync --directory backend --all-extras --locked
       - name: Ruff
         run: |
-          uv run --directory backend ruff check . ../scripts
-          uv run --directory backend ruff format --check . ../scripts
+          uv run --directory backend ruff check . ../packs ../scripts
+          uv run --directory backend ruff format --check . ../packs ../scripts
       - name: Mypy
         run: uv run --directory backend mypy
       - name: Pytest
         run: uv run --directory backend pytest
+      - name: Coverage gates
+        run: uv run --directory backend python ../scripts/check_coverage.py
+      - name: OpenAPI snapshot is current
+        run: uv run --directory backend python ../scripts/export_openapi.py --check
       - name: Tooling rule (pnpm/uv only)
         run: uv run --directory backend python ../scripts/check_tooling.py
 
@@ -101,10 +105,11 @@ jobs:
       - name: Build wheel
         run: |
           uv run --directory backend python ../scripts/copy_static.py
+          uv build backend/sdk --out-dir backend/dist
           uv build backend
           uv run --directory backend python ../scripts/check_wheel.py
       - name: Smoke the wheel in a clean environment
-        run: uv run --isolated --no-project --with backend/dist/astro_canvas-*.whl python scripts/smoke_wheel.py
+        run: uv run --isolated --no-project --with backend/dist/astro_canvas_sdk-*.whl --with backend/dist/astro_canvas-*.whl python scripts/smoke_wheel.py
       - uses: actions/upload-artifact@v4
         with:
           name: astro-canvas-wheel

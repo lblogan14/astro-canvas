@@ -24,6 +24,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Astronomy",
 ]
 dependencies = [
+  "astro-canvas-sdk",
   "fastapi>=0.115",
   "uvicorn[standard]>=0.30",
   "pydantic>=2",
@@ -80,14 +81,15 @@ required-environments = [
 ]
 
 [tool.uv.sources]
+astro-canvas-sdk = { workspace = true }
 astro-canvas-core = { workspace = true }
 astro-canvas-rbcodes = { workspace = true }
 
 [tool.uv.workspace]
-members = ["../packs/*"]
+members = ["sdk", "../packs/*"]
 
 [tool.hatch.version]
-path = "src/astro_canvas/__init__.py"
+path = "src/astro_canvas/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/astro_canvas"]
@@ -97,10 +99,11 @@ artifacts = ["src/astro_canvas/static/**"]
 [tool.hatch.build.targets.sdist]
 include = ["src/astro_canvas", "tests", "README.md"]
 
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-src = ["src", "tests"]
+src = ["src", "sdk/src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "PL"]
@@ -115,9 +118,13 @@ ignore = [
 "tests/**" = ["PLR2004", "PLC0415"]
 
 [tool.mypy]
-python_version = "3.10"
-packages = ["astro_canvas"]
-mypy_path = "src"
+# 3.12 because NumPy 2.5 stubs use PEP 695 syntax; 3.10 compatibility is covered by the CI matrix.
+python_version = "3.12"
+# `astro_canvas` is a namespace package split between src/ (app) and sdk/src/ (SDK).
+files = ["src", "sdk/src", "../packs/core/src", "../packs/rbcodes/src"]
+mypy_path = "src:sdk/src:../packs/core/src:../packs/rbcodes/src"
+namespace_packages = true
+explicit_package_bases = true
 warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
@@ -130,14 +137,24 @@ plugins = ["pydantic.mypy"]
 module = ["astro_canvas.sdk.*", "astro_canvas.engine.*"]
 strict = true
 
+[[tool.mypy.overrides]]
+module = ["astropy.*", "pyarrow.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Compiled extension without type hints for its downsampler classes.
+module = ["tsdownsample"]
+follow_imports = "skip"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-addopts = "-ra --strict-markers --cov=astro_canvas --cov-report=term-missing"
+addopts = "-ra --strict-markers --cov=astro_canvas --cov=astro_canvas_core --cov=astro_canvas_rbcodes --cov-report=term-missing --cov-report=json:coverage.json"
 filterwarnings = ["error::DeprecationWarning:astro_canvas.*"]
 
 [tool.coverage.run]
-source = ["astro_canvas"]
+source = ["astro_canvas", "astro_canvas_core", "astro_canvas_rbcodes"]
 branch = true
 
 [tool.coverage.report]

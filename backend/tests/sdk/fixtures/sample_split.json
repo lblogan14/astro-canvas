@@ -1,0 +1,74 @@
+{
+  "category": "Samples/Transform",
+  "cost": "cheap",
+  "deprecated": false,
+  "description": "Split a spectrum at ``pivot``.",
+  "editor": null,
+  "expand": false,
+  "experimental": false,
+  "fingerprint": false,
+  "icon": null,
+  "id": "sample.spec.split",
+  "inputs": [
+    {
+      "description": "The spectrum to split.",
+      "lazy": false,
+      "name": "spec",
+      "required": true,
+      "type": "astro.Spectrum1D"
+    }
+  ],
+  "is_async": false,
+  "module": "tests.sdk.sample_nodes",
+  "name": "Split",
+  "outputs": [
+    {
+      "description": "",
+      "lazy": false,
+      "name": "blue",
+      "required": true,
+      "type": "astro.Spectrum1D"
+    },
+    {
+      "description": "",
+      "lazy": false,
+      "name": "red",
+      "required": true,
+      "type": "astro.Spectrum1D"
+    },
+    {
+      "description": "",
+      "lazy": false,
+      "name": "pivot",
+      "required": true,
+      "type": "astro.Float"
+    }
+  ],
+  "pack": null,
+  "param_docs": {
+    "pivot": "Split wavelength.",
+    "spec": "The spectrum to split."
+  },
+  "params": [
+    {
+      "advanced": false,
+      "default": null,
+      "description": "Split wavelength.",
+      "json_schema": {
+        "description": "Split wavelength.",
+        "title": "Pivot",
+        "type": "number"
+      },
+      "label": "Pivot",
+      "link_type": "astro.Float",
+      "linkable": true,
+      "name": "pivot",
+      "required": true,
+      "step": null,
+      "unit": null,
+      "widget": null
+    }
+  ],
+  "preview": null,
+  "version": "1.0.0"
+}
