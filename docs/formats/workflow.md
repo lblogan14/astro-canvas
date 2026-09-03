@@ -97,6 +97,14 @@ the `?token=` URL. Set `ASTRO_CANVAS_AUTH=false` to disable.
 | `GET /runs?workflow_id=` · `GET /runs/{id}` | history (`status, started, finished, targets, nodes[]`) |
 | `POST /runs/{id}/cancel` | `{cancelled}` |
 | `GET /outputs/{node}/{port}?workflow_id=&fmt=json\|msgpack\|arrow\|npz&decimate=N&range=lo,hi` | full outputs; `decimate`/`range` apply to spectrum-like values |
+| `GET /workspace` · `POST /workspace/select` `{path, create}` | active workspace (root, recent list) / switch folders (closes open workflows, restarts the watcher) |
+| `GET /workspace/tree?path=&depth=1&hidden=false` | folder listing, folders first; deeper folders are lazy (`children: null`) |
+| `GET /workspace/info?path=&hash=true` | size, mtime, MIME, blake3 (cached in the `files` table by path + mtime) |
+| `GET /workspace/file?path=` · `DELETE /workspace/file?path=&recursive=` | download / delete |
+| `GET /workspace/sniff?path=` | `{kind: spectrum\|image\|cube\|table\|unknown, node}` from headers/columns |
+| `POST /workspace/mkdir` `{path}` · `POST /workspace/upload` (multipart `file, dir, filename, on_conflict, upload_id, chunk_index, chunk_count`) | create folders / upload (chunked above 100 MB) |
+
+Every workspace path is resolved inside the root; absolute paths, `..` and symlinks answer 400.
 
 ## WebSocket `/ws?token=…&client_id=…`
 
@@ -110,17 +118,29 @@ workflow_id`:
 | `graph.validation` | `node_errors` |
 | `node.status` | `node_id, state, run_id, cache_hit, elapsed_ms, cost_class, stale` |
 | `node.progress` · `node.log` · `node.error` | `frac, message` · `level, message, fields` · `message, traceback, hint` |
-| `node.output.summary` | `node_id, port, type_id, summary` (≤ 4000 points for spectra; `port="$preview"` for `ctx.preview`) |
+| `node.output.summary` | `node_id, port, type_id, summary, tag` (≤ 4000 points for spectra; `port="$preview"` for `ctx.preview`; `tag` echoes `viewport.tag` so viewer-only slices do not replace thumbnails) |
+| `workspace.changed` | `paths` (workspace-relative); broadcast to every subscriber (`workflow_id = "*"`) |
 | `run.started` / `run.finished` | `run_id, targets, n_nodes, cached` (+ `status, elapsed_ms`) |
 
 Client → server: `subscribe {workflow_id}` (replies with `subscribed`, `graph.validation` and one
 `node.status` per node), `run {targets?}`, `cancel {run_id?, node_id?}`,
-`preview.request {node_id, port, viewport: {lo, hi, n_out}}` (re-decimated summary),
+`preview.request {node_id, port, viewport: {lo, hi, n_out, rows, tag}}` (re-decimated summary: `lo/hi` restrict the axis or the cube band, `n_out` is the point budget or tile edge, `rows` the table head),
 `output.request {node_id, port}` (binary frame), `ping`.
 
 Binary frames: `u32 msg_type (1 = output) | u32 header_len | msgpack header | buffers`, header
 `{node_id, port, type_id, data, arrays: [{name, dtype, shape, offset, nbytes}]}`; each array is a
 C-contiguous little-endian buffer at `offset` in the payload (`dtype="bytes"` for raw parts).
+
+### Summary payloads (phase 04)
+
+| Type | `summary` |
+|---|---|
+| `Spectrum1D` | `n, n_view, range, wave[], flux[], error?[], continuum?[], wave_unit, flux_unit, frame, z, v0_wrest` (all series sampled at the same MinMaxLTTB indices) |
+| `Image2D` | `shape, unit, wcs, object, tile: {width, height, step, dtype: "f4", b64, zscale, minmax, percentile}` (base64 little-endian float32 rows) |
+| `Cube3D` | `shape, instrument, wave_unit, wave_range, band, has_var, wcs, tile` (white light over `lo..hi`), `spectrum: {wave, flux}` (integrated, ≤ 512 points) |
+| `Table` | `n_rows, columns, units, dtypes, head: {col: values}` (first `rows`, default 50), `arrow_b64` (Arrow IPC of the head) |
+| `Figure` | `kind, size` plus `plotly` or `png_b64` when ≤ 400 kB |
+| scalars, `File`, others | `{type, data: {...}}` (arrays summarised as shape/dtype/min/max) |
 
 ## CLI
 

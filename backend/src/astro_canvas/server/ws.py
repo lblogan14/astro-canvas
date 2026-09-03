@@ -182,13 +182,21 @@ class WsSession:
         if value is None:
             await self.error(f"no output for {request.node_id}.{request.port}")
             return
-        summary = await asyncio.to_thread(value.summary, request.viewport)
+        viewport = dict(request.viewport)
+        raw_tag = viewport.pop("tag", None)
+        tag = str(raw_tag) if raw_tag is not None else None
+        try:
+            summary = await asyncio.to_thread(value.summary, viewport)
+        except Exception as exc:  # noqa: BLE001 - a bad viewport must not drop the socket
+            await self.error(f"preview failed for {request.node_id}.{request.port}: {exc}")
+            return
         event = NodeOutputSummary(
             workflow_id=scheduler.workflow_id,
             node_id=request.node_id,
             port=request.port,
             type_id=value.type_id(),
             summary=summary,
+            tag=tag,
         )
         await self.send(event.model_dump(mode="json"))
 

@@ -8,13 +8,15 @@ headless nodes so undergrads and researchers can run the same tools in a browser
 
 ## Status
 
-**Pre-alpha, phase 03 of 13 (canvas MVP).** The repository builds, lints, tests, and runs a FastAPI + Vue app
+**Pre-alpha, phase 04 of 13 (data and visualization).** The repository builds, lints, tests, and runs a FastAPI + Vue app
 on Windows, macOS, and Linux. Packs register nodes and port types through `astro_canvas.sdk`; the server lists their
 schemas, stores `workflow.json` documents, and executes them reactively (content-hash cache, cost gating, thread/process
 executors, cancellation) with events over `/ws`. The browser canvas (Vue Flow) lets you browse nodes, place and connect
 them with type checking, edit parameters in schema-generated widgets, run, and watch status stream in, with undo/redo,
-copy/paste, groups, autosave and version restore. Previews, data loading and visualization widgets arrive in phase 04.
-See [docs/guide/canvas.md](docs/guide/canvas.md) and the roadmap below.
+copy/paste, groups, autosave and version restore. Phase 04 adds the workspace folder (browse, upload, drag files onto the canvas),
+loaders for spectra/tables/images/cubes, archive fetch nodes, inline previews (uPlot, image tiles, table heads) and a full-size
+viewer (Plotly with server-side re-sampling, Canvas2D image view with WCS readout, Arrow tables).
+See [docs/guide/canvas.md](docs/guide/canvas.md), [docs/guide/data.md](docs/guide/data.md) and the roadmap below.
 
 | Phase | Outcome |
 |---|---|
@@ -46,7 +48,7 @@ uv run --with backend/dist/astro_canvas_sdk-*.whl --with backend/dist/astro_canv
 
 Configuration is via `ASTRO_CANVAS_*` environment variables (`HOST`, `PORT`, `WORKSPACE`, `LOG_LEVEL`, `TOKEN`, `AUTH`,
 `CACHE_MEMORY_MB`, `CACHE_DISK_GB`, `CACHE_MAX_AGE_DAYS`, `MAX_WORKERS`, `PROCESS_POOL`, `RUN_TIMEOUT_S`, `DEBOUNCE_MS`,
-`AUTO_THRESHOLD_MS`) or the `astro-canvas serve --host --port --workspace --open` flags. The server prints a
+`AUTO_THRESHOLD_MS`, `WATCH_WORKSPACE`) or the `astro-canvas serve --host --port --workspace --open` flags. The server prints a
 `http://127.0.0.1:8765/?token=…` URL at startup; every `/api` and `/ws` request needs that bearer token
 (also written to `<config>/token`).
 
@@ -74,6 +76,7 @@ workspace members) · `launcher/`, `deploy/` (phase 12) · `registry/` (pack ind
 - [docs/formats/workflow.md](docs/formats/workflow.md): `workflow.json` format v1, compile rules, execution model,
   REST endpoints for workflows/runs/outputs, the `/ws` event protocol and binary frames.
 - [docs/guide/canvas.md](docs/guide/canvas.md): using the canvas (panels, nodes, connections, shortcuts).
+- [docs/guide/data.md](docs/guide/data.md): the workspace folder, loaders, fetch nodes, previews and the viewer.
 - [backend/sdk/README.md](backend/sdk/README.md): writing nodes with the SDK.
 - [docs/dev/rbcodes-compat.md](docs/dev/rbcodes-compat.md): rbcodes on Python 3.12, test results, and the
   proposed upstream patch ([docs/dev/rbcodes-upstream.patch](docs/dev/rbcodes-upstream.patch)).

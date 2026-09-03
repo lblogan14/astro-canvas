@@ -109,6 +109,11 @@ class NodeOutputSummary(_Event):
     port: str
     type_id: str
     summary: dict[str, Any]
+    tag: str | None = Field(
+        default=None,
+        description="Echo of ``viewport.tag`` from a ``preview.request``; tagged summaries "
+        "belong to one view (e.g. the expanded viewer) and do not replace the node thumbnail.",
+    )
 
 
 class GraphValidation(_Event):
