@@ -228,12 +228,18 @@ class SpectrumCollection(PortType):
         return len(self.items)
 
     def summary(self, viewport: Mapping[str, TypingAny] | None = None) -> dict[str, TypingAny]:
-        per_item = {"n_out": int((viewport or {}).get("n_out", 512))}
+        """Up to ``max_items`` (default 8, at most 64) item summaries at ``n_out`` points each.
+
+        ``count`` is always the full length, so a client can tell that it received a prefix; the
+        multi-spectrum viewer raises ``max_items`` to show every panel.
+        """
+        per_item = {"n_out": _viewport_int(viewport, "n_out", 512, 20000)}
+        max_items = _viewport_int(viewport, "max_items", 8, 64)
         return {
             "type": self.type_id(),
             "count": len(self.items),
             "labels": self.labels,
-            "items": [s.summary(per_item) for s in self.items[:8]],
+            "items": [s.summary(per_item) for s in self.items[:max_items]],
         }
 
 

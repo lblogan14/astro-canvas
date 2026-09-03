@@ -13,6 +13,7 @@ TEMPLATES = Path(__file__).resolve().parents[4] / "packs" / "rbcodes" / "templat
 CASES = {
     "absorption-line-measurement.acw": ("ew", "save"),
     "redshift-finder.acw": ("rank_gal", "zshift_qso"),
+    "multi-spectrum-viewer.acw": ("viewer", "export", "vstack"),
 }
 
 SCRIPT = r"""

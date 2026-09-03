@@ -1,0 +1,169 @@
+{
+  "format": "astro-canvas/workflow",
+  "version": 1,
+  "id": "rbcodes-multi-spectrum-viewer",
+  "name": "Multi-Spectrum Viewer",
+  "description": "rbcodes rb_multispec as a workflow: three SDSS spectra stacked in the Multi-Spectrum Viewer, absorber systems found by the zfind absorber search seeded into its catalogue, the MgII doublet of the z = 1.3855 system identified, a velocity stack of that system and a quick Gaussian fit of MgII 2796. Export Line List writes the MultispecViewer JSON that rb_multispec reads back.",
+  "nodes": {
+    "load_qso": {
+      "type": "core.io.load_spectrum",
+      "title": "SDSS quasar (z = 3.01)",
+      "pos": [40, 120],
+      "params": { "path": "samples/rbcodes/sdss1.fits" }
+    },
+    "load_qso2": {
+      "type": "core.io.load_spectrum",
+      "title": "SDSS quasar 2",
+      "pos": [40, 320],
+      "params": { "path": "samples/rbcodes/sdss2.fits" }
+    },
+    "load_gal": {
+      "type": "core.io.load_spectrum",
+      "title": "SDSS galaxy (z = 0.0059)",
+      "pos": [40, 520],
+      "params": { "path": "samples/rbcodes/spec-0398-51789-0282.fits" }
+    },
+    "stack": {
+      "type": "core.list.collect",
+      "title": "Three sightlines",
+      "pos": [400, 300],
+      "params": {}
+    },
+    "igm_lines": {
+      "type": "rbcodes.zfind.curated_linelist",
+      "title": "Intervening absorber lines",
+      "pos": [40, 760],
+      "params": { "name": "zfind_igm" }
+    },
+    "absorbers": {
+      "type": "rbcodes.zfind.absorber_search",
+      "title": "Absorber search (quasar 1)",
+      "pos": [400, 760],
+      "params": { "z_min": 0.3, "z_max": 2.5, "n_steps": 2000 }
+    },
+    "zcatalog": {
+      "type": "rbcodes.zfind.absorbers_to_catalog",
+      "title": "Top candidates",
+      "pos": [760, 760],
+      "params": { "accepted": [0, 1, 2] }
+    },
+    "catalog": {
+      "type": "rbcodes.multispec.absorber_catalog",
+      "title": "Absorber manager rows",
+      "pos": [1100, 760],
+      "params": { "linelist": "LLS", "visible": true }
+    },
+    "viewer": {
+      "type": "rbcodes.multispec.view",
+      "title": "Multi-spectrum viewer",
+      "pos": [800, 260],
+      "size": [420, 260],
+      "params": {
+        "z": 1.3855,
+        "linelist": "LLS",
+        "catalog": [],
+        "identifications": [
+          {
+            "name": "MgII 2796",
+            "wave_obs": 6670.7025,
+            "zabs": 1.3855,
+            "wave_rest": 2796.3542,
+            "spectrum": "sdss1.fits"
+          },
+          {
+            "name": "MgII 2803",
+            "wave_obs": 6687.8232,
+            "zabs": 1.3855,
+            "wave_rest": 2803.5315,
+            "spectrum": "sdss1.fits"
+          }
+        ],
+        "display": {
+          "wave_min": null,
+          "wave_max": null,
+          "smooth_pixels": 1,
+          "show_error": true,
+          "show_labels": true
+        }
+      }
+    },
+    "export": {
+      "type": "rbcodes.multispec.export_linelist",
+      "title": "Export (MultispecViewer JSON)",
+      "pos": [1500, 200],
+      "params": {
+        "path": "outputs/multispec-lines.json",
+        "format": "json",
+        "comment": "Multi-spectrum viewer template"
+      }
+    },
+    "lls_lines": {
+      "type": "rbcodes.lines.line_list",
+      "title": "LLS transitions",
+      "pos": [800, 1080],
+      "params": { "name": "LLS" }
+    },
+    "vstack": {
+      "type": "rbcodes.multispec.vstack",
+      "title": "Velocity stack (z = 1.3855)",
+      "pos": [1180, 1080],
+      "params": { "z": 1.3855, "vmin": -800.0, "vmax": 800.0, "max_panels": 12 }
+    },
+    "fit": {
+      "type": "rbcodes.multispec.quick_fit",
+      "title": "Quick fit: MgII 2796",
+      "pos": [400, 1080],
+      "params": {
+        "x1": 6663.46,
+        "y1": 7.26,
+        "x2": 6675.75,
+        "y2": 6.94,
+        "kind": "gaussian"
+      }
+    },
+    "readme": {
+      "type": "core.note.markdown",
+      "pos": [1500, 520],
+      "size": [560, 380],
+      "params": {
+        "text": "# Multi-spectrum viewer\n\n`rb_multispec` as nodes.\n\n1. Three SDSS spectra are **collected** into one stack: two quasars and a star-forming galaxy.\n2. The **Absorber Search** scans quasar 1 with the `zfind_igm` list; **Absorber Catalog** turns its top candidates into the `Zabs`/`LineList`/`Color` rows rb_multispec's absorber manager uses, and they seed the viewer.\n3. Open the **Multi-Spectrum Viewer** editor on the viewer node: pan the shared wavelength axis, toggle line lists, type or slide the redshift, press `A` to add an absorber system at it, click a feature to identify the nearest line, and press `g` twice (or `c` twice) around a feature for a quick Gaussian / centre-of-mass fit. Apply writes the catalogues back into the node.\n4. **Export Line List** writes `outputs/multispec-lines.json` in MultispecViewer's own format (`metadata.application_name = \"MultispecViewer\"`), so rb_multispec's *Load* reads it back. Switch `format` to `txt` or `csv` for the fixed-width and CSV tables.\n5. **Velocity Stack** shows the `LLS` transitions of the z = 1.3855 system on a common velocity axis, and **Quick Line Fit** reproduces the viewer's `g` fit as a reproducible node.\n\nThe pre-identified MgII doublet marks the well-known z = 1.3855 absorber in `sdss1.fits` - the same system the absorption-line template measures."
+      }
+    }
+  },
+  "edges": {
+    "e1": { "from": ["load_qso", "out"], "to": ["stack", "a"] },
+    "e2": { "from": ["load_qso2", "out"], "to": ["stack", "b"] },
+    "e3": { "from": ["load_gal", "out"], "to": ["stack", "c"] },
+    "e4": { "from": ["stack", "out"], "to": ["viewer", "spectra"] },
+    "e5": { "from": ["load_qso", "out"], "to": ["absorbers", "spec"] },
+    "e6": { "from": ["igm_lines", "out"], "to": ["absorbers", "linelist"] },
+    "e7": { "from": ["absorbers", "out"], "to": ["zcatalog", "result"] },
+    "e8": { "from": ["zcatalog", "out"], "to": ["catalog", "absorbers"] },
+    "e9": { "from": ["catalog", "out"], "to": ["viewer", "absorber_seed"] },
+    "e10": { "from": ["igm_lines", "out"], "to": ["viewer", "extra_lines"] },
+    "e11": { "from": ["viewer", "identified_lines"], "to": ["export", "identified_lines"] },
+    "e12": { "from": ["viewer", "absorbers"], "to": ["export", "absorbers"] },
+    "e13": { "from": ["load_qso", "out"], "to": ["vstack", "spec"] },
+    "e14": { "from": ["lls_lines", "out"], "to": ["vstack", "linelist"] },
+    "e15": { "from": ["load_qso", "out"], "to": ["fit", "spec"] }
+  },
+  "views": [
+    { "id": "stack", "node": "viewer", "port": "view", "kind": "multispec-thumb" },
+    { "id": "lines", "node": "viewer", "port": "identified_lines", "kind": "table" },
+    { "id": "absorbers", "node": "viewer", "port": "absorbers", "kind": "table" },
+    { "id": "significance", "node": "absorbers", "port": "out", "kind": "zfind-curve" },
+    { "id": "velocity", "node": "vstack", "port": "out", "kind": "spectrum-stack" },
+    { "id": "fit", "node": "fit", "port": "out", "kind": "table" }
+  ],
+  "requires": {
+    "packs": {
+      "astro-canvas-core": ">=0.1,<0.2",
+      "astro-canvas-rbcodes": ">=0.1,<0.2"
+    },
+    "python": ">=3.10"
+  },
+  "meta": {
+    "author": "rbcodes pack",
+    "tags": ["template", "rbcodes", "multispec", "absorbers", "line identification"]
+  }
+}
