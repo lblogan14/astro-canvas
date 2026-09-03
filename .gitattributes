@@ -1,0 +1,5 @@
+# FITS files are binary: never normalise line endings
+*.fits binary
+*.acw text eol=lf
+*.lst text eol=lf
+*.dat text eol=lf
