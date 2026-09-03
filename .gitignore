@@ -41,3 +41,8 @@ backend/sdk/dist/
 
 # Per-workspace engine state (created when a repo folder is used as a workspace)
 .astro-canvas/
+
+# Playwright MCP session artefacts
+.playwright-mcp/
+frontend/test-results/
+frontend/playwright-report/
