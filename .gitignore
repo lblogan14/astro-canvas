@@ -46,3 +46,6 @@ backend/sdk/dist/
 .playwright-mcp/
 frontend/test-results/
 frontend/playwright-report/
+
+# claude
+CLAUDE.md
