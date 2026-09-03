@@ -77,7 +77,8 @@
       "cheap": "Cheap",
       "expensive": "Expensive",
       "auto": "Auto"
-    }
+    },
+    "open_editor": "Open editor"
   },
   "group": {
     "rename": "Rename group",
@@ -143,7 +144,13 @@
     "restore": "Restore version {id}",
     "restored": "Restored version {id} (undo to revert).",
     "duplicated": "Duplicated “{name}”.",
-    "open_failed": "Could not open workflow {id}."
+    "open_failed": "Could not open workflow {id}.",
+    "templates": "Templates",
+    "templates_empty": "No templates installed.",
+    "use_template": "Use template {name}",
+    "use": "Use",
+    "template_created": "Created “{name}” from the template.",
+    "template_nodes": "{count} node | {count} nodes"
   },
   "inspector": {
     "title": "Inspector",
@@ -155,16 +162,13 @@
     "notes": "Notes",
     "notes_placeholder": "Notes shown on the node…",
     "group_title": "Group title",
-    "group_members": "{count} member | {count} members"
+    "group_members": "{count} member | {count} members",
+    "open_editor": "Open editor…"
   },
   "drawer": {
     "title": "Run log and errors",
     "log": "Log",
     "errors": "Errors",
-    "system": "System",
-    "clear": "Clear",
-    "empty_log": "No events yet.",
-    "no_errors": "No errors.",
     "system": {
       "version": "Version",
       "python": "Python",
@@ -173,7 +177,10 @@
       "disk": "Disk",
       "disk_value": "{free} GiB free of {total} GiB",
       "packs": "Packs"
-    }
+    },
+    "clear": "Clear",
+    "empty_log": "No events yet.",
+    "no_errors": "No errors."
   },
   "palette": {
     "title": "Add node",
@@ -292,5 +299,62 @@
     "picker_hint": "Click a file to use its workspace path.",
     "browse": "Browse workspace files",
     "actions": "Actions for {name}"
+  },
+  "editor": {
+    "title": "{node} · {editor}",
+    "close": "Close editor",
+    "apply": "Apply",
+    "reset": "Reset",
+    "waiting_upstream": "Waiting for the upstream node to finish…",
+    "no_input": "Connect the input port first: the editor works on the node's input.",
+    "axis_velocity": "v (km/s)",
+    "axis_wavelength": "λ (Å)",
+    "axis_flux": "flux",
+    "axis_normalized": "normalised flux",
+    "placement": {
+      "modal": "Modal",
+      "sheet": "Dock right"
+    },
+    "names": {
+      "range-select": "Range",
+      "line-picker": "Line picker",
+      "continuum-mask": "Continuum masks"
+    },
+    "range": {
+      "hint": "Drag the orange handles or type the limits. Apply writes vmin/vmax to the node.",
+      "vmin": "vmin (km/s)",
+      "vmax": "vmax (km/s)",
+      "width": "width {width} km/s"
+    },
+    "continuum": {
+      "hint": "Drag horizontally on the plot to mask a range, click a shaded band to remove it. The fit preview updates as you edit; Apply writes masks, order and method.",
+      "masks": "Masks (km/s)",
+      "no_masks": "No masks: every pixel is fitted.",
+      "add_mask": "Add",
+      "remove_mask": "Remove mask",
+      "method": "Method",
+      "methods": {
+        "polynomial": "Polynomial (Legendre)",
+        "legendre": "Legendre",
+        "spline": "Spline",
+        "flat": "Flat",
+        "ransac": "RANSAC"
+      },
+      "order": "Order",
+      "order_auto": "Auto (BIC)",
+      "bic_table": "BIC per order",
+      "no_bic": "Pick the polynomial method with Auto order to see the BIC table.",
+      "fitting": "Fitting…",
+      "fit_done": "Order {order} · {ms} ms · residual σ {err}"
+    },
+    "lines": {
+      "hint": "Click a feature on the spectrum to list the nearest transitions of the chosen line list; pick one and Apply.",
+      "linelist": "Line list",
+      "count": "{n} transitions",
+      "candidates": "Nearest transitions",
+      "click_first": "Click on the spectrum to see candidates.",
+      "selected": "Selected",
+      "doublet": "{species} doublet: partner at {partner} Å ({offset} km/s)."
+    }
   }
 }

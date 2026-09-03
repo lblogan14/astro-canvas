@@ -6,7 +6,7 @@ import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 
 import { api } from '@/api/client'
-import type { PreviewViewport } from '@/api/events'
+import type { ComputeRequest, PreviewViewport } from '@/api/events'
 import type { DecodedFrame } from '@/api/frames'
 import { type WsStatus, WsClient } from '@/api/ws'
 import { useExecutionStore } from './execution'
@@ -137,6 +137,11 @@ export const useSessionStore = defineStore('session', () => {
     return client.value?.requestOutput(nodeId, port) ?? false
   }
 
+  /** Run a node body with candidate params for an editor preview (`preview.compute`). */
+  function requestCompute(request: ComputeRequest): boolean {
+    return client.value?.requestCompute(request) ?? false
+  }
+
   function onFrame(listener: FrameListener): () => void {
     frameListeners.add(listener)
     return () => frameListeners.delete(listener)
@@ -160,6 +165,7 @@ export const useSessionStore = defineStore('session', () => {
     setAutoRun,
     requestPreview,
     requestOutput,
+    requestCompute,
     onFrame,
   }
 })

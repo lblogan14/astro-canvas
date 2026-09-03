@@ -32,6 +32,19 @@ export function viewKey(nodeId: string, port: string, tag: string): string {
   return `${nodeId}/${port}#${tag}`
 }
 
+/** Outcome of a `preview.compute` (editor live preview), keyed `node#tag`. */
+export interface ComputeEntry {
+  ok: boolean
+  ports: string[]
+  error: string | null
+  elapsedMs: number
+  ts: number
+}
+
+export function computeKey(nodeId: string, tag: string): string {
+  return `${nodeId}#${tag}`
+}
+
 export interface LogEntry {
   id: number
   ts: number
@@ -78,6 +91,8 @@ export const useExecutionStore = defineStore('execution', () => {
   const lastServerError = ref<string | null>(null)
   /** Tagged summaries (`preview.request` with `viewport.tag`), keyed `node/port#tag`. */
   const views = shallowRef<Record<string, SummaryEntry>>({})
+  /** Results of `preview.compute` requests, keyed `node#tag`. */
+  const computes = shallowRef<Record<string, ComputeEntry>>({})
   let logSeq = 0
 
   const isRunning = computed(() => currentRunId.value !== null)
@@ -125,9 +140,28 @@ export const useExecutionStore = defineStore('execution', () => {
     views.value = rest
   }
 
+  function compute(nodeId: string, tag: string): ComputeEntry | undefined {
+    return computes.value[computeKey(nodeId, tag)]
+  }
+
+  /** Forget a node's tagged views and compute result (an editor closing). */
+  function clearTag(nodeId: string, tag: string): void {
+    const suffix = `#${tag}`
+    const prefix = `${nodeId}/`
+    const rest: Record<string, SummaryEntry> = {}
+    for (const [key, entry] of Object.entries(views.value)) {
+      if (!(key.startsWith(prefix) && key.endsWith(suffix))) rest[key] = entry
+    }
+    views.value = rest
+    const remaining = { ...computes.value }
+    delete remaining[computeKey(nodeId, tag)]
+    computes.value = remaining
+  }
+
   function reset(): void {
     nodes.value = {}
     views.value = {}
+    computes.value = {}
     issues.value = {}
     log.value = []
     runs.value = {}
@@ -300,6 +334,20 @@ export const useExecutionStore = defineStore('execution', () => {
         lastServerError.value = message.message
         append({ ts: message.ts, level: 'error', nodeId: null, message: message.message })
         return
+      case 'preview.computed': {
+        const key = computeKey(message.node_id ?? `type:${message.node_type ?? ''}`, message.tag)
+        computes.value = {
+          ...computes.value,
+          [key]: {
+            ok: message.ok,
+            ports: message.ports ?? [],
+            error: message.error ?? null,
+            elapsedMs: message.elapsed_ms,
+            ts: message.ts,
+          },
+        }
+        return
+      }
       default:
         applyEngineEvent(message)
     }
@@ -322,9 +370,12 @@ export const useExecutionStore = defineStore('execution', () => {
     issueCount,
     errorNodeIds,
     views,
+    computes,
     node,
     view,
     clearView,
+    compute,
+    clearTag,
     issuesFor,
     reset,
     setIssues,

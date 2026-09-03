@@ -17,6 +17,8 @@ vi.mock('@/api/client', async (importOriginal) => {
       createWorkflow: vi.fn<typeof original.api.createWorkflow>(),
       listVersions: vi.fn<typeof original.api.listVersions>(),
       getVersion: vi.fn<typeof original.api.getVersion>(),
+      listTemplates: vi.fn<typeof original.api.listTemplates>(),
+      instantiateTemplate: vi.fn<typeof original.api.instantiateTemplate>(),
     },
   }
 })
@@ -94,5 +96,37 @@ describe('workflows store', () => {
     await store.loadVersions('a')
     expect(store.versions).toEqual([])
     expect(store.error).toBe('missing')
+  })
+
+  it('lists templates and instantiates one into a new workflow', async () => {
+    const store = useWorkflowsStore()
+    mocked.listTemplates.mockResolvedValueOnce([
+      {
+        id: 'rbcodes.absorption-line-measurement',
+        name: 'Absorption Line Measurement',
+        description: 'MgII at z = 1.3855',
+        pack: 'rbcodes',
+        node_count: 9,
+        file: 'absorption-line-measurement.acw',
+        readme: '# Absorption',
+      },
+    ])
+    await store.loadTemplates()
+    expect(store.templates).toHaveLength(1)
+    expect(store.templates[0]?.pack).toBe('rbcodes')
+    const doc = { ...mathChain(), id: 'fresh-id', name: 'Absorption Line Measurement' }
+    mocked.instantiateTemplate.mockResolvedValueOnce({ doc, node_errors: {} })
+    mocked.listWorkflows.mockResolvedValueOnce([summary('fresh-id', doc.name)])
+    const id = await store.instantiate('rbcodes.absorption-line-measurement')
+    expect(id).toBe('fresh-id')
+    expect(mocked.instantiateTemplate).toHaveBeenCalledWith(
+      'rbcodes.absorption-line-measurement',
+      null,
+    )
+    expect(store.items.map((w) => w.id)).toEqual(['fresh-id'])
+    mocked.listTemplates.mockRejectedValueOnce(new ApiError(500, 'down'))
+    await store.loadTemplates()
+    expect(store.templates).toEqual([])
+    expect(store.error).toBe('down')
   })
 })

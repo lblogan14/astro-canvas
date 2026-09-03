@@ -9,6 +9,7 @@ import { AutoForm } from '@/nodes'
 import { useExecutionStore } from '@/stores/execution'
 import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { useSelectionStore } from '@/stores/selection'
+import { useUiStore } from '@/stores/ui'
 import { useWorkflowStore } from '@/stores/workflow'
 
 const { t } = useI18n()
@@ -16,6 +17,7 @@ const workflow = useWorkflowStore()
 const schema = useNodesSchemaStore()
 const selection = useSelectionStore()
 const execution = useExecutionStore()
+const ui = useUiStore()
 
 const primary = computed(() => selection.primaryNodeId)
 const nodeId = computed(() =>
@@ -101,6 +103,15 @@ function setCost(event: Event): void {
           @update="(name, value) => workflow.setParam(nodeId!, name, value)"
           @toggle-link="(name) => workflow.toggleLink(nodeId!, name)"
         />
+        <button
+          v-if="spec.editor"
+          type="button"
+          class="mt-2 inline-flex h-7 w-full items-center justify-center rounded-md border px-2 hover:bg-muted"
+          data-testid="inspector-editor"
+          @click="ui.openEditor({ nodeId: nodeId! })"
+        >
+          {{ t('inspector.open_editor') }}
+        </button>
       </section>
 
       <section class="grid grid-cols-2 gap-2">

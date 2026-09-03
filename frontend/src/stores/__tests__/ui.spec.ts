@@ -122,4 +122,23 @@ describe('ui store system theme', () => {
     ui.setTheme('system')
     expect(ui.isDark).toBe(false)
   })
+
+  it('tracks the open editor and persists the placement setting', () => {
+    const ui = useUiStore()
+    expect(ui.editor).toBeNull()
+    expect(ui.editorPlacement).toBe('modal')
+    ui.openEditor({ nodeId: 'n1' })
+    expect(ui.editor).toEqual({ nodeId: 'n1' })
+    ui.closeEditor()
+    expect(ui.editor).toBeNull()
+    ui.setEditorPlacement('sheet')
+    expect(ui.editorPlacement).toBe('sheet')
+    expect(window.localStorage.getItem('astro-canvas-editor-placement')).toBe('"sheet"')
+    // A fresh store reads it back; garbage falls back to the modal default.
+    setActivePinia(createPinia())
+    expect(useUiStore().editorPlacement).toBe('sheet')
+    window.localStorage.setItem('astro-canvas-editor-placement', '"weird"')
+    setActivePinia(createPinia())
+    expect(useUiStore().editorPlacement).toBe('modal')
+  })
 })

@@ -31,6 +31,7 @@ import {
   Copy,
   MoreHorizontal,
   Pencil,
+  PencilRuler,
   Play,
   RefreshCw,
   Trash2,
@@ -72,6 +73,7 @@ const emit = defineEmits<{
   duplicate: []
   delete: []
   'toggle-collapse': []
+  'open-editor': []
 }>()
 
 defineSlots<{
@@ -234,6 +236,18 @@ const errorOpen = ref(false)
         {{ title }}
       </span>
 
+      <button
+        v-if="spec?.editor"
+        type="button"
+        class="nodrag inline-flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+        :title="t('node.open_editor')"
+        :aria-label="t('node.open_editor')"
+        data-testid="node-editor"
+        @click.stop="emit('open-editor')"
+      >
+        <PencilRuler class="size-3.5" />
+      </button>
+
       <span
         v-if="showBadge"
         class="ac-badge shrink-0 rounded px-1.5 py-px text-[10px] font-medium uppercase tracking-wide"
@@ -299,6 +313,14 @@ const errorOpen = ref(false)
           >
             <DropdownMenuItem class="ac-menu-item" @select="startRename">
               <Pencil class="size-3.5" /> {{ t('node.rename') }}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              v-if="spec?.editor"
+              class="ac-menu-item"
+              data-testid="node-menu-editor"
+              @select="emit('open-editor')"
+            >
+              <PencilRuler class="size-3.5" /> {{ t('node.open_editor') }}
             </DropdownMenuItem>
             <DropdownMenuItem class="ac-menu-item" @select="emit('set-disabled', !node.disabled)">
               <Ban class="size-3.5" /> {{ node.disabled ? t('node.enable') : t('node.bypass') }}

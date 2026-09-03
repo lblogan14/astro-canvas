@@ -14,6 +14,14 @@ export interface ViewerTarget {
   port: string
 }
 
+/** The node whose expandable editor (`NodeSpec.editor`) is open. */
+export interface EditorTarget {
+  nodeId: string
+}
+
+/** Where editors open: a centred modal (default) or a sheet docked on the right. */
+export type EditorPlacement = 'modal' | 'sheet'
+
 /** Why the command palette opened: a plain quick-add, or a connection dropped on empty canvas. */
 export interface PaletteContext {
   sourceNodeId: string
@@ -26,6 +34,7 @@ export interface PaletteContext {
 const THEME_ORDER: readonly Theme[] = ['system', 'light', 'dark']
 const THEME_KEY = 'astro-canvas-theme'
 const FAVORITES_KEY = 'astro-canvas-favorites'
+const EDITOR_PLACEMENT_KEY = 'astro-canvas-editor-placement'
 
 function prefersDark(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
@@ -55,6 +64,8 @@ const isTheme = (value: unknown): value is Theme =>
   value === 'system' || value === 'light' || value === 'dark'
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((v) => typeof v === 'string')
+const isPlacement = (value: unknown): value is EditorPlacement =>
+  value === 'modal' || value === 'sheet'
 
 /** Shell-wide UI state: theme, panels, backend connectivity, favourites, transient toasts. */
 export const useUiStore = defineStore('ui', () => {
@@ -67,6 +78,10 @@ export const useUiStore = defineStore('ui', () => {
   const paletteOpen = ref(false)
   const paletteContext = ref<PaletteContext | null>(null)
   const viewer = ref<ViewerTarget | null>(null)
+  const editor = ref<EditorTarget | null>(null)
+  const editorPlacement = ref<EditorPlacement>(
+    readStorage(EDITOR_PLACEMENT_KEY, 'modal', isPlacement),
+  )
   const backendStatus = ref<BackendStatus>('idle')
   const backendVersion = ref<string | null>(null)
   const backendError = ref<string | null>(null)
@@ -141,6 +156,19 @@ export const useUiStore = defineStore('ui', () => {
     viewer.value = null
   }
 
+  function openEditor(target: EditorTarget): void {
+    editor.value = target
+  }
+
+  function closeEditor(): void {
+    editor.value = null
+  }
+
+  function setEditorPlacement(next: EditorPlacement): void {
+    editorPlacement.value = next
+    writeStorage(EDITOR_PLACEMENT_KEY, next)
+  }
+
   function toggleFavorite(typeId: string): void {
     favorites.value = favoriteSet.value.has(typeId)
       ? favorites.value.filter((id) => id !== typeId)
@@ -195,6 +223,8 @@ export const useUiStore = defineStore('ui', () => {
     paletteOpen,
     paletteContext,
     viewer,
+    editor,
+    editorPlacement,
     backendStatus,
     backendVersion,
     backendError,
@@ -213,6 +243,9 @@ export const useUiStore = defineStore('ui', () => {
     closePalette,
     openViewer,
     closeViewer,
+    openEditor,
+    closeEditor,
+    setEditorPlacement,
     toggleFavorite,
     notify,
     dismissToast,
