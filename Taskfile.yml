@@ -1,0 +1,106 @@
+# https://taskfile.dev — task runner for Astro Canvas.
+# Tooling rule: frontend only via pnpm, backend only via uv (see CONTRIBUTING.md).
+version: '3'
+
+env:
+  MPLBACKEND: Agg
+  QT_QPA_PLATFORM: offscreen
+
+vars:
+  BE: backend
+  FE: frontend
+
+tasks:
+  default:
+    silent: true
+    cmds:
+      - task --list
+
+  install:
+    desc: Install backend (uv sync) and frontend (pnpm install) dependencies
+    cmds:
+      - uv sync --directory {{.BE}} --all-extras
+      - pnpm -C {{.FE}} install
+      - pnpm -C {{.FE}} exec playwright install chromium
+
+  dev:
+    desc: Run the backend on :8765 and Vite on :5173 concurrently
+    deps: [dev:be, dev:fe]
+
+  dev:be:
+    desc: Backend with auto-reload on http://127.0.0.1:8765
+    cmds:
+      - uv run --directory {{.BE}} uvicorn --factory astro_canvas.server.app:create_app --host 127.0.0.1 --port 8765 --reload --reload-dir src
+
+  dev:fe:
+    desc: Vite dev server on http://127.0.0.1:5173 (proxies /api and /ws to the backend)
+    cmds:
+      - pnpm -C {{.FE}} dev
+
+  lint:
+    desc: ruff + oxlint + eslint + prettier check + tooling rule
+    cmds:
+      - uv run --directory {{.BE}} ruff check . ../scripts
+      - uv run --directory {{.BE}} ruff format --check . ../scripts
+      - pnpm -C {{.FE}} lint
+      - pnpm -C {{.FE}} format:check
+      - task: check:tooling
+
+  typecheck:
+    desc: mypy (strict on sdk/engine) + vue-tsc
+    cmds:
+      - uv run --directory {{.BE}} mypy
+      - pnpm -C {{.FE}} typecheck
+
+  test:
+    desc: All tests (backend, frontend unit, e2e)
+    cmds:
+      - task: test:py
+      - task: test:fe
+      - task: test:e2e
+
+  test:py:
+    desc: Backend pytest with coverage
+    cmds:
+      - uv run --directory {{.BE}} pytest
+
+  test:fe:
+    desc: Frontend Vitest
+    cmds:
+      - pnpm -C {{.FE}} test:unit
+
+  test:e2e:
+    desc: Playwright smoke against a real backend (starts both servers)
+    cmds:
+      - pnpm -C {{.FE}} test:e2e
+
+  fmt:
+    desc: Format and auto-fix backend and frontend
+    cmds:
+      - uv run --directory {{.BE}} ruff format . ../scripts
+      - uv run --directory {{.BE}} ruff check --fix . ../scripts
+      - pnpm -C {{.FE}} lint:fix
+      - pnpm -C {{.FE}} format
+
+  build:
+    desc: Build the SPA, copy it into the wheel, build the wheel, verify it
+    cmds:
+      - pnpm -C {{.FE}} build
+      - uv run --directory {{.BE}} python ../scripts/copy_static.py
+      - uv build {{.BE}}
+      - uv run --directory {{.BE}} python ../scripts/check_wheel.py
+
+  build:smoke:
+    desc: Install the built wheel in a throwaway env and check it serves the SPA
+    cmds:
+      - uv run --isolated --no-project --with {{.BE}}/dist/astro_canvas-*.whl python scripts/smoke_wheel.py
+
+  check:tooling:
+    desc: Fail if npm/npx/yarn/bun/pip/poetry/conda are invoked anywhere
+    cmds:
+      - uv run --directory {{.BE}} python ../scripts/check_tooling.py
+
+  clean:
+    desc: Remove build outputs
+    cmds:
+      - uv run --directory {{.BE}} python -c "import shutil,pathlib; [shutil.rmtree(p, ignore_errors=True) for p in ('dist', '../frontend/dist')]; [p.unlink() for p in pathlib.Path('src/astro_canvas/static').rglob('*') if p.is_file() and p.name != '.gitkeep']"

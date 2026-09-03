@@ -1,0 +1,145 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "astro-canvas"
+dynamic = ["version"]
+description = "Node-based infinite canvas for exploring astronomical spectra, images, and cubes"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10,<3.14"
+authors = [{ name = "Bin Liu" }]
+keywords = ["astronomy", "spectroscopy", "workflow", "canvas", "rbcodes"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Framework :: FastAPI",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Astronomy",
+]
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pydantic>=2",
+  "pydantic-settings>=2",
+  "sqlalchemy>=2",
+  "alembic>=1.13",
+  "numpy>=1.26",
+  "astropy>=6",
+  "pyarrow>=16",
+  "msgpack>=1.0",
+  "blake3>=0.4",
+  "tsdownsample>=0.1.3",
+  "pebble>=5.0",
+  "griffe>=1.0",
+  "typer>=0.12",
+  "platformdirs>=4",
+  "structlog>=24",
+  "python-multipart>=0.0.9",
+  "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "pytest-asyncio>=0.24",
+  "pytest-cov>=5",
+  "hypothesis>=6",
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "respx>=0.21",
+]
+
+[project.scripts]
+astro-canvas = "astro_canvas.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/bkoservices/astro-canvas"
+Source = "https://github.com/bkoservices/astro-canvas"
+
+[dependency-groups]
+# Node packs developed in this monorepo. Installed editable by `uv sync` so the
+# server can discover them; they are not runtime dependencies of the wheel.
+packs = ["astro-canvas-core", "astro-canvas-rbcodes"]
+
+[tool.uv]
+default-groups = ["packs"]
+# Make the universal lock pick versions with wheels for every developer platform
+# (e.g. pyqt5-qt5, pulled in by rbcodes on 3.10, has no Windows wheel in recent releases).
+required-environments = [
+  "sys_platform == 'win32' and platform_machine == 'AMD64'",
+  "sys_platform == 'darwin' and platform_machine == 'arm64'",
+  "sys_platform == 'darwin' and platform_machine == 'x86_64'",
+  "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
+
+[tool.uv.sources]
+astro-canvas-core = { workspace = true }
+astro-canvas-rbcodes = { workspace = true }
+
+[tool.uv.workspace]
+members = ["../packs/*"]
+
+[tool.hatch.version]
+path = "src/astro_canvas/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/astro_canvas"]
+# The built SPA (frontend/dist) is copied here by `task build` / CI before `uv build`.
+artifacts = ["src/astro_canvas/static/**"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/astro_canvas", "tests", "README.md"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "PL"]
+ignore = [
+  "PLR0913", # too many arguments (node functions legitimately take many params)
+  "PLR2004", # magic value comparison
+  "PLR0912", # too many branches
+  "PLR0915", # too many statements
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR2004", "PLC0415"]
+
+[tool.mypy]
+python_version = "3.10"
+packages = ["astro_canvas"]
+mypy_path = "src"
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["astro_canvas.sdk.*", "astro_canvas.engine.*"]
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-ra --strict-markers --cov=astro_canvas --cov-report=term-missing"
+filterwarnings = ["error::DeprecationWarning:astro_canvas.*"]
+
+[tool.coverage.run]
+source = ["astro_canvas"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false

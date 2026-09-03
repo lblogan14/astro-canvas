@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'phase/**']
+    tags: ['v*']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MPLBACKEND: Agg
+  QT_QPA_PLATFORM: offscreen
+  FORCE_COLOR: '1'
+
+jobs:
+  backend:
+    name: backend (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ['3.12']
+        include:
+          - os: ubuntu-latest
+            python: '3.10'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+          python-version: ${{ matrix.python }}
+      - name: Sync
+        run: uv sync --directory backend --all-extras --locked
+      - name: Ruff
+        run: |
+          uv run --directory backend ruff check . ../scripts
+          uv run --directory backend ruff format --check . ../scripts
+      - name: Mypy
+        run: uv run --directory backend mypy
+      - name: Pytest
+        run: uv run --directory backend pytest
+      - name: Tooling rule (pnpm/uv only)
+        run: uv run --directory backend python ../scripts/check_tooling.py
+
+  frontend:
+    name: frontend (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install
+        run: pnpm -C frontend install --frozen-lockfile
+      - name: Lint
+        run: |
+          pnpm -C frontend lint
+          pnpm -C frontend format:check
+      - name: Typecheck
+        run: pnpm -C frontend typecheck
+      - name: Vitest
+        run: pnpm -C frontend test:unit
+
+  build:
+    name: wheel with SPA
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+          python-version: '3.12'
+      - name: Build SPA
+        run: |
+          pnpm -C frontend install --frozen-lockfile
+          pnpm -C frontend build
+      - name: Build wheel
+        run: |
+          uv run --directory backend python ../scripts/copy_static.py
+          uv build backend
+          uv run --directory backend python ../scripts/check_wheel.py
+      - name: Smoke the wheel in a clean environment
+        run: uv run --isolated --no-project --with backend/dist/astro_canvas-*.whl python scripts/smoke_wheel.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: astro-canvas-wheel
+          path: backend/dist/*.whl
+
+  e2e:
+    name: playwright smoke (ubuntu)
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+          python-version: '3.12'
+      - name: Install
+        run: |
+          pnpm -C frontend install --frozen-lockfile
+          uv sync --directory backend --all-extras --locked
+          pnpm -C frontend exec playwright install --with-deps chromium
+      - name: Playwright
+        run: pnpm -C frontend test:e2e
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7
