@@ -7,13 +7,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-TEMPLATE = (
-    Path(__file__).resolve().parents[4]
-    / "packs"
-    / "rbcodes"
-    / "templates"
-    / "absorption-line-measurement.acw"
-)
+import pytest
+
+TEMPLATES = Path(__file__).resolve().parents[4] / "packs" / "rbcodes" / "templates"
+CASES = {
+    "absorption-line-measurement.acw": ("ew", "save"),
+    "redshift-finder.acw": ("rank_gal", "zshift_qso"),
+}
 
 SCRIPT = r"""
 import json, os, sys, asyncio
@@ -41,13 +41,14 @@ print(json.dumps({
 """
 
 
-def test_pack_and_template_run_without_qt(tmp_path: Path) -> None:
+@pytest.mark.parametrize("template", sorted(CASES))
+def test_pack_and_template_run_without_qt(tmp_path: Path, template: str) -> None:
     """Runs in a subprocess so earlier tests cannot have imported Qt already."""
     workspace = tmp_path / "ws"
     workspace.mkdir()
     env = {**os.environ, "MPLBACKEND": "Agg", "QT_QPA_PLATFORM": "offscreen"}
     proc = subprocess.run(
-        [sys.executable, "-c", SCRIPT, str(workspace), str(TEMPLATE)],
+        [sys.executable, "-c", SCRIPT, str(workspace), str(TEMPLATES / template)],
         capture_output=True,
         text=True,
         env=env,
@@ -60,5 +61,5 @@ def test_pack_and_template_run_without_qt(tmp_path: Path) -> None:
     report = json.loads(proc.stdout.strip().splitlines()[-1])
     assert report["pyqt5"] is False and report["qt_any"] is False
     assert report["status"] == "done", report
-    assert report["states"]["ew"] == "done" and report["states"]["save"] == "done", report
+    assert all(report["states"][node] == "done" for node in CASES[template]), report
     assert report["mpl_backend"] in (None, "agg", "Agg")

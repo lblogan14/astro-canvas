@@ -1,0 +1,507 @@
+{
+  "rbcodes_version": "2.4.0",
+  "python": "3.10.20",
+  "numpy": "2.2.6",
+  "astropy": "6.1.7",
+  "scipy": "1.15.3",
+  "generated_by": "tests/packs/rbcodes/fixtures/generate_reference_zfind.py",
+  "cases": {
+    "galaxy_picket_fence": {
+      "case": {
+        "id": "galaxy_picket_fence",
+        "file": "spec-0398-51789-0282.fits",
+        "method": "picket_fence",
+        "linelist": "zfind_galaxy",
+        "kwargs": {
+          "z_min": 0.0,
+          "z_max": 0.5,
+          "n_steps": 3000,
+          "smooth_fwhm_pix": 2.0,
+          "fwhm_ang": 3.0
+        }
+      },
+      "expected": {
+        "warnings": [],
+        "curve": {
+          "n": 3000,
+          "n_finite": 3000,
+          "argmin_z": 0.0056685561853951315,
+          "min": -77.16233855573441,
+          "probe_index": [
+            0,
+            1,
+            7,
+            100,
+            999
+          ],
+          "probe": [
+            -11.757636615808856,
+            -11.041419696875487,
+            -7.157960328534211,
+            -10.188312564981707,
+            -11.805977446928797
+          ]
+        },
+        "label": "PicketFence:zfind_galaxy",
+        "solutions": [
+          {
+            "z": 0.0056685561853951315,
+            "z_err": 6.653204471581924e-05,
+            "chi2_dof": -77.16233855573441,
+            "method": "PicketFence:zfind_galaxy",
+            "template_type": "Unknown",
+            "n_features": 12
+          },
+          {
+            "z": 0.318106035345115,
+            "z_err": 0.00011976554259704163,
+            "chi2_dof": -43.9373188431137,
+            "method": "PicketFence:zfind_galaxy",
+            "template_type": "Unknown",
+            "n_features": 14
+          },
+          {
+            "z": 0.3496165388462821,
+            "z_err": 0.00012006581936787068,
+            "chi2_dof": -32.15596460801879,
+            "method": "PicketFence:zfind_galaxy",
+            "template_type": "Unknown",
+            "n_features": 14
+          },
+          {
+            "z": 0.02900966988996332,
+            "z_err": 0.0001347298353228449,
+            "chi2_dof": -23.52502721270941,
+            "method": "PicketFence:zfind_galaxy",
+            "template_type": "Unknown",
+            "n_features": 14
+          },
+          {
+            "z": 0.2164054684894965,
+            "z_err": 0.0003628347412386904,
+            "chi2_dof": -20.06663128933934,
+            "method": "PicketFence:zfind_galaxy",
+            "template_type": "Unknown",
+            "n_features": 14
+          }
+        ]
+      }
+    },
+    "galaxy_line_search": {
+      "case": {
+        "id": "galaxy_line_search",
+        "file": "spec-0398-51789-0282.fits",
+        "method": "line_search",
+        "linelist": "zfind_galaxy",
+        "kwargs": {
+          "z_min": 0.0,
+          "z_max": 0.5,
+          "n_steps": 3000,
+          "mode": "emission"
+        }
+      },
+      "expected": {
+        "warnings": [],
+        "curve": {
+          "n": 3000,
+          "n_finite": 3000,
+          "argmin_z": 0.0056685561853951315,
+          "min": -592.7832990008029,
+          "probe_index": [
+            0,
+            1,
+            7,
+            100,
+            999
+          ],
+          "probe": [
+            -189.87098383310482,
+            -197.6245977719243,
+            -213.08314176753686,
+            -184.81464617821499,
+            -221.14697247825126
+          ]
+        },
+        "label": "LineSearch:zfind_galaxy",
+        "solutions": [
+          {
+            "z": 0.0056685561853951315,
+            "z_err": 3.771677125393968e-05,
+            "chi2_dof": -592.7832990008029,
+            "method": "LineSearch:zfind_galaxy",
+            "template_type": "Unknown",
+            "n_features": 12
+          },
+          {
+            "z": 0.12004001333777925,
+            "z_err": 3.072229101679679e-05,
+            "chi2_dof": -573.6879914983915,
+            "method": "LineSearch:zfind_galaxy",
+            "template_type": "Unknown",
+            "n_features": 14
+          },
+          {
+            "z": 0.26825608536178724,
+            "z_err": 4.609694400121243e-05,
+            "chi2_dof": -463.23330144663413,
+            "method": "LineSearch:zfind_galaxy",
+            "template_type": "Unknown",
+            "n_features": 14
+          },
+          {
+            "z": 0.35061687229076355,
+            "z_err": 5.0070652449502344e-05,
+            "chi2_dof": -435.78322171107476,
+            "method": "LineSearch:zfind_galaxy",
+            "template_type": "Unknown",
+            "n_features": 14
+          },
+          {
+            "z": 0.09453151050350116,
+            "z_err": 8.302963521787787e-05,
+            "chi2_dof": -381.6819798152679,
+            "method": "LineSearch:zfind_galaxy",
+            "template_type": "Unknown",
+            "n_features": 14
+          }
+        ]
+      }
+    },
+    "galaxy_template": {
+      "case": {
+        "id": "galaxy_template",
+        "file": "spec-0398-51789-0282.fits",
+        "method": "template",
+        "kwargs": {
+          "template_name": "LateTypeEmission",
+          "z_min": 0.0,
+          "z_max": 0.5,
+          "n_steps": 1000
+        }
+      },
+      "expected": {
+        "warnings": [],
+        "curve": {
+          "n": 1000,
+          "n_finite": 1000,
+          "argmin_z": 0.4964964964964965,
+          "min": 0.019632973726191782,
+          "probe_index": [
+            0,
+            1,
+            7,
+            100,
+            999
+          ],
+          "probe": [
+            0.03863073320738159,
+            0.038351872339376245,
+            0.03494153179734977,
+            0.033455687179610574,
+            0.022750300614486598
+          ]
+        },
+        "label": "Template:LateTypeEmission",
+        "solutions": [
+          {
+            "z": 0.4964964964964965,
+            "z_err": 0.021068371324600862,
+            "chi2_dof": 0.019632973726191782,
+            "method": "Template:LateTypeEmission",
+            "template_type": "LateTypeEmission",
+            "n_features": 3818
+          },
+          {
+            "z": 0.4469469469469469,
+            "z_err": 0.027410142359689426,
+            "chi2_dof": 0.020288691484001614,
+            "method": "Template:LateTypeEmission",
+            "template_type": "LateTypeEmission",
+            "n_features": 3818
+          },
+          {
+            "z": 0.466966966966967,
+            "z_err": 0.05157689748931318,
+            "chi2_dof": 0.021336498984794772,
+            "method": "Template:LateTypeEmission",
+            "template_type": "LateTypeEmission",
+            "n_features": 3818
+          },
+          {
+            "z": 0.4149149149149149,
+            "z_err": 0.0505292679178443,
+            "chi2_dof": 0.02136815879767712,
+            "method": "Template:LateTypeEmission",
+            "template_type": "LateTypeEmission",
+            "n_features": 3818
+          },
+          {
+            "z": 0.006006006006006006,
+            "z_err": 0.005524804652154404,
+            "chi2_dof": 0.021737908226730662,
+            "method": "Template:LateTypeEmission",
+            "template_type": "LateTypeEmission",
+            "n_features": 3813
+          }
+        ]
+      }
+    },
+    "galaxy_pca": {
+      "case": {
+        "id": "galaxy_pca",
+        "file": "spec-0398-51789-0282.fits",
+        "method": "pca",
+        "kwargs": {
+          "template_set": "galaxy",
+          "z_min": 0.0,
+          "z_max": 0.5,
+          "n_steps": 500
+        }
+      },
+      "expected": {
+        "warnings": [],
+        "curve": {
+          "n": 500,
+          "n_finite": 500,
+          "argmin_z": 0.0060120240480961915,
+          "min": 0.0016792912439656112,
+          "probe_index": [
+            0,
+            1,
+            7,
+            100
+          ],
+          "probe": [
+            0.004819829448977648,
+            0.004902703674389118,
+            0.003954948677132403,
+            0.005601749387413261
+          ]
+        },
+        "label": "PCA:galaxy",
+        "solutions": [
+          {
+            "z": 0.0060120240480961915,
+            "z_err": 0.027280348914202994,
+            "chi2_dof": 0.0016792912439656112,
+            "method": "PCA:galaxy",
+            "template_type": "galaxy",
+            "n_features": 10
+          },
+          {
+            "z": 0.40581162324649295,
+            "z_err": 0.22339129498470192,
+            "chi2_dof": 0.004785298083928671,
+            "method": "PCA:galaxy",
+            "template_type": "galaxy",
+            "n_features": 10
+          },
+          {
+            "z": 0.029058116232464928,
+            "z_err": 0.17717554396817908,
+            "chi2_dof": 0.004879881957614662,
+            "method": "PCA:galaxy",
+            "template_type": "galaxy",
+            "n_features": 10
+          },
+          {
+            "z": 0.42985971943887774,
+            "z_err": 0.174759869052545,
+            "chi2_dof": 0.004904415413672798,
+            "method": "PCA:galaxy",
+            "template_type": "galaxy",
+            "n_features": 10
+          },
+          {
+            "z": 0.44989979959919835,
+            "z_err": 0.4829918413352462,
+            "chi2_dof": 0.004950997317905604,
+            "method": "PCA:galaxy",
+            "template_type": "galaxy",
+            "n_features": 10
+          }
+        ]
+      }
+    },
+    "qso_picket_fence": {
+      "case": {
+        "id": "qso_picket_fence",
+        "file": "sdss1.fits",
+        "method": "picket_fence",
+        "linelist": "zfind_qso",
+        "kwargs": {
+          "z_min": 0.0,
+          "z_max": 5.0,
+          "n_steps": 5000,
+          "smooth_fwhm_pix": 3.0,
+          "fwhm_ang": 20.0
+        }
+      },
+      "expected": {
+        "warnings": [],
+        "curve": {
+          "n": 5000,
+          "n_finite": 3711,
+          "argmin_z": 3.007601520304061,
+          "min": -227.4362686860415,
+          "probe_index": [
+            0,
+            1,
+            7,
+            100,
+            999
+          ],
+          "probe": [
+            -147.19429943484593,
+            -146.3543203196533,
+            -119.39637397395445,
+            -18.453469389941652,
+            -40.86709397444467
+          ]
+        },
+        "label": "PicketFence:zfind_qso",
+        "solutions": [
+          {
+            "z": 3.007601520304061,
+            "z_err": 0.0014106746166624269,
+            "chi2_dof": -227.4362686860415,
+            "method": "PicketFence:zfind_qso",
+            "template_type": "Unknown",
+            "n_features": 4
+          },
+          {
+            "z": 3.027605521104221,
+            "z_err": 0.0015563164008442106,
+            "chi2_dof": -206.25188166568816,
+            "method": "PicketFence:zfind_qso",
+            "template_type": "Unknown",
+            "n_features": 4
+          },
+          {
+            "z": 2.987597519503901,
+            "z_err": 0.004863843372353729,
+            "chi2_dof": -195.1680616517473,
+            "method": "PicketFence:zfind_qso",
+            "template_type": "Unknown",
+            "n_features": 4
+          },
+          {
+            "z": 2.1904380876175233,
+            "z_err": 0.0025707521918025816,
+            "chi2_dof": -186.61066365301923,
+            "method": "PicketFence:zfind_qso",
+            "template_type": "Unknown",
+            "n_features": 5
+          },
+          {
+            "z": 2.1464292858571716,
+            "z_err": 0.000844344187332163,
+            "chi2_dof": -186.35794940799684,
+            "method": "PicketFence:zfind_qso",
+            "template_type": "Unknown",
+            "n_features": 5
+          }
+        ]
+      }
+    },
+    "qso_absorbers": {
+      "case": {
+        "id": "qso_absorbers",
+        "file": "sdss1.fits",
+        "method": "line_search",
+        "linelist": "zfind_igm",
+        "kwargs": {
+          "z_min": 0.5,
+          "z_max": 2.5,
+          "n_steps": 4000,
+          "mode": "absorption"
+        }
+      },
+      "expected": {
+        "warnings": [],
+        "curve": {
+          "n": 4000,
+          "n_finite": 2703,
+          "argmin_z": 1.403725931482871,
+          "min": -0.773063277281687,
+          "probe_index": [
+            0,
+            1,
+            7,
+            100,
+            999
+          ],
+          "probe": [
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        "candidates": [
+          {
+            "z": 1.1376594148537134,
+            "significance": 5.647890007267475,
+            "n_lines": 2,
+            "linelist_name": "zfind_igm",
+            "lines_matched": [
+              "MgII 2796",
+              "MgII 2803"
+            ]
+          },
+          {
+            "z": 1.0951487871967993,
+            "significance": 3.219174309530631,
+            "n_lines": 2,
+            "linelist_name": "zfind_igm",
+            "lines_matched": [
+              "MgII 2796",
+              "MgII 2803"
+            ]
+          },
+          {
+            "z": 0.6735433858464617,
+            "significance": 3.0563968501287078,
+            "n_lines": 2,
+            "linelist_name": "zfind_igm",
+            "lines_matched": [
+              "MgII 2796",
+              "MgII 2803"
+            ]
+          },
+          {
+            "z": 2.3669667416854216,
+            "significance": 2.9100640990536113,
+            "n_lines": 7,
+            "linelist_name": "zfind_igm",
+            "lines_matched": [
+              "HI Lya",
+              "SiII 1260",
+              "CII 1334",
+              "SiIV 1393",
+              "SiIV 1402",
+              "CIV 1548",
+              "CIV 1550"
+            ]
+          },
+          {
+            "z": 2.02638159539885,
+            "significance": 2.7351723999537882,
+            "n_lines": 7,
+            "linelist_name": "zfind_igm",
+            "lines_matched": [
+              "CII 1334",
+              "SiIV 1393",
+              "SiIV 1402",
+              "CIV 1548",
+              "CIV 1550",
+              "MgII 2796",
+              "MgII 2803"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
