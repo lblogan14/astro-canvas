@@ -524,7 +524,7 @@ def iau_names(
     name="Moment Maps",
     category=CATEGORY,
     icon="waves",
-    cost="expensive",
+    cost="auto",
 )
 def moment_maps(
     cube: Cube3D,

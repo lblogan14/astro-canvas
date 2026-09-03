@@ -14,6 +14,7 @@ CASES = {
     "absorption-line-measurement.acw": ("ew", "save"),
     "redshift-finder.acw": ("rank_gal", "zshift_qso"),
     "multi-spectrum-viewer.acw": ("viewer", "export", "vstack"),
+    "ifu-cube-explorer.acw": ("extract", "moments", "names", "reg"),
 }
 
 SCRIPT = r"""
