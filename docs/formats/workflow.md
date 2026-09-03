@@ -91,7 +91,8 @@ the `?token=` URL. Set `ASTRO_CANVAS_AUTH=false` to disable.
 | `POST /workflows` | create (409 if the id exists) → `{doc, node_errors}` |
 | `GET /workflows/{id}` · `PUT /workflows/{id}` · `DELETE /workflows/{id}` | read / replace (recompiles, auto-runs) / delete |
 | `GET /workflows/{id}/versions` · `GET /workflows/{id}/versions/{vid}` | snapshots |
-| `GET /workflows/{id}/status` | `{node_errors, nodes: {id: node.status}, current_run}` for reconnecting clients |
+| `GET /workflows/{id}/status` | `{node_errors, nodes: {id: node.status}, current_run, auto_run}` for reconnecting clients |
+| `GET /workflows/{id}/settings` · `POST /workflows/{id}/settings` `{auto_run}` | read / toggle the scheduler's auto-run switch (enabling it runs dirty cheap nodes immediately) |
 | `POST /workflows/{id}/run` `{targets?}` | 202 `{run_id}`; runs to the targets (default every leaf) |
 | `GET /runs?workflow_id=` · `GET /runs/{id}` | history (`status, started, finished, targets, nodes[]`) |
 | `POST /runs/{id}/cancel` | `{cancelled}` |
@@ -105,7 +106,7 @@ workflow_id`:
 
 | `type` | fields |
 |---|---|
-| `hello` / `subscribed` / `run.accepted` / `cancel.result` / `pong` / `error` | command replies |
+| `hello` / `subscribed` / `run.accepted` / `cancel.result` / `pong` / `error` | command replies (`subscribed` carries `current_run` and `auto_run`) |
 | `graph.validation` | `node_errors` |
 | `node.status` | `node_id, state, run_id, cache_hit, elapsed_ms, cost_class, stale` |
 | `node.progress` · `node.log` · `node.error` | `frac, message` · `level, message, fields` · `message, traceback, hint` |

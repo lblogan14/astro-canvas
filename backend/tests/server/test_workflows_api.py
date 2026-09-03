@@ -137,3 +137,28 @@ def test_workflows_persist_across_restarts(
         status = wait_status(second, doc["id"])
         # Outputs were cached on disk: the fresh process reports cache hits, not re-execution.
         assert all(n["cache_hit"] for n in status["nodes"].values() if n["state"] == "done")
+
+
+def test_auto_run_setting_gates_the_debounced_run(api: TestClient) -> None:
+    doc = load("math_chain")
+    doc["id"] = "wf-settings"
+    assert api.post("/api/workflows", json=doc).status_code == 201
+    wait_status(api, "wf-settings")
+    assert api.get("/api/workflows/wf-settings/settings").json() == {"auto_run": True}
+    assert api.get("/api/workflows/wf-settings/status").json()["auto_run"] is True
+
+    off = api.post("/api/workflows/wf-settings/settings", json={"auto_run": False})
+    assert off.status_code == 200 and off.json() == {"auto_run": False}
+    doc["nodes"]["c"]["params"]["value"] = 5.0
+    assert api.put("/api/workflows/wf-settings", json=doc).status_code == 200
+    time.sleep(0.15)
+    body = api.get("/api/workflows/wf-settings/status").json()
+    assert body["auto_run"] is False
+    assert body["nodes"]["c"]["state"] == "dirty"
+
+    on = api.post("/api/workflows/wf-settings/settings", json={"auto_run": True})
+    assert on.json() == {"auto_run": True}
+    body = wait_status(api, "wf-settings")
+    assert body["nodes"]["sum"]["state"] == "done"
+    assert api.get("/api/workflows/missing/settings").status_code == 404
+    assert api.post("/api/workflows/missing/settings", json={"auto_run": True}).status_code == 404

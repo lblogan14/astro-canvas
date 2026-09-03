@@ -34,6 +34,13 @@ class WorkflowStatus(BaseModel):
     node_errors: dict[str, list[NodeIssue]]
     nodes: dict[str, NodeStatus]
     current_run: str | None = None
+    auto_run: bool = True
+
+
+class WorkflowSettings(BaseModel):
+    """Per-workflow scheduler switches (kept in memory for the server's lifetime)."""
+
+    auto_run: bool = True
 
 
 def _not_found(workflow_id: str) -> HTTPException:
@@ -114,4 +121,28 @@ async def workflow_status(request: Request, workflow_id: str) -> WorkflowStatus:
         node_errors=scheduler.issues,
         nodes=scheduler.snapshot(),
         current_run=current.run_id if current else None,
+        auto_run=scheduler.auto_run,
     )
+
+
+@router.get("/workflows/{workflow_id}/settings", response_model=WorkflowSettings)
+async def get_settings(request: Request, workflow_id: str) -> WorkflowSettings:
+    """The scheduler switches for one workflow."""
+    try:
+        scheduler = get_runtime(request).scheduler(workflow_id)
+    except UnknownWorkflowError:
+        raise _not_found(workflow_id) from None
+    return WorkflowSettings(auto_run=scheduler.auto_run)
+
+
+@router.post("/workflows/{workflow_id}/settings", response_model=WorkflowSettings)
+async def update_settings(
+    request: Request, workflow_id: str, body: WorkflowSettings
+) -> WorkflowSettings:
+    """Toggle auto-run; enabling it schedules any dirty cheap nodes right away."""
+    try:
+        scheduler = get_runtime(request).scheduler(workflow_id)
+    except UnknownWorkflowError:
+        raise _not_found(workflow_id) from None
+    scheduler.set_auto_run(body.auto_run)
+    return WorkflowSettings(auto_run=scheduler.auto_run)

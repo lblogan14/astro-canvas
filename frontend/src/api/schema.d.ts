@@ -267,6 +267,30 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/workflows/{workflow_id}/settings': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get Settings
+     * @description The scheduler switches for one workflow.
+     */
+    get: operations['get_settings_api_workflows__workflow_id__settings_get']
+    put?: never
+    /**
+     * Update Settings
+     * @description Toggle auto-run; enabling it schedules any dirty cheap nodes right away.
+     */
+    post: operations['update_settings_api_workflows__workflow_id__settings_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/workflows/{workflow_id}/status': {
     parameters: {
       query?: never
@@ -977,8 +1001,24 @@ export interface components {
         [key: string]: components['schemas']['NodeIssue'][]
       }
     }
+    /**
+     * WorkflowSettings
+     * @description Per-workflow scheduler switches (kept in memory for the server's lifetime).
+     */
+    WorkflowSettings: {
+      /**
+       * Auto Run
+       * @default true
+       */
+      auto_run: boolean
+    }
     /** WorkflowStatus */
     WorkflowStatus: {
+      /**
+       * Auto Run
+       * @default true
+       */
+      auto_run: boolean
       /** Current Run */
       current_run?: string | null
       /** Node Errors */
@@ -1475,6 +1515,72 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['RunAccepted']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_settings_api_workflows__workflow_id__settings_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['WorkflowSettings']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  update_settings_api_workflows__workflow_id__settings_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['WorkflowSettings']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['WorkflowSettings']
         }
       }
       /** @description Validation Error */

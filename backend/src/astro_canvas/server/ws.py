@@ -127,6 +127,7 @@ class WsSession:
                 "workflow_id": workflow_id,
                 "ts": time.time(),
                 "current_run": scheduler.current_run.run_id if scheduler.current_run else None,
+                "auto_run": scheduler.auto_run,
             }
         )
         validation = GraphValidation(workflow_id=workflow_id, node_errors=scheduler.issues)
