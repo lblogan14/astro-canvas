@@ -1,0 +1,26 @@
+{
+  "app": {
+    "title": "Astro Canvas",
+    "tagline": "Node-based canvas for astronomical data"
+  },
+  "backend": {
+    "status": {
+      "idle": "Not connected",
+      "connecting": "Connecting…",
+      "online": "Backend online",
+      "offline": "Backend offline"
+    },
+    "version": "v{version}",
+    "retry": "Reconnect"
+  },
+  "theme": {
+    "toggle": "Switch theme (current: {theme})",
+    "system": "system",
+    "light": "light",
+    "dark": "dark"
+  },
+  "canvas": {
+    "placeholder": "The canvas arrives in phase 03.",
+    "hint": "Phase 00 foundation: this shell reaches the FastAPI backend through /api/health."
+  }
+}
