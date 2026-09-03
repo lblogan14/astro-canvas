@@ -14,7 +14,16 @@ import { computed, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { Button } from '@/components/ui/button'
-import { DEFAULT_RENDER, type RenderOptions, decodeTile, isTileSummary } from '@/lib/tile'
+import { COLORMAP_NAMES, type ColormapName } from '@/lib/colormaps'
+import {
+  DEFAULT_RENDER,
+  type RenderOptions,
+  type ScaleMode,
+  type Stretch,
+  decodeTile,
+  isTileSummary,
+  sampleTile,
+} from '@/lib/tile'
 import { type WcsDict, formatDec, formatRa, wcsFromDict } from '@/lib/wcs'
 import { useExecutionStore } from '@/stores/execution'
 import { useSessionStore } from '@/stores/session'
@@ -91,6 +100,8 @@ const arcsecPerPixel = computed(() => {
   return w.pixelScale()[0] * 3600
 })
 const render = ref<RenderOptions>({ ...DEFAULT_RENDER })
+const SCALES: ScaleMode[] = ['zscale', 'minmax', 'percentile']
+const STRETCHES: Stretch[] = ['linear', 'asinh', 'log', 'sqrt']
 
 /** Re-collapse on the server when the band changes (debounced by the slider's `change` event). */
 function requestBand(): void {
@@ -163,8 +174,41 @@ function clearAll(): void {
 
 // --- drawing on the image -----------------------------------------------------------------------
 
+const image = ref<InstanceType<typeof ImageView> | null>(null)
 const overlay = ref<SVGSVGElement | null>(null)
 const cursor = ref<{ x: number; y: number; value: number } | null>(null)
+
+/**
+ * ImageView letterboxes the tile inside its box, so the overlay has to sit on the painted
+ * rectangle rather than on the whole widget: its `view` transform (exposed for exactly this) says
+ * where that rectangle is.
+ */
+const imageBox = computed(() => {
+  const decoded = tile.value
+  const transform = image.value?.view
+  if (!decoded || !transform) return null
+  return {
+    left: transform.tx,
+    top: transform.ty,
+    width: decoded.width * transform.scale,
+    height: decoded.height * transform.scale,
+  }
+})
+const overlayStyle = computed(() => {
+  const box = imageBox.value
+  return box
+    ? {
+        left: `${box.left}px`,
+        top: `${box.top}px`,
+        width: `${box.width}px`,
+        height: `${box.height}px`,
+      }
+    : { display: 'none' }
+})
+
+function fitImage(): void {
+  image.value?.resetView()
+}
 type Drag =
   | { kind: 'draw'; from: { x: number; y: number } }
   | { kind: 'move'; index: number }
@@ -172,12 +216,13 @@ type Drag =
 const drag = ref<Drag | null>(null)
 const preview = ref<Aperture | null>(null)
 
-/** The overlay is positioned over the image, so a client point maps through the same transform. */
+/** The overlay covers exactly the painted tile, so a client point is a plain scale away. */
 function dataAt(event: MouseEvent): { x: number; y: number } | null {
   const el = overlay.value
   const decoded = tile.value
   if (!el || !decoded) return null
   const rect = el.getBoundingClientRect()
+  if (!rect.width || !rect.height) return null
   const x = ((event.clientX - rect.left) / rect.width) * decoded.width * decoded.step
   const y = (1 - (event.clientY - rect.top) / rect.height) * decoded.height * decoded.step
   return { x, y }
@@ -205,6 +250,11 @@ function onDown(event: MouseEvent): void {
 function onMove(event: MouseEvent): void {
   const point = dataAt(event)
   if (!point) return
+  // The overlay is on top of the canvas, so ImageView never sees the cursor: read it out here.
+  const decoded = tile.value
+  cursor.value = decoded
+    ? { x: point.x, y: point.y, value: sampleTile(decoded, point.x, point.y) }
+    : null
   const current = drag.value
   if (!current) return
   if (current.kind === 'draw') {
@@ -234,8 +284,9 @@ function onUp(): void {
   say(t('editor.aperture.status.added', { shape: t(`editor.aperture.shapes.${placed.shape}`) }))
 }
 
-function onHover(pixel: { x: number; y: number; value: number } | null): void {
-  cursor.value = pixel
+function onLeave(): void {
+  onUp()
+  cursor.value = null
 }
 
 /** Data pixels → the overlay's viewBox (SVG y grows downward, FITS y upward). */
@@ -464,6 +515,55 @@ onBeforeUnmount(() => {
       </span>
     </div>
 
+    <!-- display -->
+    <div class="flex flex-wrap items-center gap-2 text-[11px]" data-testid="aperture-display">
+      <label class="flex items-center gap-1">
+        <span class="text-muted-foreground">{{ t('widgets.scale') }}</span>
+        <select
+          class="h-6 rounded border bg-background px-1"
+          data-testid="aperture-scale"
+          :value="render.scale"
+          @change="
+            render = { ...render, scale: ($event.target as HTMLSelectElement).value as ScaleMode }
+          "
+        >
+          <option v-for="s in SCALES" :key="s" :value="s">{{ t(`widgets.scales.${s}`) }}</option>
+        </select>
+      </label>
+      <label class="flex items-center gap-1">
+        <span class="text-muted-foreground">{{ t('widgets.stretch') }}</span>
+        <select
+          class="h-6 rounded border bg-background px-1"
+          data-testid="aperture-stretch"
+          :value="render.stretch"
+          @change="
+            render = { ...render, stretch: ($event.target as HTMLSelectElement).value as Stretch }
+          "
+        >
+          <option v-for="s in STRETCHES" :key="s" :value="s">{{ s }}</option>
+        </select>
+      </label>
+      <label class="flex items-center gap-1">
+        <span class="text-muted-foreground">{{ t('widgets.colormap') }}</span>
+        <select
+          class="h-6 rounded border bg-background px-1"
+          data-testid="aperture-colormap"
+          :value="render.colormap"
+          @change="
+            render = {
+              ...render,
+              colormap: ($event.target as HTMLSelectElement).value as ColormapName,
+            }
+          "
+        >
+          <option v-for="c in COLORMAP_NAMES" :key="c" :value="c">{{ c }}</option>
+        </select>
+      </label>
+      <Button size="sm" variant="ghost" data-testid="aperture-fit" @click="fitImage">
+        {{ t('widgets.fit') }}
+      </Button>
+    </div>
+
     <!-- band -->
     <div v-if="waveRange" class="flex items-center gap-2 text-[11px]" data-testid="aperture-band">
       <span class="text-muted-foreground">{{ t('editor.aperture.band') }}</span>
@@ -500,28 +600,27 @@ onBeforeUnmount(() => {
 
     <div class="flex min-h-0 flex-1 gap-2">
       <!-- image + overlay -->
-      <div class="relative min-h-0 min-w-0 flex-1">
+      <div class="relative min-h-0 min-w-0 flex-1 overflow-hidden">
         <ImageView
+          ref="image"
           :tile="tile"
           :wcs="wcsDict"
           :options="render"
           :interactive="false"
-          :controls="true"
+          :controls="false"
           class="h-full"
-          @update:options="render = $event"
-          @hover="onHover"
         />
         <svg
           ref="overlay"
-          class="absolute inset-x-0 cursor-crosshair"
-          style="top: 28px; bottom: 24px"
+          class="absolute cursor-crosshair"
+          :style="overlayStyle"
           :viewBox="viewBox"
           preserveAspectRatio="none"
           data-testid="aperture-overlay"
           @mousedown="onDown"
           @mousemove="onMove"
           @mouseup="onUp"
-          @mouseleave="onUp"
+          @mouseleave="onLeave"
         >
           <g v-for="(aperture, index) in drawn" :key="index" data-testid="aperture-shape">
             <circle

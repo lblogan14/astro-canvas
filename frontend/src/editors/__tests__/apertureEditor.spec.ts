@@ -386,6 +386,19 @@ describe('ApertureEditor', () => {
     expect(wrapper.find('[data-testid="aperture-list"]').text()).toContain('Drag on the image')
   })
 
+  it('places the overlay on the painted tile, not on the whole widget', async () => {
+    // ImageView letterboxes the tile inside its box; an overlay covering the widget would draw
+    // every aperture in the wrong place (and stretched).
+    const { wrapper } = await setup({ regions: toParam([CIRCLE]) })
+    const overlay = wrapper.find('[data-testid="aperture-overlay"]')
+    const style = overlay.attributes('style') ?? ''
+    expect(style).not.toContain('display: none')
+    const width = Number(/width:\s*([\d.]+)px/.exec(style)?.[1])
+    const height = Number(/height:\s*([\d.]+)px/.exec(style)?.[1])
+    expect(width / height).toBeCloseTo(NX / NY, 5)
+    expect(overlay.attributes('viewBox')).toBe(`0 0 ${NX} ${NY}`)
+  })
+
   it('seeds the apertures from the node parameters', async () => {
     const { wrapper } = await setup({ regions: toParam([CIRCLE, ANNULUS]) })
     expect(wrapper.attributes('data-apertures')).toBe('2')

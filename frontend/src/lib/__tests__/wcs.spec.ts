@@ -82,3 +82,30 @@ describe('Wcs2D against astropy', () => {
     expect(roundTrip.y).toBeCloseTo(49, 6)
   })
 })
+
+describe('cube WCS with only a spectral CD term', () => {
+  it('falls back to CDELT when the spatial CD block is empty', () => {
+    // What `wcs_dict` produces for a header with CDELT1/CDELT2 and CD3_3: the 3x3 `cd` matrix is
+    // all zeros except CD3_3, so the spatial block is singular and CDELT has to take over.
+    const wcs = wcsFromDict({
+      naxis: 3,
+      ctype: ['RA---TAN', 'DEC--TAN', 'AWAV'],
+      crval: [150.1, 2.2, 4900],
+      crpix: [18, 20, 1],
+      cdelt: [-0.0001, 0.0001, 1],
+      cunit: ['deg', 'deg', 'Angstrom'],
+      cd: [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 1],
+      ],
+    })
+    expect(wcs).not.toBeNull()
+    expect(wcs?.celestial).toBe(true)
+    expect(wcs?.projection).toBe('tan')
+    const world = wcs!.pixelToWorld(17, 19)
+    expect(world.lon).toBeCloseTo(150.1, 6)
+    expect(world.lat).toBeCloseTo(2.2, 6)
+    expect(wcs!.pixelScale()[0] * 3600).toBeCloseTo(0.36, 6)
+  })
+})
