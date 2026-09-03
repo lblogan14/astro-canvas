@@ -207,3 +207,48 @@ def test_events_follow_document_edits(api: TestClient) -> None:
             if e["type"] == "node.output.summary"
         }
         assert summaries["sum"] == 111.0
+
+
+def test_preview_compute_replies_with_tagged_summaries(api: TestClient) -> None:
+    doc = {
+        "id": "ws-compute",
+        "nodes": {
+            "src": {"type": "test.spec.make", "params": {"n": 201}},
+            "crop": {"type": "core.spec.crop", "params": {"lo": 1200.0, "hi": 1300.0}},
+        },
+        "edges": {"e": {"from": ["src", "out"], "to": ["crop", "spec"]}},
+    }
+    assert api.post("/api/workflows", json=doc).status_code == 201
+    wait_status(api, "ws-compute")
+    with api.websocket_connect("/ws?token=test-token") as ws:
+        ws.send_json({"type": "subscribe", "workflow_id": "ws-compute"})
+        collect_until(ws, "subscribed")
+        ws.send_json(
+            {
+                "type": "preview.compute",
+                "node_id": "crop",
+                "params": {"hi": 1250.0},
+                "tag": "editor",
+                "viewport": {"n_out": 5},
+            }
+        )
+        events = collect_until(ws, "preview.computed")
+        summaries = [e for e in events if e["type"] == "node.output.summary"]
+        assert len(summaries) == 1
+        summary = summaries[0]
+        assert summary["node_id"] == "crop" and summary["port"] == "out"
+        assert summary["tag"] == "editor" and summary["summary"]["n"] == 11
+        assert len(summary["summary"]["wave"]) <= 5
+        done = events[-1]
+        assert done["ok"] is True and done["ports"] == ["out"] and done["tag"] == "editor"
+        assert done["elapsed_ms"] >= 0
+        # The committed output is untouched (21 points, not the previewed 11).
+        body = api.get("/api/outputs/crop/out?workflow_id=ws-compute&fmt=json").json()
+        assert len(body["data"]["wave"]) == 21
+        # Errors come back as a failed preview.computed, not as a dropped socket.
+        ws.send_json({"type": "preview.compute", "node_type": "test.fail", "params": {}})
+        failed = collect_until(ws, "preview.computed")[-1]
+        assert failed["ok"] is False and "RuntimeError: boom" in failed["error"]
+        ws.send_json({"type": "preview.compute", "node_id": "nope", "params": {}})
+        missing = collect_until(ws, "preview.computed")[-1]
+        assert missing["ok"] is False and "nope" in missing["error"]

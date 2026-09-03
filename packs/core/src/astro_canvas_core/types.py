@@ -445,6 +445,21 @@ class LineList(PortType):
     def __len__(self) -> int:
         return int(self.wrest.shape[0])
 
+    def summary(self, viewport: Mapping[str, TypingAny] | None = None) -> dict[str, TypingAny]:
+        """Up to ``rows`` transitions (default 2000) as parallel lists for line pickers."""
+        rows = _viewport_int(viewport, "rows", 2000, 5000)
+        out: dict[str, TypingAny] = {
+            "type": self.type_id(),
+            "n": len(self),
+            "source": self.source,
+            "wrest": self.wrest[:rows].tolist(),
+            "name": [str(v) for v in self.name[:rows].tolist()],
+            "fval": self.fval[:rows].tolist(),
+        }
+        if self.gamma is not None:
+            out["gamma"] = self.gamma[:rows].tolist()
+        return out
+
 
 @port_type(id="astro.Redshift", color="#EAB308", summary_renderer="chip")
 class Redshift(PortType):
@@ -466,6 +481,46 @@ class Continuum(PortType):
     order: int | None = None
     params: dict[str, TypingAny] = {}
     bic: float | None = None
+
+    def __len__(self) -> int:
+        return int(self.cont.shape[0])
+
+    def summary(self, viewport: Mapping[str, TypingAny] | None = None) -> dict[str, TypingAny]:
+        """The continuum values (whole when they fit ``n_out``, else strided with ``index``).
+
+        ``index`` lists the sampled positions on the spectrum grid so an editor can overlay the
+        continuum on a full-resolution spectrum; ``masks``, ``order`` and ``bic`` travel as is.
+        """
+        n_out = _viewport_int(viewport, "n_out", 20000, 200000)
+        n = len(self)
+        strided = np.unique(np.linspace(0, max(n - 1, 0), n_out).astype(int))
+        index = np.arange(n) if n <= n_out else strided
+        return {
+            "type": self.type_id(),
+            "n": n,
+            "index": index.tolist(),
+            "cont": self.cont[index].tolist(),
+            "masks": [[float(lo), float(hi)] for lo, hi in self.masks],
+            "method": self.method,
+            "order": self.order,
+            "bic": self.bic,
+            "params": summarize_params(self.params),
+        }
+
+
+def summarize_params(value: TypingAny) -> TypingAny:
+    """JSON-safe copy of a params dict (arrays to lists, numpy scalars to Python, NaN to null)."""
+    if isinstance(value, np.ndarray):
+        return summarize_params(value.tolist())
+    if isinstance(value, np.generic):
+        return summarize_params(value.item())
+    if isinstance(value, Mapping):
+        return {str(k): summarize_params(v) for k, v in value.items()}
+    if isinstance(value, list | tuple):
+        return [summarize_params(v) for v in value]
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    return value
 
 
 @port_type(id="astro.RangeMask", color="#22C55E", summary_renderer="chip")

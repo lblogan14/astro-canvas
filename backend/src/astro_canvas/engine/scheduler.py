@@ -502,6 +502,20 @@ class Scheduler:
             values[port] = self._upstream_value(src, sport)
         return values
 
+    def resolve_inputs(self, node_id: str, *, include_lazy: bool = True) -> dict[str, PortType]:
+        """Cached upstream values for every connected input of ``node_id`` (preview endpoints).
+
+        Raises ``KeyError`` for an unknown or blocked node and ``UpstreamMissingError`` when an
+        upstream output has not been computed yet.
+        """
+        node = self.graph.nodes[node_id]
+        values: dict[str, PortType] = {}
+        for port, (src, sport) in node.inputs.items():
+            if port in node.lazy and not include_lazy:
+                continue
+            values[port] = self._upstream_value(src, sport)
+        return values
+
     def _upstream_value(self, src: str, sport: str) -> PortType:
         rec = self.records.get(src)
         outputs = self.cache.lookup(rec.key) if rec is not None and rec.key else None

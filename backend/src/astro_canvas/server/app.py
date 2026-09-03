@@ -17,6 +17,7 @@ from astro_canvas.server.outputs import router as outputs_router
 from astro_canvas.server.runs import router as runs_router
 from astro_canvas.server.runtime import EngineRuntime
 from astro_canvas.server.static import mount_static
+from astro_canvas.server.templates import router as templates_router
 from astro_canvas.server.workflows import router as workflows_router
 from astro_canvas.server.workspace import router as workspace_router
 from astro_canvas.server.ws import router as ws_router
@@ -68,6 +69,7 @@ def create_app(
     app.include_router(health_router, prefix="/api")
     app.include_router(nodes_router, prefix="/api")
     app.include_router(workflows_router, prefix="/api")
+    app.include_router(templates_router, prefix="/api")
     app.include_router(runs_router, prefix="/api")
     app.include_router(outputs_router, prefix="/api")
     app.include_router(workspace_router, prefix="/api")

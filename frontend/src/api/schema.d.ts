@@ -181,6 +181,66 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/templates': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get Templates
+     * @description Templates shipped by the installed packs.
+     */
+    get: operations['get_templates_api_templates_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/templates/{template_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get Template
+     * @description The template document itself (not stored; instantiate to get an editable workflow).
+     */
+    get: operations['get_template_api_templates__template_id__get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/templates/{template_id}/instantiate': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Instantiate Template
+     * @description Create a new workflow from the template (fresh id; ``meta.template`` records the origin).
+     */
+    post: operations['instantiate_template_api_templates__template_id__instantiate_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/types': {
     parameters: {
       query?: never
@@ -648,6 +708,14 @@ export interface components {
       status: 'ok'
       /** Version */
       version: string
+    }
+    /**
+     * InstantiateRequest
+     * @description Optional overrides when creating a workflow from a template.
+     */
+    InstantiateRequest: {
+      /** Name */
+      name?: string | null
     }
     /** MkdirRequest */
     MkdirRequest: {
@@ -1196,6 +1264,32 @@ export interface components {
       /** Workspace Exists */
       workspace_exists: boolean
     }
+    /**
+     * TemplateInfo
+     * @description A workflow template a pack ships (``GET /api/templates``).
+     */
+    TemplateInfo: {
+      /**
+       * Description
+       * @default
+       */
+      description: string
+      /** File */
+      file: string
+      /** Id */
+      id: string
+      /** Name */
+      name: string
+      /**
+       * Node Count
+       * @default 0
+       */
+      node_count: number
+      /** Pack */
+      pack: string
+      /** Readme */
+      readme?: string | null
+    }
     /** TreeResponse */
     TreeResponse: {
       /** Entries */
@@ -1664,6 +1758,92 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['SystemInfo']
+        }
+      }
+    }
+  }
+  get_templates_api_templates_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['TemplateInfo'][]
+        }
+      }
+    }
+  }
+  get_template_api_templates__template_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        template_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['WorkflowDoc']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  instantiate_template_api_templates__template_id__instantiate_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        template_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['InstantiateRequest'] | null
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['WorkflowSaved']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
         }
       }
     }

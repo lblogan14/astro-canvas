@@ -1,5 +1,5 @@
 """``WS /ws?token=…&client_id=…``: event stream plus ``subscribe`` / ``run`` / ``cancel`` /
-``preview.request`` / ``output.request`` commands (design 6.4)."""
+``preview.request`` / ``output.request`` / ``preview.compute`` commands (design 6.4)."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from astro_canvas.engine.events import (
     Subscription,
     output_frame,
 )
+from astro_canvas.engine.preview import compute_preview
 from astro_canvas.server.auth import origin_allowed, ws_authorized
 from astro_canvas.server.runtime import EngineRuntime, UnknownWorkflowError
 
@@ -52,6 +53,21 @@ class PreviewRequest(BaseModel):
 class OutputRequest(BaseModel):
     node_id: str
     port: str
+
+
+class ComputeRequest(BaseModel):
+    """Run a node body with candidate params (editor live preview); nothing is cached or emitted.
+
+    Either ``node_id`` (inputs come from the graph's cached upstream outputs) or ``node_type``
+    (a node without inputs, run on ``params`` alone). Replies are one tagged
+    ``node.output.summary`` per output followed by ``preview.computed``.
+    """
+
+    node_id: str | None = None
+    node_type: str | None = None
+    params: dict[str, Any] = {}
+    tag: str = "editor"
+    viewport: dict[str, Any] = {}
 
 
 class WsSession:
@@ -103,6 +119,8 @@ class WsSession:
                 await self.preview(PreviewRequest.model_validate(message))
             elif kind == "output.request":
                 await self.output(OutputRequest.model_validate(message))
+            elif kind == "preview.compute":
+                await self.compute(ComputeRequest.model_validate(message))
             elif kind == "ping":
                 await self.send({"type": "pong", "ts": time.time()})
             else:
@@ -208,6 +226,63 @@ class WsSession:
             return
         frame = await asyncio.to_thread(output_frame, request.node_id, request.port, value)
         await self.send_bytes(frame)
+
+    async def compute(self, request: ComputeRequest) -> None:
+        scheduler = self._scheduler()
+        started = time.perf_counter()
+        label = request.node_id or request.node_type or "?"
+        try:
+            type_id, outputs = await asyncio.to_thread(
+                compute_preview,
+                scheduler,
+                self.runtime.registry,
+                node_id=request.node_id,
+                node_type=request.node_type,
+                params=request.params,
+            )
+            summaries = {
+                port: await asyncio.to_thread(value.summary, dict(request.viewport))
+                for port, value in outputs.items()
+            }
+        except Exception as exc:  # noqa: BLE001 - reported to the client, never fatal
+            await self.send(
+                {
+                    "type": "preview.computed",
+                    "workflow_id": self.workflow_id,
+                    "node_id": request.node_id,
+                    "node_type": request.node_type,
+                    "tag": request.tag,
+                    "ok": False,
+                    "error": f"{type(exc).__name__}: {exc}",
+                    "elapsed_ms": (time.perf_counter() - started) * 1000.0,
+                    "ts": time.time(),
+                }
+            )
+            log.info("preview.compute failed", node=label, error=str(exc))
+            return
+        for port, value in outputs.items():
+            event = NodeOutputSummary(
+                workflow_id=scheduler.workflow_id,
+                node_id=request.node_id or f"type:{type_id}",
+                port=port,
+                type_id=value.type_id(),
+                summary=summaries[port],
+                tag=request.tag,
+            )
+            await self.send(event.model_dump(mode="json"))
+        await self.send(
+            {
+                "type": "preview.computed",
+                "workflow_id": self.workflow_id,
+                "node_id": request.node_id,
+                "node_type": request.node_type,
+                "tag": request.tag,
+                "ok": True,
+                "ports": list(outputs),
+                "elapsed_ms": (time.perf_counter() - started) * 1000.0,
+                "ts": time.time(),
+            }
+        )
 
     async def close(self) -> None:
         await self.unsubscribe()
