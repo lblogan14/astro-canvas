@@ -271,8 +271,9 @@ class PackManager:
     def set_enabled(self, name: str, enabled: bool) -> PackDetail:
         """Enable or disable a pack. Disabled packs stay installed but are not registered.
 
-        Enabling re-registers immediately when the pack was never imported; otherwise the caller
-        gets ``restart_required`` through ``PackManager.restart_required``.
+        Both directions take effect immediately: disabling drops the pack's nodes out of the
+        registry, and enabling calls its ``register(registry)`` again. No new code is involved
+        either way, so neither needs a restart.
         """
         with self.sessions() as session:
             row = session.get(Pack, name)
@@ -281,7 +282,7 @@ class PackManager:
             row.enabled = enabled
             session.commit()
         if enabled:
-            self._register([name])
+            self._register([name], new_code=False)
         else:
             self.registry.remove_pack(name)
             self._changed("disabled", [name])
@@ -609,11 +610,14 @@ class PackManager:
                 return record.distribution or name
         return name
 
-    def _register(self, names: list[str]) -> bool:
-        """Register newly installed packs into the live registry.
+    def _register(self, names: list[str], *, new_code: bool = True) -> bool:
+        """Register packs into the live registry; returns ``True`` when a restart is needed.
 
-        Returns ``True`` when a restart is needed instead: Python will not re-import a module that
-        is already in ``sys.modules``, so replacing loaded code can only take effect on restart.
+        ``new_code`` is the whole distinction. Installing or updating brings *new code*, and
+        Python will not re-import a module that is already in ``sys.modules``, so a pack whose
+        module is loaded can only change on restart. Re-enabling a pack brings no new code at
+        all: its ``register(registry)`` is simply called again on the module already in memory,
+        which is safe, cheap, and takes effect immediately.
         """
         if not names:
             return self.restart_required
@@ -625,7 +629,7 @@ class PackManager:
             if ep is None:
                 continue
             module = ep.value.split(":", 1)[0].split(".", 1)[0]
-            if module in sys.modules:
+            if new_code and module in sys.modules:
                 restart = True
                 continue
             self.registry.remove_pack(name)

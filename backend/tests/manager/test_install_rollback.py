@@ -249,3 +249,18 @@ def test_rollback_touches_only_what_changed(manager: PackManager, fake_uv: FakeE
     assert "astro-canvas-core" not in rolled.output
     assert "astro-canvas-demo" in rolled.output
     assert manager.uv.freeze() == manager.snapshot_packages(snapshot.id)
+
+
+def test_re_enabling_a_pack_registers_it_again_without_a_restart(
+    manager: PackManager, monkeypatch: pytest.MonkeyPatch, fake_uv: FakeEnvironment
+) -> None:
+    """Re-enabling brings no new code, so it takes effect in the running server."""
+    _entry_points_after_install(monkeypatch, fake_uv, "good")
+    manager.install("astro-canvas-demo")
+    manager.set_enabled("good", False)
+    assert "good.text.token" not in manager.registry
+
+    info = manager.set_enabled("good", True)
+    assert info.enabled and info.loaded
+    assert "good.text.token" in manager.registry
+    assert manager.disabled() == set()

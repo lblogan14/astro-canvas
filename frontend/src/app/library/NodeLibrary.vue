@@ -102,7 +102,7 @@ function addAtCenter(spec: NodeSpec): void {
             @toggle-favorite="ui.toggleFavorite($event.id)"
           />
         </ul>
-        <p v-else class="p-3 text-xs text-muted-foreground">
+        <p v-else class="p-3 text-xs text-muted-foreground" data-testid="library-no-results">
           {{ t('library.no_results', { query }) }}
         </p>
       </template>
