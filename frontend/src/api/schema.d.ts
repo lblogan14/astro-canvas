@@ -367,6 +367,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/workflows/{workflow_id}/exports': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Create Export
+     * @description Write the named outputs into the workspace and return their paths.
+     */
+    post: operations['create_export_api_workflows__workflow_id__exports_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/workflows/{workflow_id}/run': {
     parameters: {
       query?: never
@@ -830,6 +850,50 @@ export interface components {
        * @default 0
        */
       size: number
+    }
+    /**
+     * ExportRequest
+     * @description Which outputs to write, and where under the workspace to put them.
+     */
+    ExportRequest: {
+      /**
+       * Dir
+       * @description Workspace-relative folder; defaults to ``exports/<workflow name>``.
+       */
+      dir?: string | null
+      /**
+       * Overwrite
+       * @default true
+       */
+      overwrite: boolean
+      /**
+       * Refs
+       * @description ``'<node>.<port>'`` outputs to write.
+       */
+      refs?: string[]
+    }
+    /** ExportResult */
+    ExportResult: {
+      /** Dir */
+      dir: string
+      /** Files */
+      files?: components['schemas']['ExportedFile'][]
+      /** Skipped */
+      skipped?: components['schemas']['SkippedExport'][]
+    }
+    /** ExportedFile */
+    ExportedFile: {
+      /** Bytes */
+      bytes: number
+      /**
+       * Format
+       * @enum {string}
+       */
+      format: 'csv' | 'npz' | 'json'
+      /** Path */
+      path: string
+      /** Ref */
+      ref: string
     }
     /** FileInfoModel */
     FileInfoModel: {
@@ -1389,6 +1453,18 @@ export interface components {
        * @description Absolute path of the folder to open as the workspace.
        */
       path: string
+    }
+    /** SkippedExport */
+    SkippedExport: {
+      /** Message */
+      message: string
+      /**
+       * Reason
+       * @enum {string}
+       */
+      reason: 'no_output' | 'bad_ref' | 'not_written'
+      /** Ref */
+      ref: string
     }
     /** SniffResult */
     SniffResult: {
@@ -2312,6 +2388,41 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['BatchInfo']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  create_export_api_workflows__workflow_id__exports_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ExportRequest']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ExportResult']
         }
       }
       /** @description Validation Error */

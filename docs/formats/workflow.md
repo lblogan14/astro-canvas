@@ -136,6 +136,7 @@ the `?token=` URL. Set `ASTRO_CANVAS_AUTH=false` to disable.
 | `GET /workflows/{id}/settings` · `POST /workflows/{id}/settings` `{auto_run}` | read / toggle the scheduler's auto-run switch (enabling it runs dirty cheap nodes immediately) |
 | `POST /workflows/{id}/run` `{targets?}` | 202 `{run_id}`; runs to the targets (default every leaf) |
 | `POST /workflows/{id}/batch` `{rows, spec?}` | 202 `BatchInfo`; runs the document once per row (`spec` defaults to `layouts.batch`) |
+| `POST /workflows/{id}/exports` `{refs, dir?, overwrite?}` | write finished outputs into the workspace (default `exports/<workflow name>`): tables become CSV, values with arrays `.npz`, everything else the JSON body of `GET /outputs`. Answers `{dir, files: [{ref, path, bytes, format}], skipped: [{ref, reason, message}]}` |
 | `GET /workflows/{id}/batch/{batch_id}` · `POST .../cancel` | per-row states and the results grid assembled so far / stop queued rows and cancel the running ones |
 | `GET /templates` · `GET /templates/{id}` | pack-shipped workflow templates (`id = <pack>.<file stem>`, `name, description, pack, node_count, file, readme`) / the template document itself |
 | `POST /templates/{id}/instantiate` `{name?}` | 201 `{doc, node_errors}`: a stored copy under a fresh id (`meta.template` records the origin) that compiles and auto-runs like any workflow |

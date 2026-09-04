@@ -436,6 +436,98 @@
         "title": "EntryModel",
         "type": "object"
       },
+      "ExportRequest": {
+        "description": "Which outputs to write, and where under the workspace to put them.",
+        "properties": {
+          "dir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Workspace-relative folder; defaults to ``exports/<workflow name>``.",
+            "title": "Dir"
+          },
+          "overwrite": {
+            "default": true,
+            "title": "Overwrite",
+            "type": "boolean"
+          },
+          "refs": {
+            "description": "``'<node>.<port>'`` outputs to write.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Refs",
+            "type": "array"
+          }
+        },
+        "title": "ExportRequest",
+        "type": "object"
+      },
+      "ExportResult": {
+        "properties": {
+          "dir": {
+            "title": "Dir",
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/ExportedFile"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/SkippedExport"
+            },
+            "title": "Skipped",
+            "type": "array"
+          }
+        },
+        "required": [
+          "dir"
+        ],
+        "title": "ExportResult",
+        "type": "object"
+      },
+      "ExportedFile": {
+        "properties": {
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "format": {
+            "enum": [
+              "csv",
+              "npz",
+              "json"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ref",
+          "path",
+          "bytes",
+          "format"
+        ],
+        "title": "ExportedFile",
+        "type": "object"
+      },
       "FileInfoModel": {
         "properties": {
           "blake3": {
@@ -1579,6 +1671,34 @@
           "path"
         ],
         "title": "SelectRequest",
+        "type": "object"
+      },
+      "SkippedExport": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "no_output",
+              "bad_ref",
+              "not_written"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ref",
+          "reason",
+          "message"
+        ],
+        "title": "SkippedExport",
         "type": "object"
       },
       "SniffResult": {
@@ -3164,6 +3284,59 @@
         "summary": "Cancel Batch",
         "tags": [
           "batch"
+        ]
+      }
+    },
+    "/api/workflows/{workflow_id}/exports": {
+      "post": {
+        "description": "Write the named outputs into the workspace and return their paths.",
+        "operationId": "create_export_api_workflows__workflow_id__exports_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Export",
+        "tags": [
+          "workflows"
         ]
       }
     },
