@@ -78,16 +78,26 @@ const title = computed(
 )
 const progress = computed(() => exec.value.progress)
 
+/**
+ * Ask the server for this port's summary. A node that finished *before* the page opened is only
+ * described by the status snapshot, which carries states but no summaries — so a tile with no
+ * cached entry always asks, and one that has an entry only re-asks when its width buys it more
+ * points.
+ */
 function scheduleRequest(): void {
   if (debounce !== null) clearTimeout(debounce)
   debounce = setTimeout(() => {
     debounce = null
+    if (exec.value.state !== 'done') return
     const kind = renderer.value
-    if (!kind || exec.value.state !== 'done') return
-    const budget = previewBudget(kind, width.value)
-    if (budget === null || requested === budget) return
+    const budget = kind ? previewBudget(kind, width.value) : null
+    if (entry.value && (budget === null || requested === budget)) return
     requested = budget
-    session.requestPreview(props.view.node, props.view.port, { n_out: budget })
+    session.requestPreview(
+      props.view.node,
+      props.view.port,
+      budget === null ? {} : { n_out: budget },
+    )
   }, 100)
 }
 

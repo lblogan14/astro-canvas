@@ -155,12 +155,15 @@ test.describe('batch mode over the absorption template', () => {
       await openWorkflow(page, id)
       await openBatch(page)
       // Unique redshifts: every row is real work, so none of them can finish from the cache.
+      // The e2e workspace outlives a run, so the offset also varies between runs — otherwise
+      // the second run of this test finds all 24 rows already cached and nothing to cancel.
+      const seed = Date.now() % 100000
       const header =
         'filename,redshift,transition,slice_vmin,slice_vmax,ew_vmin,ew_vmax,linelist,method'
       const rows = Array.from(
         { length: 24 },
         (_, i) =>
-          `samples/rbcodes/sdss1.fits,${(1.3855 + i * 1e-5).toFixed(6)},2796.35,-1500,1500,-200,200,atom,closest`,
+          `samples/rbcodes/sdss1.fits,${(1.3855 + (seed * 24 + i) * 1e-7).toFixed(7)},2796.35,-1500,1500,-200,200,atom,closest`,
       )
       await page.getByTestId('batch-paste').click()
       await page.getByTestId('batch-paste-area').fill([header, ...rows, ''].join('\n'))

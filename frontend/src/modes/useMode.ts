@@ -123,11 +123,26 @@ export function useMode() {
     return refs
   })
 
-  /** Write the export refs into the workspace; returns the folder or `null` on failure. */
+  /** Auto-run starts 250 ms after a save; give it a moment, then wait for the run to end. */
+  async function settle(timeoutMs = 30000): Promise<void> {
+    const deadline = Date.now() + timeoutMs
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    while (execution.isRunning && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+  }
+
+  /**
+   * Write the export refs into the workspace; returns the folder or `null` on failure.
+   *
+   * Exporting flushes pending edits first, and an edit means a re-run: exporting into the
+   * middle of it would write whatever was still cached, so the run is waited out.
+   */
   async function exportResults(): Promise<string | null> {
     const id = workflow.id
     if (!id || exportRefs.value.length === 0) return null
     await workflow.saveNow()
+    await settle()
     try {
       const result = await api.exportOutputs(id, { refs: exportRefs.value, overwrite: true })
       const written = result.files?.length ?? 0
@@ -156,6 +171,7 @@ export function useMode() {
     autoRun,
     run,
     cancel,
+    settle,
     exportRefs,
     exportResults,
   }

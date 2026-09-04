@@ -216,7 +216,17 @@
     "expand": "expand subgraph",
     "promote": "promote parameter",
     "insert_blueprint": "insert blueprint",
-    "batch_row": "apply batch row"
+    "batch_row": "apply batch row",
+    "unpromote": "remove promoted parameter",
+    "promote_edit": "edit promoted parameter",
+    "promote_order": "reorder parameters",
+    "pin_view": "pin view",
+    "unpin_view": "unpin view",
+    "view_edit": "edit view",
+    "layout": "edit layout",
+    "layout_app": "save app layout",
+    "layout_wizard": "save wizard layout",
+    "layout_dashboard": "save dashboard layout"
   },
   "widgets": {
     "flux": "flux",
