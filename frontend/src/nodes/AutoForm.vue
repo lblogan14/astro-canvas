@@ -17,6 +17,9 @@ const props = withDefaults(
     disabled?: boolean
     idPrefix: string
     showAdvanced?: boolean
+    /** Show a promotion star on every row; `promoted` names the ones already promoted. */
+    promotable?: boolean
+    promoted?: readonly string[]
   }>(),
   {
     linked: () => [],
@@ -24,12 +27,15 @@ const props = withDefaults(
     compact: false,
     disabled: false,
     showAdvanced: false,
+    promotable: false,
+    promoted: () => [],
   },
 )
 
 const emit = defineEmits<{
   update: [name: string, value: unknown]
   'toggle-link': [name: string]
+  promote: [name: string]
 }>()
 
 const { t } = useI18n()
@@ -46,6 +52,7 @@ watch(
 )
 
 const linkedSet = computed(() => new Set(props.linked))
+const promotedSet = computed(() => new Set(props.promoted))
 
 function valueOf(param: ParamSpec): unknown {
   return param.name in props.values ? props.values[param.name] : coerceDefault(param)
@@ -72,8 +79,11 @@ const gap = computed(() => (props.compact ? 'gap-0.5' : 'gap-2'))
       :compact="compact"
       :disabled="disabled"
       :id-prefix="idPrefix"
+      :promotable="promotable"
+      :promoted="promotedSet.has(param.name)"
       @update="(name, value) => emit('update', name, value)"
       @toggle-link="(name) => emit('toggle-link', name)"
+      @promote="(name) => emit('promote', name)"
     />
 
     <div v-if="advancedParams.length > 0" class="flex flex-col" :class="gap" data-advanced-section>
@@ -104,8 +114,11 @@ const gap = computed(() => (props.compact ? 'gap-0.5' : 'gap-2'))
           :compact="compact"
           :disabled="disabled"
           :id-prefix="idPrefix"
+          :promotable="promotable"
+          :promoted="promotedSet.has(param.name)"
           @update="(name, value) => emit('update', name, value)"
           @toggle-link="(name) => emit('toggle-link', name)"
+          @promote="(name) => emit('promote', name)"
         />
       </div>
     </div>

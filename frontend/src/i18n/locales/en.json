@@ -539,5 +539,34 @@
       "error": "Error",
       "cancelled": "Cancelled"
     }
+  },
+  "promote": {
+    "panel_title": "Parameters",
+    "add": "Promote {label} to the app layouts",
+    "remove": "Remove {label} from the app layouts",
+    "add_hint": "Promote: show this parameter in App, Wizard, Dashboard and Batch",
+    "remove_hint": "Stop showing this parameter in the app layouts",
+    "added": "Promoted {label}",
+    "removed": "Removed from the app layouts",
+    "count": "{count} parameter | {count} parameters",
+    "empty": "Nothing promoted yet. Star a parameter in the Inspector, or pin a preview, to build an app.",
+    "label": "Label",
+    "group": "Group",
+    "help": "Help text",
+    "help_placeholder": "Shown under the widget in App and Wizard modes",
+    "edit": "Edit {label}",
+    "move_up": "Move {label} up",
+    "move_down": "Move {label} down",
+    "reveal": "Select {node} on the canvas",
+    "revealed": "Selected {node}",
+    "hint": "Drag to reorder; drop on a group heading to move a parameter into it."
+  },
+  "pin": {
+    "toggle": "Pin {port} as a view",
+    "added": "Pinned {port}",
+    "removed": "Unpinned {port}",
+    "views": "Views",
+    "remove": "Unpin {port}",
+    "kind_auto": "auto"
   }
 }

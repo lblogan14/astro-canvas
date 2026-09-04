@@ -124,6 +124,23 @@ describe('workflow store: promotion', () => {
     expect(wf.promotedList.map((p) => p.param)).toEqual(['value', 'z', 'x'])
   })
 
+  it('promotes while a subgraph body is open (layout refs stay root refs)', () => {
+    const wf = setup()
+    const instance = wf.collapseToSubgraph(['sq', 'sum'], 'Measure')!
+    wf.enterSubgraph(instance)
+    // `c` is on the root canvas, not in the open body: promoting it still lands on the document.
+    wf.promoteParam('c', 'value', { group: 'Setup' })
+    expect(wf.promotedList.map((p) => `${p.node}.${p.param}`)).toEqual(['c.value'])
+    expect(wf.rootNodes['c']).toBeDefined()
+    // The write-back of the open body did not swallow the promotion.
+    expect(Object.keys(wf.subgraphs[Object.keys(wf.subgraphs)[0]!]?.nodes ?? {})).toEqual([
+      'sq',
+      'sum',
+    ])
+    wf.unpromoteParam('c', 'value')
+    expect(wf.promotedList).toHaveLength(0)
+  })
+
   it('undoes promotion in one step', () => {
     const wf = setup()
     wf.promoteParam('c', 'value', { group: 'Setup' })

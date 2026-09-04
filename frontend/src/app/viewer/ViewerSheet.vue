@@ -28,7 +28,7 @@ import {
   tileFromArray,
 } from '@/lib/tile'
 import type { WcsDict } from '@/lib/wcs'
-import { rendererFor } from '@/previews'
+import { SCALED, previewBudget, previewComponent, rendererFor } from '@/previews'
 import { useExecutionStore } from '@/stores/execution'
 import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { useSessionStore } from '@/stores/session'
@@ -84,6 +84,26 @@ const title = computed(() =>
 const viewSummary = computed(() =>
   target.value ? execution.view(target.value.nodeId, target.value.port, VIEW_TAG) : undefined,
 )
+
+// --- renderers shown at full width -------------------------------------------------------------
+
+/** Width the scaled renderers paint into (they all take a `width` prop). */
+const SCALED_WIDTH = 1100
+
+const scaled = computed(() => SCALED.has(renderer.value))
+const scaledSummary = computed<Record<string, unknown>>(
+  () => viewSummary.value?.summary ?? thumb.value?.summary ?? {},
+)
+
+/** Ask for a denser payload than the node thumbnail carried. */
+function requestScaled(): void {
+  if (!target.value) return
+  const budget = previewBudget(renderer.value, SCALED_WIDTH)
+  session.requestPreview(target.value.nodeId, target.value.port, {
+    tag: VIEW_TAG,
+    ...(budget === null ? {} : { n_out: budget }),
+  })
+}
 
 // --- spectra -----------------------------------------------------------------------------------
 
@@ -297,6 +317,7 @@ watch(
         void loadFigure()
         break
       default:
+        if (scaled.value) requestScaled()
         break
     }
   },
@@ -448,6 +469,22 @@ function close(): void {
           <img v-if="png" :src="png" alt="" class="mx-auto max-h-full object-contain" />
           <PlotlyView v-else-if="figure" :figure="figure" />
           <p v-else class="p-4 text-xs text-muted-foreground">{{ t('common.loading') }}</p>
+        </div>
+
+        <!-- rbcodes renderers (curves, candidate tables, stacks, moment maps) at full width -->
+        <div
+          v-else-if="scaled"
+          class="min-h-0 flex-1 overflow-auto p-3"
+          data-testid="viewer-scaled"
+        >
+          <component
+            :is="previewComponent(renderer)"
+            :node-id="target!.nodeId"
+            :port="target!.port"
+            :type-id="typeId"
+            :summary="scaledSummary"
+            :width="SCALED_WIDTH"
+          />
         </div>
 
         <!-- Everything else -->

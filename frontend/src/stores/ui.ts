@@ -5,9 +5,15 @@ import { api } from '@/api/client'
 
 export type Theme = 'system' | 'light' | 'dark'
 export type BackendStatus = 'idle' | 'connecting' | 'online' | 'offline'
-export type SidebarPanel = 'library' | 'workflows' | 'workspace'
-/** Which layout the shell shows (design §8.4); app/wizard/dashboard arrive in phase 10. */
-export type AppMode = 'canvas' | 'batch'
+export type SidebarPanel = 'library' | 'workflows' | 'workspace' | 'params'
+/** Which layout the shell shows (design §8.4). `/w/:id/:mode` mirrors it in the URL. */
+export type AppMode = 'canvas' | 'app' | 'wizard' | 'dashboard' | 'batch'
+
+export const APP_MODES: readonly AppMode[] = ['canvas', 'app', 'wizard', 'dashboard', 'batch']
+
+export function isAppMode(value: unknown): value is AppMode {
+  return typeof value === 'string' && (APP_MODES as readonly string[]).includes(value)
+}
 export type DrawerTab = 'log' | 'errors' | 'system'
 
 /** The node output shown in the full-size viewer sheet. */

@@ -20,6 +20,7 @@ import {
   Play,
   Redo2,
   Square,
+  Star,
   TriangleAlert,
   Undo2,
   Workflow,
@@ -99,6 +100,17 @@ const ENABLED: ReadonlySet<string> = new Set(['canvas', 'batch'])
       @click="ui.showSidebar('workspace')"
     >
       <FolderOpen />
+    </Button>
+
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      :aria-pressed="ui.sidebarOpen && ui.sidebarPanel === 'params'"
+      :title="t('promote.panel_title')"
+      data-testid="toggle-params"
+      @click="ui.showSidebar('params')"
+    >
+      <Star />
     </Button>
 
     <span class="mx-1 h-5 w-px bg-border" aria-hidden="true" />

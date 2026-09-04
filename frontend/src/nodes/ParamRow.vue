@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Star } from '@lucide/vue'
 
 import type { NodeIssue, ParamSpec } from '@/api/types'
 
@@ -38,13 +39,24 @@ const props = withDefaults(
     compact?: boolean
     disabled?: boolean
     idPrefix: string
+    /** Show the star that lifts this param into the App/Wizard/Dashboard layouts. */
+    promotable?: boolean
+    promoted?: boolean
   }>(),
-  { linked: false, issues: () => [], compact: false, disabled: false },
+  {
+    linked: false,
+    issues: () => [],
+    compact: false,
+    disabled: false,
+    promotable: false,
+    promoted: false,
+  },
 )
 
 const emit = defineEmits<{
   update: [name: string, value: unknown]
   'toggle-link': [name: string]
+  promote: [name: string]
 }>()
 
 const { t } = useI18n()
@@ -369,6 +381,29 @@ const invalid = computed(() => clientMessages.value.length > 0 || serverIssues.v
             {{ unit }}
           </span>
         </template>
+
+        <button
+          v-if="promotable"
+          type="button"
+          class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          :class="
+            promoted
+              ? 'border-amber-500 bg-amber-500/10 text-amber-600'
+              : 'border-input bg-background'
+          "
+          :aria-pressed="promoted"
+          :aria-label="
+            promoted
+              ? t('promote.remove', { label: param.label })
+              : t('promote.add', { label: param.label })
+          "
+          :title="promoted ? t('promote.remove_hint') : t('promote.add_hint')"
+          data-promote-toggle
+          :data-testid="`promote-${param.name}`"
+          @click="emit('promote', param.name)"
+        >
+          <Star class="size-3" :fill="promoted ? 'currentColor' : 'none'" />
+        </button>
 
         <button
           v-if="param.linkable"

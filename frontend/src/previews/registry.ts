@@ -84,7 +84,12 @@ const RENDERER_ALIASES: Record<string, PreviewId> = {
   'moment-thumbs': 'moment-thumbs',
 }
 
-/** Renderers that have a full-size view in the viewer sheet. */
+/**
+ * Renderers that have a full-size view in the viewer sheet. The four rbcodes renderers below
+ * have no bespoke viewer branch: the sheet re-renders the inline component at full width, which
+ * is enough because each one already scales with `width` (and Dashboard tiles rely on the same
+ * property).
+ */
 export const EXPANDABLE: ReadonlySet<PreviewId> = new Set<PreviewId>([
   'spectrum-thumb',
   'spectrum-stack',
@@ -93,6 +98,18 @@ export const EXPANDABLE: ReadonlySet<PreviewId> = new Set<PreviewId>([
   'table-head',
   'figure',
   'kv-tile',
+  'zfind-curve',
+  'candidates-table',
+  'multispec-thumb',
+  'moment-thumbs',
+])
+
+/** Expandable renderers the viewer shows by scaling the inline renderer up. */
+export const SCALED: ReadonlySet<PreviewId> = new Set<PreviewId>([
+  'zfind-curve',
+  'candidates-table',
+  'multispec-thumb',
+  'moment-thumbs',
 ])
 
 function isMapEntry(value: unknown): boolean {

@@ -362,6 +362,11 @@ export const useWorkflowStore = defineStore('workflow', () => {
   /**
    * The maps a mutation should touch. Inside a subgraph the draft's `nodes`/`edges` are swapped
    * for the open body's; `sync` writes them back as a fresh `SubgraphDoc` entry.
+   *
+   * Everything else on the view is document-level (name, `promoted`, `views`, `layouts`, the
+   * subgraph map itself), so `sync` copies those back too — a promotion or layout edit made
+   * while a body is open must not be swallowed by the write-back. Groups are the exception:
+   * the group layer is empty inside a body, so the root's groups are left as they are.
    */
   function scoped(draft: DocCore): { view: DocCore; sync: () => void } {
     const crumbs = resolvePath(draft, path.value)
@@ -377,9 +382,15 @@ export const useWorkflowStore = defineStore('workflow', () => {
     return {
       view,
       sync: () => {
+        draft.name = view.name
+        draft.description = view.description
+        draft.promoted = view.promoted
+        draft.views = view.views
+        draft.layouts = view.layouts
+        const body = view.subgraphs[sgId] ?? sg
         draft.subgraphs = {
-          ...draft.subgraphs,
-          [sgId]: { ...sg, nodes: view.nodes, edges: view.edges },
+          ...view.subgraphs,
+          [sgId]: { ...body, nodes: view.nodes, edges: view.edges },
         }
       },
     }

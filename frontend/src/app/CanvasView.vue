@@ -19,6 +19,7 @@ import BottomDrawer from './drawer/BottomDrawer.vue'
 import CommandPalette from './CommandPalette.vue'
 import InspectorPanel from './inspector/InspectorPanel.vue'
 import NodeLibrary from './library/NodeLibrary.vue'
+import ParametersPanel from './params/ParametersPanel.vue'
 import { useShortcutActions, useShortcuts } from './shortcuts'
 import CanvasToolbar from './CanvasToolbar.vue'
 import ViewerSheet from './viewer/ViewerSheet.vue'
@@ -124,6 +125,7 @@ onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
       >
         <NodeLibrary v-if="ui.sidebarPanel === 'library'" />
         <WorkspacePanel v-else-if="ui.sidebarPanel === 'workspace'" />
+        <ParametersPanel v-else-if="ui.sidebarPanel === 'params'" />
         <WorkflowsPanel v-else />
       </aside>
 
