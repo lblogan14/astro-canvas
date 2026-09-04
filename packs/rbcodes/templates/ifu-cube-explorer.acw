@@ -400,61 +400,61 @@
           "x": 0,
           "y": 0,
           "w": 4,
-          "h": 5
+          "h": 4
         },
         {
           "ref": "view:narrowband",
           "x": 4,
           "y": 0,
           "w": 4,
-          "h": 5
+          "h": 4
         },
         {
           "ref": "view:spectra",
           "x": 8,
           "y": 0,
           "w": 4,
-          "h": 5
+          "h": 4
         },
         {
           "ref": "view:moments",
           "x": 0,
-          "y": 5,
+          "y": 4,
           "w": 8,
-          "h": 5
+          "h": 4
         },
         {
           "ref": "view:names",
           "x": 8,
-          "y": 5,
+          "y": 4,
           "w": 4,
-          "h": 5
+          "h": 4
         },
         {
           "ref": "promoted:nb.wmin",
           "x": 0,
-          "y": 10,
+          "y": 8,
           "w": 3,
           "h": 2
         },
         {
           "ref": "promoted:nb.wmax",
           "x": 3,
-          "y": 10,
+          "y": 8,
           "w": 3,
           "h": 2
         },
         {
           "ref": "promoted:moments.wmin",
           "x": 6,
-          "y": 10,
+          "y": 8,
           "w": 3,
           "h": 2
         },
         {
           "ref": "promoted:moments.wmax",
           "x": 9,
-          "y": 10,
+          "y": 8,
           "w": 3,
           "h": 2
         }

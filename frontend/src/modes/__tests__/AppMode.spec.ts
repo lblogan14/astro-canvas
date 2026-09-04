@@ -116,7 +116,9 @@ describe('App mode', () => {
     exportOutputs.mockResolvedValue({ dir: 'exports/Math-chain', files: [{ ref: 'sum.out' }] })
     const app = mountMode()
     await app.get('[data-testid="app-export"]').trigger('click')
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    // The export waits out any run its own save started, so give it a moment.
+    await vi.waitUntil(() => exportOutputs.mock.calls.length > 0, { timeout: 5000 })
+    await app.vm.$nextTick()
 
     expect(exportOutputs).toHaveBeenCalledWith(workflow.id, {
       refs: ['sum.out'],

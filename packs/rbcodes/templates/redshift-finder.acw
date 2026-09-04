@@ -444,63 +444,63 @@
           "x": 0,
           "y": 0,
           "w": 7,
-          "h": 5
+          "h": 3
         },
         {
           "ref": "view:candidates",
           "x": 7,
           "y": 0,
           "w": 5,
-          "h": 5
+          "h": 3
         },
         {
           "ref": "view:spectrum",
           "x": 0,
-          "y": 5,
+          "y": 3,
           "w": 12,
-          "h": 5
+          "h": 3
         },
         {
           "ref": "promoted:pf_gal.z_min",
           "x": 0,
-          "y": 10,
+          "y": 6,
           "w": 3,
           "h": 2
         },
         {
           "ref": "promoted:pf_gal.z_max",
           "x": 3,
-          "y": 10,
+          "y": 6,
           "w": 3,
           "h": 2
         },
         {
           "ref": "promoted:pf_gal.n_steps",
           "x": 6,
-          "y": 10,
+          "y": 6,
           "w": 3,
           "h": 2
         },
         {
           "ref": "promoted:rank_gal.accepted",
           "x": 9,
-          "y": 10,
+          "y": 6,
           "w": 3,
           "h": 2
         },
         {
           "ref": "view:qso_curve",
           "x": 0,
-          "y": 12,
+          "y": 8,
           "w": 7,
-          "h": 5
+          "h": 3
         },
         {
           "ref": "view:qso_candidates",
           "x": 7,
-          "y": 12,
+          "y": 8,
           "w": 5,
-          "h": 5
+          "h": 3
         }
       ]
     },
