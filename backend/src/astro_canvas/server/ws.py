@@ -1,4 +1,4 @@
-"""``WS /ws?token=â€¦&client_id=â€¦``: event stream plus ``subscribe`` / ``run`` / ``cancel`` /
+"""``WS /ws?token=…&client_id=…``: event stream plus ``subscribe`` / ``run`` / ``cancel`` /
 ``preview.request`` / ``output.request`` / ``preview.compute`` commands (design 6.4)."""
 
 from __future__ import annotations
@@ -343,15 +343,25 @@ class WsSession:
 async def websocket_endpoint(websocket: WebSocket) -> None:
     """Authenticated, same-origin event stream for one client."""
     settings = websocket.app.state.settings
-    token = websocket.app.state.token if settings.token_auth else None
-    if not ws_authorized(websocket.scope, token):
-        await websocket.close(code=WS_UNAUTHORIZED, reason="missing or invalid token")
-        return
+    users = getattr(websocket.app.state, "users", None)
+    user = None
+    if users is not None:
+        user = await users.authenticate_ws(websocket)
+        if user is None:
+            await websocket.close(code=WS_UNAUTHORIZED, reason="please log in")
+            return
+    else:
+        token = websocket.app.state.token if settings.token_auth else None
+        if not ws_authorized(websocket.scope, token):
+            await websocket.close(code=WS_UNAUTHORIZED, reason="missing or invalid token")
+            return
     if not origin_allowed(websocket.scope):
         await websocket.close(code=WS_FORBIDDEN_ORIGIN, reason="origin not allowed")
         return
     await websocket.accept()
-    runtime: EngineRuntime = websocket.app.state.runtime
+    runtime: EngineRuntime = (
+        await users.pool.get(user) if users is not None else websocket.app.state.runtime
+    )
     runtime.bus.bind(asyncio.get_running_loop())
     client_id = websocket.query_params.get("client_id") or uuid.uuid4().hex[:8]
     session = WsSession(websocket, runtime, client_id)

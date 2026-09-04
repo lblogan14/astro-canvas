@@ -133,7 +133,8 @@ class EngineRuntime:
     def _open_workspace(self, root: Path) -> None:
         """Bind caches, stores and sample data to ``root`` (fresh state for a new workspace)."""
         settings = self.settings
-        self.workspace = Workspace(root)
+        shared = Path(settings.shared_dir) if settings.shared_dir else None
+        self.workspace = Workspace(root, shared=shared if shared and shared.is_dir() else None)
         self.settings.workspace = self.workspace.root
         self.memory = MemoryLRU(settings.cache_memory_mb * 1024 * 1024)
         self.index = OutputIndex(self.workspace.sessions)
