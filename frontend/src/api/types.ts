@@ -62,3 +62,10 @@ export type BatchCollect = Schemas['BatchCollect']
 export type BatchResults = Schemas['BatchResults']
 export type BatchRowInfo = Schemas['BatchRowInfo']
 export type BatchRowState = BatchRowInfo['state']
+
+// Phase 10: app modes (promoted params, pinned views, layouts) and workspace exports.
+export type ViewDoc = Schemas['ViewDoc']
+export type LayoutIssue = Schemas['LayoutIssue']
+export type ExportRequest = Schemas['ExportRequest']
+export type ExportResult = Schemas['ExportResult']
+export type ExportedFile = Schemas['ExportedFile']

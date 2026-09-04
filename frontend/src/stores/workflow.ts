@@ -14,10 +14,13 @@ import { api } from '@/api/client'
 import type {
   EdgeDoc,
   GroupDoc,
+  LayoutIssue,
   NodeDoc,
   NodeErrors,
   NodeSpec,
+  PromotedDoc,
   SubgraphDoc,
+  ViewDoc,
   WorkflowDoc,
 } from '@/api/types'
 import { type ClipboardPayload, copySelection, preparePaste } from '@/canvas/clipboard'
@@ -31,6 +34,13 @@ import {
   subgraphType,
 } from '@/canvas/subgraph'
 import { clone } from '@/lib/deepEqual'
+import {
+  PROMOTED_PREFIX,
+  VIEW_PREFIX,
+  dropRefFromLayouts,
+  groupPromoted,
+  refOf,
+} from '@/modes/layouts'
 import { newId } from '@/lib/ids'
 import { useExecutionStore } from './execution'
 import { useNodesSchemaStore } from './nodesSchema'
@@ -51,6 +61,12 @@ export interface DocCore {
   edges: Record<string, EdgeDoc>
   groups: Record<string, CanvasGroup>
   subgraphs: Record<string, SubgraphDoc>
+  /** Params lifted into the App/Wizard/Dashboard/Batch layouts, in display order. */
+  promoted: PromotedDoc[]
+  /** Node outputs pinned as views for those layouts. */
+  views: ViewDoc[]
+  /** `layouts.app|wizard|dashboard|batch`; unknown sections round-trip untouched. */
+  layouts: Record<string, unknown>
 }
 
 /** One step of the open subgraph path: the instance node and the body it points at. */
@@ -132,6 +148,9 @@ function core(doc: WorkflowDoc): DocCore {
     edges: { ...doc.edges },
     groups: { ...(doc.groups as Record<string, CanvasGroup> | undefined) },
     subgraphs: { ...doc.subgraphs },
+    promoted: [...(doc.promoted ?? [])],
+    views: [...(doc.views ?? [])],
+    layouts: { ...(doc.layouts as Record<string, unknown> | undefined) },
   }
 }
 
@@ -191,6 +210,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
   const redoStack = shallowRef<Command[]>([])
   const saveState = ref<SaveState>('clean')
   const saveError = ref<string | null>(null)
+  /** `layout_errors` from the last save: layout refs the server could not resolve. */
+  const layoutErrors = shallowRef<LayoutIssue[]>([])
   const lastSavedAt = ref<number | null>(null)
   /** Increments on every change; compared against the sequence a save started from. */
   const changeSeq = ref(0)
@@ -248,6 +269,25 @@ export const useWorkflowStore = defineStore('workflow', () => {
   const isDirty = computed(() => changeSeq.value !== savedSeq.value)
   const nodeCount = computed(() => Object.keys(nodes.value).length)
 
+  /**
+   * The **root** document's nodes, whatever container the canvas has open. Layout refs address
+   * root nodes, so modes resolving `promoted`/`views` must read this, not `nodes`.
+   */
+  const rootNodes = computed<Record<string, NodeDoc>>(() => doc.value?.nodes ?? {})
+  /** Promoted params in layout order (`order`, then document order for ties). */
+  const promotedList = computed<PromotedDoc[]>(() =>
+    [...(doc.value?.promoted ?? [])]
+      .map((entry, index) => ({ entry, index }))
+      .sort((a, b) => (a.entry.order ?? 0) - (b.entry.order ?? 0) || a.index - b.index)
+      .map(({ entry }) => entry),
+  )
+  /** The same list bucketed by `group` (what the Parameters panel and App sections render). */
+  const promotedGroups = computed(() => groupPromoted(promotedList.value))
+  const views = computed<ViewDoc[]>(() => doc.value?.views ?? [])
+  const layouts = computed<Record<string, unknown>>(
+    () => (doc.value?.layouts as Record<string, unknown> | undefined) ?? {},
+  )
+
   // --- document lifecycle ---------------------------------------------------------------------
 
   function normalize(input: WorkflowDoc): WorkflowDoc {
@@ -256,6 +296,9 @@ export const useWorkflowStore = defineStore('workflow', () => {
     copy.edges ??= {}
     copy.groups ??= {}
     copy.subgraphs ??= {}
+    copy.promoted ??= []
+    copy.views ??= []
+    copy.layouts ??= {}
     copy.meta ??= {}
     copy.id ??= newId('wf')
     return copy
@@ -265,6 +308,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   function load(input: WorkflowDoc): void {
     cancelScheduledSave()
     doc.value = normalize(input)
+    layoutErrors.value = []
     path.value = []
     undoStack.value = []
     redoStack.value = []
@@ -294,6 +338,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const fresh = emptyDoc(title)
     const saved = await api.createWorkflow(fresh)
     load(saved.doc)
+    layoutErrors.value = saved.layout_errors ?? []
     useExecutionStore().setIssues(saved.node_errors)
     return saved.doc.id as string
   }
@@ -309,6 +354,9 @@ export const useWorkflowStore = defineStore('workflow', () => {
     current.edges = next.edges
     current.groups = next.groups
     current.subgraphs = next.subgraphs
+    current.promoted = next.promoted
+    current.views = next.views
+    current.layouts = next.layouts
   }
 
   /**
@@ -824,6 +872,163 @@ export const useWorkflowStore = defineStore('workflow', () => {
     })
   }
 
+  // --- promoted params, views and layouts (design 7.1, 8.4) -----------------------------------
+
+  /**
+   * Promotion, pinning and layouts are **document-level**: their refs address root nodes, so
+   * every function here works on `draft` itself rather than the `scoped()` view a subgraph body
+   * would give. They go through `commit()` like any other mutation, so a layout edit is undoable
+   * and lands in the same autosave.
+   */
+  function promotedIndex(node: string, param: string): number {
+    return (doc.value?.promoted ?? []).findIndex((p) => p.node === node && p.param === param)
+  }
+
+  function isPromoted(node: string, param: string): boolean {
+    return promotedIndex(node, param) >= 0
+  }
+
+  function promotedOf(node: string, param: string): PromotedDoc | undefined {
+    return promotedList.value.find((p) => p.node === node && p.param === param)
+  }
+
+  /** Renumber `order` to the array position so a reordered list survives a round-trip. */
+  function renumber(entries: readonly PromotedDoc[]): PromotedDoc[] {
+    return entries.map((entry, index) => ({ ...entry, order: index + 1 }))
+  }
+
+  /** Lift a node param into the layouts (no-op when it is already promoted). */
+  function promoteParam(node: string, param: string, patch: Partial<PromotedDoc> = {}): void {
+    if (isPromoted(node, param)) return
+    commit('command.promote', (draft) => {
+      draft.promoted = renumber([
+        ...draft.promoted,
+        { node, param, label: null, group: null, order: draft.promoted.length + 1, ...patch },
+      ])
+    })
+  }
+
+  /** Drop a promoted param and every layout item that referenced it. */
+  function unpromoteParam(node: string, param: string): void {
+    if (!isPromoted(node, param)) return
+    const ref = refOf({ node, param })
+    commit('command.unpromote', (draft) => {
+      draft.promoted = renumber(
+        draft.promoted.filter((p) => !(p.node === node && p.param === param)),
+      )
+      draft.layouts = dropRefFromLayouts(draft.layouts, `${PROMOTED_PREFIX}${ref}`)
+    })
+  }
+
+  /** Star toggle: returns whether the param is promoted afterwards. */
+  function togglePromoted(node: string, param: string, patch: Partial<PromotedDoc> = {}): boolean {
+    if (isPromoted(node, param)) {
+      unpromoteParam(node, param)
+      return false
+    }
+    promoteParam(node, param, patch)
+    return true
+  }
+
+  /** Edit a promoted entry's label, group, help text or order. */
+  function updatePromoted(node: string, param: string, patch: Partial<PromotedDoc>): void {
+    if (!isPromoted(node, param)) return
+    commit(
+      'command.promote_edit',
+      (draft) => {
+        draft.promoted = draft.promoted.map((entry) =>
+          entry.node === node && entry.param === param ? { ...entry, ...patch } : entry,
+        )
+      },
+      { coalesce: `promoted:${refOf({ node, param })}` },
+    )
+  }
+
+  /**
+   * Move a promoted param to `index` in the flat list, optionally into another `group`
+   * (the Parameters panel's drag ordering).
+   */
+  function movePromoted(node: string, param: string, index: number, group?: string | null): void {
+    const from = promotedList.value.findIndex((p) => p.node === node && p.param === param)
+    if (from < 0) return
+    commit('command.promote_order', (draft) => {
+      const ordered = [...promotedList.value]
+      const [entry] = ordered.splice(from, 1)
+      if (!entry) return
+      const at = Math.max(0, Math.min(index, ordered.length))
+      ordered.splice(at, 0, group === undefined ? entry : { ...entry, group })
+      draft.promoted = renumber(ordered)
+    })
+  }
+
+  function viewIndex(nodeId: string, port: string): number {
+    return (doc.value?.views ?? []).findIndex((v) => v.node === nodeId && v.port === port)
+  }
+
+  function isPinned(nodeId: string, port: string): boolean {
+    return viewIndex(nodeId, port) >= 0
+  }
+
+  function viewOf(nodeId: string, port: string): ViewDoc | undefined {
+    return (doc.value?.views ?? []).find((v) => v.node === nodeId && v.port === port)
+  }
+
+  function viewById(viewId: string): ViewDoc | undefined {
+    return (doc.value?.views ?? []).find((v) => v.id === viewId)
+  }
+
+  /** Pin a node output as a view; returns its id (the existing one when already pinned). */
+  function pinView(nodeId: string, port: string, patch: Partial<ViewDoc> = {}): string {
+    const existing = viewOf(nodeId, port)
+    if (existing) return existing.id
+    const viewId = freshId('v')
+    commit('command.pin_view', (draft) => {
+      draft.views = [...draft.views, { id: viewId, node: nodeId, port, kind: null, ...patch }]
+    })
+    return viewId
+  }
+
+  /** Unpin a view and drop it from every layout. */
+  function unpinView(viewId: string): void {
+    if (!viewById(viewId)) return
+    commit('command.unpin_view', (draft) => {
+      draft.views = draft.views.filter((v) => v.id !== viewId)
+      draft.layouts = dropRefFromLayouts(draft.layouts, `${VIEW_PREFIX}${viewId}`)
+    })
+  }
+
+  /** Pin toggle: returns whether the output is pinned afterwards. */
+  function togglePinned(nodeId: string, port: string, patch: Partial<ViewDoc> = {}): boolean {
+    const existing = viewOf(nodeId, port)
+    if (existing) {
+      unpinView(existing.id)
+      return false
+    }
+    pinView(nodeId, port, patch)
+    return true
+  }
+
+  function updateView(viewId: string, patch: Partial<ViewDoc>): void {
+    if (!viewById(viewId)) return
+    commit(
+      'command.view_edit',
+      (draft) => {
+        draft.views = draft.views.map((v) => (v.id === viewId ? { ...v, ...patch } : v))
+      },
+      { coalesce: `view:${viewId}` },
+    )
+  }
+
+  /** Write (or with `null` remove) one layout section as a single undoable command. */
+  function setLayout(name: string, section: unknown, label = 'command.layout'): void {
+    commit(label, (draft) => {
+      const next = { ...draft.layouts }
+      if (section === null || section === undefined) delete next[name]
+      else next[name] = section
+      draft.layouts = next
+    })
+  }
+
   /** A standalone document holding one subgraph plus an instance: a reusable blueprint. */
   function blueprintOf(subgraphId: string, title?: string): WorkflowDoc | null {
     const sg = subgraphs.value[subgraphId]
@@ -922,6 +1127,10 @@ export const useWorkflowStore = defineStore('workflow', () => {
       draft.nodes = { ...incoming.nodes }
       draft.edges = { ...incoming.edges }
       draft.groups = { ...(incoming.groups as Record<string, CanvasGroup> | undefined) }
+      draft.subgraphs = { ...incoming.subgraphs }
+      draft.promoted = [...(incoming.promoted ?? [])]
+      draft.views = [...(incoming.views ?? [])]
+      draft.layouts = { ...(incoming.layouts as Record<string, unknown> | undefined) }
     })
   }
 
@@ -976,6 +1185,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
         savedSeq.value = seq
         lastSavedAt.value = Date.now()
         saveState.value = changeSeq.value === seq ? 'saved' : 'pending'
+        layoutErrors.value = saved.layout_errors ?? []
         useExecutionStore().setIssues(saved.node_errors as NodeErrors)
       }
       return true
@@ -1050,6 +1260,27 @@ export const useWorkflowStore = defineStore('workflow', () => {
     expandSubgraph,
     renameSubgraph,
     promoteSubgraphParam,
+    rootNodes,
+    promotedList,
+    promotedGroups,
+    views,
+    layouts,
+    layoutErrors,
+    isPromoted,
+    promotedOf,
+    promoteParam,
+    unpromoteParam,
+    togglePromoted,
+    updatePromoted,
+    movePromoted,
+    isPinned,
+    viewOf,
+    viewById,
+    pinView,
+    unpinView,
+    togglePinned,
+    updateView,
+    setLayout,
     blueprintOf,
     insertBlueprint,
     copy,

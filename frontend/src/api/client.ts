@@ -2,6 +2,8 @@ import type {
   BatchInfo,
   BatchRequest,
   CancelResult,
+  ExportRequest,
+  ExportResult,
   HealthResponse,
   NodeSpec,
   PackRecord,
@@ -158,6 +160,9 @@ export const api = {
     request<BatchInfo>(`/api/workflows/${enc(id)}/batch/${enc(batchId)}/cancel`, {
       method: 'POST',
     }),
+  // Phase 10: write collected outputs into the workspace (App/Wizard "Export results").
+  exportOutputs: (id: string, body: ExportRequest) =>
+    request<ExportResult>(`/api/workflows/${enc(id)}/exports`, json('POST', body)),
 
   listRuns: (workflowId?: string) =>
     request<RunDetail[]>(
