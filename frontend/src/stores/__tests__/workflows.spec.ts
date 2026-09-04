@@ -109,6 +109,11 @@ describe('workflows store', () => {
         node_count: 9,
         file: 'absorption-line-measurement.acw',
         readme: '# Absorption',
+        packs: { 'astro-canvas-rbcodes': '>=0.1,<0.2' },
+        tags: ['absorption'],
+        layouts: ['wizard', 'app', 'batch'],
+        default_layout: 'wizard',
+        figure: false,
       },
     ])
     await store.loadTemplates()

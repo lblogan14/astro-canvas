@@ -20,6 +20,7 @@ import {
   Play,
   Redo2,
   Square,
+  Star,
   TriangleAlert,
   Undo2,
   Workflow,
@@ -30,7 +31,7 @@ import { Button } from '@/components/ui/button'
 import { useCanvasAdapter } from '@/canvas/CanvasAdapter'
 import { useExecutionStore } from '@/stores/execution'
 import { useSessionStore } from '@/stores/session'
-import { useUiStore } from '@/stores/ui'
+import { type AppMode, useUiStore } from '@/stores/ui'
 import { useWorkflowStore } from '@/stores/workflow'
 
 const { t } = useI18n()
@@ -61,8 +62,8 @@ async function toggleRun(): Promise<void> {
   else await session.run()
 }
 
-const LAYOUTS = ['canvas', 'batch', 'app', 'wizard', 'dashboard'] as const
-const ENABLED: ReadonlySet<string> = new Set(['canvas', 'batch'])
+/** Menu order: the graph first, then the four composed layouts (design 8.1). */
+const LAYOUTS: readonly AppMode[] = ['canvas', 'app', 'wizard', 'dashboard', 'batch']
 </script>
 
 <template>
@@ -99,6 +100,17 @@ const ENABLED: ReadonlySet<string> = new Set(['canvas', 'batch'])
       @click="ui.showSidebar('workspace')"
     >
       <FolderOpen />
+    </Button>
+
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      :aria-pressed="ui.sidebarOpen && ui.sidebarPanel === 'params'"
+      :title="t('promote.panel_title')"
+      data-testid="toggle-params"
+      @click="ui.showSidebar('params')"
+    >
+      <Star />
     </Button>
 
     <span class="mx-1 h-5 w-px bg-border" aria-hidden="true" />
@@ -174,10 +186,9 @@ const ENABLED: ReadonlySet<string> = new Set(['canvas', 'batch'])
           <DropdownMenuItem
             v-for="layout in LAYOUTS"
             :key="layout"
-            class="ac-menu-item data-[disabled]:opacity-50"
-            :disabled="!ENABLED.has(layout)"
+            class="ac-menu-item"
             :data-testid="`layout-${layout}`"
-            @select="ENABLED.has(layout) && ui.setMode(layout as 'canvas' | 'batch')"
+            @select="ui.setMode(layout)"
           >
             <Check v-if="layout === ui.mode" class="size-3.5" />
             <span v-else class="size-3.5" />

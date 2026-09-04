@@ -34,6 +34,28 @@ describe('ui store: panels, favourites, palette, toasts', () => {
     expect(ui.inspectorOpen).toBe(false)
   })
 
+  it('folds the canvas chrome away in a composed layout and restores it', () => {
+    const ui = useUiStore()
+    expect([ui.sidebarOpen, ui.inspectorOpen]).toEqual([true, true])
+
+    ui.setMode('wizard')
+    expect([ui.sidebarOpen, ui.inspectorOpen]).toEqual([false, false])
+    // Panels opened by hand inside a mode stay open while switching between modes.
+    ui.showSidebar('params')
+    ui.setMode('dashboard')
+    expect(ui.sidebarOpen).toBe(true)
+
+    ui.setMode('canvas')
+    expect([ui.sidebarOpen, ui.inspectorOpen]).toEqual([true, true])
+    expect(ui.sidebarPanel).toBe('params')
+
+    // The inspector's own state is what comes back, not a hard-coded default.
+    ui.toggleInspector()
+    ui.setMode('app')
+    ui.setMode('canvas')
+    expect(ui.inspectorOpen).toBe(false)
+  })
+
   it('toggles the drawer, optionally switching tabs', () => {
     const ui = useUiStore()
     ui.toggleDrawer()

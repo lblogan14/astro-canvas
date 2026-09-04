@@ -314,10 +314,11 @@ def test_template_compiles_and_runs_headless(tmp_path: Path) -> None:
     graph = compile_workflow(doc, discover().registry)
     assert not getattr(graph, "node_errors", None) and not graph.blocked, graph
     assert set(graph.nodes) >= {"pf_gal", "rank_gal", "zshift_gal", "pf_qso", "pca_gal"}
+    # Phase 10: view kinds are preview ids, so the dashboard can draw them before a run.
     assert doc.views and {v.kind for v in doc.views} >= {
         "zfind-curve",
         "candidates-table",
-        "spectrum",
+        "spectrum-thumb",
     }
     workspace = tmp_path / "ws"
     workspace.mkdir()

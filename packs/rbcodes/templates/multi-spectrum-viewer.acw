@@ -411,6 +411,184 @@
       "multispec",
       "absorbers",
       "line identification"
-    ]
+    ],
+    "default_layout": "dashboard"
+  },
+  "promoted": [
+    {
+      "node": "load_qso",
+      "param": "path",
+      "label": "Spectrum 1",
+      "group": "Load",
+      "order": 1
+    },
+    {
+      "node": "load_qso2",
+      "param": "path",
+      "label": "Spectrum 2",
+      "group": "Load",
+      "order": 2
+    },
+    {
+      "node": "load_gal",
+      "param": "path",
+      "label": "Spectrum 3",
+      "group": "Load",
+      "order": 3
+    },
+    {
+      "node": "viewer",
+      "param": "z",
+      "label": "Absorber z",
+      "group": "Absorber",
+      "order": 4
+    },
+    {
+      "node": "viewer",
+      "param": "linelist",
+      "label": "Line list",
+      "group": "Absorber",
+      "order": 5
+    },
+    {
+      "node": "absorbers",
+      "param": "z_min",
+      "label": "Search z min",
+      "group": "Search",
+      "order": 6
+    },
+    {
+      "node": "absorbers",
+      "param": "z_max",
+      "label": "Search z max",
+      "group": "Search",
+      "order": 7
+    },
+    {
+      "node": "vstack",
+      "param": "vmin",
+      "label": "Velocity min",
+      "group": "Velocity stack",
+      "order": 8
+    },
+    {
+      "node": "vstack",
+      "param": "vmax",
+      "label": "Velocity max",
+      "group": "Velocity stack",
+      "order": 9
+    }
+  ],
+  "layouts": {
+    "dashboard": {
+      "cols": 12,
+      "row_height": 48,
+      "items": [
+        {
+          "ref": "view:stack",
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 4
+        },
+        {
+          "ref": "view:velocity",
+          "x": 0,
+          "y": 4,
+          "w": 6,
+          "h": 3
+        },
+        {
+          "ref": "view:significance",
+          "x": 6,
+          "y": 4,
+          "w": 6,
+          "h": 3
+        },
+        {
+          "ref": "view:absorbers",
+          "x": 0,
+          "y": 7,
+          "w": 6,
+          "h": 4
+        },
+        {
+          "ref": "view:lines",
+          "x": 6,
+          "y": 7,
+          "w": 6,
+          "h": 4
+        },
+        {
+          "ref": "promoted:viewer.z",
+          "x": 0,
+          "y": 11,
+          "w": 3,
+          "h": 2
+        },
+        {
+          "ref": "promoted:vstack.vmin",
+          "x": 3,
+          "y": 11,
+          "w": 3,
+          "h": 2
+        },
+        {
+          "ref": "promoted:vstack.vmax",
+          "x": 6,
+          "y": 11,
+          "w": 3,
+          "h": 2
+        },
+        {
+          "ref": "view:fit",
+          "x": 9,
+          "y": 11,
+          "w": 3,
+          "h": 3
+        }
+      ]
+    },
+    "app": {
+      "sections": [
+        {
+          "title": "Load",
+          "items": [
+            "promoted:load_qso.path",
+            "promoted:load_qso2.path",
+            "promoted:load_gal.path"
+          ]
+        },
+        {
+          "title": "Absorber",
+          "items": [
+            "promoted:viewer.z",
+            "promoted:viewer.linelist"
+          ]
+        },
+        {
+          "title": "Search",
+          "items": [
+            "promoted:absorbers.z_min",
+            "promoted:absorbers.z_max"
+          ]
+        },
+        {
+          "title": "Velocity stack",
+          "items": [
+            "promoted:vstack.vmin",
+            "promoted:vstack.vmax"
+          ]
+        },
+        {
+          "title": "Results",
+          "items": [
+            "view:stack",
+            "view:velocity",
+            "view:absorbers"
+          ]
+        }
+      ]
+    }
   }
 }

@@ -8,7 +8,7 @@ headless nodes so undergrads and researchers can run the same tools in a browser
 
 ## Status
 
-**Pre-alpha, phase 04 of 13 (data and visualization).** The repository builds, lints, tests, and runs a FastAPI + Vue app
+**Pre-alpha, phase 10 of 13 (app modes).** The repository builds, lints, tests, and runs a FastAPI + Vue app
 on Windows, macOS, and Linux. Packs register nodes and port types through `astro_canvas.sdk`; the server lists their
 schemas, stores `workflow.json` documents, and executes them reactively (content-hash cache, cost gating, thread/process
 executors, cancellation) with events over `/ws`. The browser canvas (Vue Flow) lets you browse nodes, place and connect
@@ -16,10 +16,15 @@ them with type checking, edit parameters in schema-generated widgets, run, and w
 copy/paste, groups, autosave and version restore. Phase 04 adds the workspace folder (browse, upload, drag files onto the canvas),
 loaders for spectra/tables/images/cubes, archive fetch nodes, inline previews (uPlot, image tiles, table heads) and a full-size
 viewer (Plotly with server-side re-sampling, Canvas2D image view with WCS readout, Arrow tables).
+Phase 10 turns a workflow into a GUI: star a parameter, pin a preview, and the same document renders as a
+**form** (App), a step-by-step **Wizard**, or a **Dashboard** of linked views where a range dragged on a
+spectrum highlights the matching rows of a table fed by it. The layout lives in the URL (`/w/<id>/wizard`),
+the four rbcodes templates ship default layouts, and the templates gallery opens each one straight into its
+own interface.
 See [docs/guide/canvas.md](docs/guide/canvas.md), [docs/guide/data.md](docs/guide/data.md),
 [docs/guide/absorption.md](docs/guide/absorption.md), [docs/guide/redshift.md](docs/guide/redshift.md),
 [docs/guide/multispec.md](docs/guide/multispec.md), [docs/guide/ifu.md](docs/guide/ifu.md),
-[docs/guide/batch.md](docs/guide/batch.md) and the roadmap below.
+[docs/guide/batch.md](docs/guide/batch.md), [docs/guide/modes.md](docs/guide/modes.md) and the roadmap below.
 
 | Phase | Outcome |
 |---|---|
@@ -31,7 +36,8 @@ See [docs/guide/canvas.md](docs/guide/canvas.md), [docs/guide/data.md](docs/guid
 | 07 | rbcodes pack III: multi-spectrum viewer (stacked panels, line identification, absorber catalogues, quick fits, rb_multispec file formats) |
 | 08 | rbcodes pack IV: IFU cubes (`rb_ifuview` collapses, aperture editor, moment maps, ds9 regions, memory-mapped cubes) |
 | 09 | Batch runner (a workflow over a table of rows, specgui batch import) and subgraphs (collapse, breadcrumb navigation, blueprints) with elk auto-layout |
-| 10–13 | App modes, pack manager and bundles, distribution, hardening and `v0.1.0` |
+| 10 | App modes: promoted parameters and pinned views rendered as App, Wizard and Dashboard layouts (linked selection), templates gallery |
+| 11–13 | Pack manager and bundles, distribution, hardening and `v0.1.0` |
 
 ## Quick start (developers)
 
@@ -85,6 +91,8 @@ workspace members) · `launcher/`, `deploy/` (phase 12) · `registry/` (pack ind
 - [docs/guide/canvas.md](docs/guide/canvas.md): using the canvas (panels, nodes, connections, shortcuts).
 - [docs/guide/data.md](docs/guide/data.md): the workspace folder, loaders, fetch nodes, previews and the viewer.
 - [docs/guide/batch.md](docs/guide/batch.md): running a workflow over a table of rows, and the specgui batch import.
+- [docs/guide/modes.md](docs/guide/modes.md): promoting parameters, pinning views, and the App, Wizard and
+  Dashboard layouts (with linked selection) plus the templates gallery.
 - [backend/sdk/README.md](backend/sdk/README.md): writing nodes with the SDK.
 - [docs/dev/rbcodes-compat.md](docs/dev/rbcodes-compat.md): rbcodes on Python 3.12, test results, and the
   proposed upstream patch ([docs/dev/rbcodes-upstream.patch](docs/dev/rbcodes-upstream.patch)).

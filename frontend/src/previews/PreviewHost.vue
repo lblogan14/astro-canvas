@@ -6,13 +6,14 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Maximize2 } from '@lucide/vue'
+import { Maximize2, Pin } from '@lucide/vue'
 
 import type { NodeSpec } from '@/api/types'
 import type { NodeExecution } from '@/stores/execution'
 import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { useSessionStore } from '@/stores/session'
 import { useUiStore } from '@/stores/ui'
+import { useWorkflowStore } from '@/stores/workflow'
 import {
   EXPANDABLE,
   type PreviewId,
@@ -31,6 +32,7 @@ const { t } = useI18n()
 const schema = useNodesSchemaStore()
 const session = useSessionStore()
 const ui = useUiStore()
+const workflow = useWorkflowStore()
 const host = ref<HTMLDivElement | null>(null)
 const width = ref(220)
 let observer: ResizeObserver | null = null
@@ -139,6 +141,12 @@ watch(
 function expand(port: string): void {
   ui.openViewer({ nodeId: props.nodeId, port })
 }
+
+/** Pin this output as a view for the App, Wizard and Dashboard layouts (design 8.4). */
+function pin(slot: Slot): void {
+  const on = workflow.togglePinned(props.nodeId, slot.port, { kind: slot.renderer })
+  ui.notify(on ? t('pin.added', { port: slot.port }) : t('pin.removed', { port: slot.port }))
+}
 </script>
 
 <template>
@@ -159,6 +167,27 @@ function expand(port: string): void {
           :summary="slot.summary"
           :width="width"
         />
+        <button
+          v-if="slot.port !== '$preview'"
+          type="button"
+          class="nodrag absolute top-0.5 right-6 inline-flex size-5 items-center justify-center rounded bg-background/80 shadow-sm"
+          :class="
+            workflow.isPinned(nodeId, slot.port)
+              ? 'text-amber-600'
+              : 'text-muted-foreground hover:text-foreground'
+          "
+          :aria-pressed="workflow.isPinned(nodeId, slot.port)"
+          :aria-label="t('pin.toggle', { port: slot.port })"
+          :title="t('pin.toggle', { port: slot.port })"
+          data-testid="preview-pin"
+          :data-pinned="workflow.isPinned(nodeId, slot.port) ? 'true' : 'false'"
+          @click.stop="pin(slot)"
+        >
+          <Pin
+            class="size-3"
+            :fill="workflow.isPinned(nodeId, slot.port) ? 'currentColor' : 'none'"
+          />
+        </button>
         <button
           v-if="slot.expandable"
           type="button"

@@ -1,6 +1,7 @@
 export { default as PreviewHost } from './PreviewHost.vue'
 export {
   EXPANDABLE,
+  SCALED,
   type PreviewId,
   type PreviewProps,
   isPreviewId,

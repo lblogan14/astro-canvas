@@ -5,8 +5,14 @@ import { useI18n } from 'vue-i18n'
 import type { PreviewProps } from '@/previews/registry'
 import { DataTable, type TableHead } from '@/widgets'
 
-const props = defineProps<PreviewProps>()
+const props = withDefaults(defineProps<PreviewProps & { selectedRows?: number[] }>(), {
+  selectedRows: () => [],
+})
+const emit = defineEmits<{ 'select-rows': [rows: number[]] }>()
 const { t } = useI18n()
+
+/** Rows highlighted by a linked selection (dashboard mode); empty everywhere else. */
+const selected = computed(() => new Set(props.selectedRows))
 
 const head = computed<TableHead | null>(() => {
   const columns = props.summary['columns']
@@ -29,7 +35,14 @@ const head = computed<TableHead | null>(() => {
 <template>
   <div data-preview="table-head">
     <div class="max-h-32 overflow-hidden rounded border">
-      <DataTable :head="head" :units="head?.units ?? {}" :page-size="5" compact />
+      <DataTable
+        :head="head"
+        :units="head?.units ?? {}"
+        :page-size="5"
+        :selected-rows="selectedRows"
+        compact
+        @select-row="(row: number) => emit('select-rows', selected.has(row) ? [] : [row])"
+      />
     </div>
     <p class="mt-0.5 flex justify-between text-[10px] text-muted-foreground">
       <span v-if="head?.nRows !== undefined">{{ t('preview.rows', { n: head.nRows }) }}</span>

@@ -221,6 +221,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/templates/{template_id}/figure': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get Template Figure
+     * @description The gallery card image a pack ships next to the template document.
+     */
+    get: operations['get_template_figure_api_templates__template_id__figure_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/templates/{template_id}/instantiate': {
     parameters: {
       query?: never
@@ -361,6 +381,26 @@ export interface paths {
      * @description Stop queued rows and cancel the ones in flight (expensive nodes have their worker killed).
      */
     post: operations['cancel_batch_api_workflows__workflow_id__batch__batch_id__cancel_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workflows/{workflow_id}/exports': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Create Export
+     * @description Write the named outputs into the workspace and return their paths.
+     */
+    post: operations['create_export_api_workflows__workflow_id__exports_post']
     delete?: never
     options?: never
     head?: never
@@ -831,6 +871,50 @@ export interface components {
        */
       size: number
     }
+    /**
+     * ExportRequest
+     * @description Which outputs to write, and where under the workspace to put them.
+     */
+    ExportRequest: {
+      /**
+       * Dir
+       * @description Workspace-relative folder; defaults to ``exports/<workflow name>``.
+       */
+      dir?: string | null
+      /**
+       * Overwrite
+       * @default true
+       */
+      overwrite: boolean
+      /**
+       * Refs
+       * @description ``'<node>.<port>'`` outputs to write.
+       */
+      refs?: string[]
+    }
+    /** ExportResult */
+    ExportResult: {
+      /** Dir */
+      dir: string
+      /** Files */
+      files?: components['schemas']['ExportedFile'][]
+      /** Skipped */
+      skipped?: components['schemas']['SkippedExport'][]
+    }
+    /** ExportedFile */
+    ExportedFile: {
+      /** Bytes */
+      bytes: number
+      /**
+       * Format
+       * @enum {string}
+       */
+      format: 'csv' | 'npz' | 'json'
+      /** Path */
+      path: string
+      /** Ref */
+      ref: string
+    }
     /** FileInfoModel */
     FileInfoModel: {
       /** Blake3 */
@@ -885,6 +969,31 @@ export interface components {
     InstantiateRequest: {
       /** Name */
       name?: string | null
+    }
+    /**
+     * LayoutIssue
+     * @description One problem with a layout section, addressed by layout name and item position.
+     */
+    LayoutIssue: {
+      /**
+       * Code
+       * @enum {string}
+       */
+      code:
+        | 'bad_layout'
+        | 'bad_ref'
+        | 'unknown_promoted'
+        | 'unknown_view'
+        | 'unknown_node'
+        | 'duplicate_view'
+      /** Index */
+      index?: number | null
+      /** Layout */
+      layout: string
+      /** Message */
+      message: string
+      /** Ref */
+      ref?: string | null
     }
     /** MkdirRequest */
     MkdirRequest: {
@@ -1365,6 +1474,18 @@ export interface components {
        */
       path: string
     }
+    /** SkippedExport */
+    SkippedExport: {
+      /** Message */
+      message: string
+      /**
+       * Reason
+       * @enum {string}
+       */
+      reason: 'no_output' | 'bad_ref' | 'not_written'
+      /** Ref */
+      ref: string
+    }
     /** SniffResult */
     SniffResult: {
       /**
@@ -1453,14 +1574,30 @@ export interface components {
      */
     TemplateInfo: {
       /**
+       * Default Layout
+       * @description The layout the gallery opens the template into.
+       * @default canvas
+       */
+      default_layout: string
+      /**
        * Description
        * @default
        */
       description: string
+      /**
+       * Figure
+       * @default false
+       */
+      figure: boolean
       /** File */
       file: string
       /** Id */
       id: string
+      /**
+       * Layouts
+       * @description Layout sections the document carries.
+       */
+      layouts?: string[]
       /** Name */
       name: string
       /**
@@ -1470,8 +1607,17 @@ export interface components {
       node_count: number
       /** Pack */
       pack: string
+      /**
+       * Packs
+       * @description ``requires.packs``: what must be installed.
+       */
+      packs?: {
+        [key: string]: string
+      }
       /** Readme */
       readme?: string | null
+      /** Tags */
+      tags?: string[]
     }
     /** TreeResponse */
     TreeResponse: {
@@ -1586,6 +1732,8 @@ export interface components {
      */
     WorkflowSaved: {
       doc: components['schemas']['WorkflowDoc']
+      /** Layout Errors */
+      layout_errors?: components['schemas']['LayoutIssue'][]
       /** Node Errors */
       node_errors: {
         [key: string]: components['schemas']['NodeIssue'][]
@@ -1996,6 +2144,37 @@ export interface operations {
       }
     }
   }
+  get_template_figure_api_templates__template_id__figure_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        template_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
   instantiate_template_api_templates__template_id__instantiate_post: {
     parameters: {
       query?: never
@@ -2285,6 +2464,41 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['BatchInfo']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  create_export_api_workflows__workflow_id__exports_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ExportRequest']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ExportResult']
         }
       }
       /** @description Validation Error */

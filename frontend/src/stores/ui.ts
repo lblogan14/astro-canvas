@@ -5,9 +5,15 @@ import { api } from '@/api/client'
 
 export type Theme = 'system' | 'light' | 'dark'
 export type BackendStatus = 'idle' | 'connecting' | 'online' | 'offline'
-export type SidebarPanel = 'library' | 'workflows' | 'workspace'
-/** Which layout the shell shows (design §8.4); app/wizard/dashboard arrive in phase 10. */
-export type AppMode = 'canvas' | 'batch'
+export type SidebarPanel = 'library' | 'workflows' | 'workspace' | 'params'
+/** Which layout the shell shows (design §8.4). `/w/:id/:mode` mirrors it in the URL. */
+export type AppMode = 'canvas' | 'app' | 'wizard' | 'dashboard' | 'batch'
+
+export const APP_MODES: readonly AppMode[] = ['canvas', 'app', 'wizard', 'dashboard', 'batch']
+
+export function isAppMode(value: unknown): value is AppMode {
+  return typeof value === 'string' && (APP_MODES as readonly string[]).includes(value)
+}
 export type DrawerTab = 'log' | 'errors' | 'system'
 
 /** The node output shown in the full-size viewer sheet. */
@@ -90,6 +96,8 @@ export const useUiStore = defineStore('ui', () => {
   const backendError = ref<string | null>(null)
   const favorites = ref<string[]>(readStorage(FAVORITES_KEY, [], isStringArray))
   const toast = ref<{ id: number; message: string; kind: 'info' | 'error' } | null>(null)
+  /** Sidebar/inspector state to restore when the canvas comes back (see `setMode`). */
+  let canvasChrome: { sidebar: boolean; inspector: boolean } | null = null
   let toastSeq = 0
   let toastTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -115,7 +123,22 @@ export const useUiStore = defineStore('ui', () => {
     setTheme(THEME_ORDER[(index + 1) % THEME_ORDER.length] ?? 'system')
   }
 
+  /**
+   * Switch layout. A composed layout *is* the interface, so the canvas furniture (node library,
+   * inspector) folds away when leaving the canvas and comes back as it was on return — both
+   * panels can still be opened by hand in a mode, which is how the Parameters panel is reached.
+   */
   function setMode(next: AppMode): void {
+    if (next === mode.value) return
+    if (mode.value === 'canvas' && next !== 'canvas') {
+      canvasChrome = { sidebar: sidebarOpen.value, inspector: inspectorOpen.value }
+      sidebarOpen.value = false
+      inspectorOpen.value = false
+    } else if (next === 'canvas' && canvasChrome !== null) {
+      sidebarOpen.value = canvasChrome.sidebar
+      inspectorOpen.value = canvasChrome.inspector
+      canvasChrome = null
+    }
     mode.value = next
   }
 

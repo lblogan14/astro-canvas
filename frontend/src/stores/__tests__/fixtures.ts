@@ -112,12 +112,12 @@ export const SPECS: NodeSpec[] = [
   }),
 ]
 
-function type(id: string, compatible: string[] = []): PortTypeSpec {
+function type(id: string, compatible: string[] = [], renderer = 'chip'): PortTypeSpec {
   return {
     id,
     name: id.split('.').pop() ?? id,
     color: '#888888',
-    summary_renderer: 'chip',
+    summary_renderer: renderer,
     compatible_with: compatible,
     description: '',
     json_schema: {},
@@ -133,8 +133,9 @@ export const TYPES: PortTypeSpec[] = [
   type('astro.Bool'),
   type('astro.Json'),
   type('astro.Any'),
-  type('astro.Spectrum1D', ['astro.SpectrumCollection']),
-  type('astro.SpectrumCollection'),
+  type('astro.Spectrum1D', ['astro.SpectrumCollection'], 'spectrum-thumb'),
+  type('astro.SpectrumCollection', [], 'spectrum-stack'),
+  type('astro.Table', [], 'table-grid'),
 ]
 
 export const SPEC_INDEX: Record<string, NodeSpec> = Object.fromEntries(SPECS.map((s) => [s.id, s]))

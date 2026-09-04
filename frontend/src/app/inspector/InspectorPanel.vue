@@ -27,6 +27,31 @@ const groupId = computed(() =>
 const node = computed(() => (nodeId.value ? workflow.nodes[nodeId.value] : undefined))
 const group = computed(() => (groupId.value ? workflow.groups[groupId.value] : undefined))
 const spec = computed(() => (node.value ? workflow.specs[node.value.type] : undefined))
+/**
+ * The star promotes into the open container: the document's `promoted` on the root canvas, the
+ * body's own `promoted` inside a subgraph (which is what an instance may then override).
+ */
+const openSubgraphId = computed(() => workflow.openSubgraphId)
+const promotedParams = computed(() => {
+  const id = nodeId.value
+  if (!id) return []
+  const subgraph = openSubgraphId.value
+  const source = subgraph ? (workflow.subgraphs[subgraph]?.promoted ?? []) : workflow.promotedList
+  return source.filter((entry) => entry.node === id).map((entry) => entry.param)
+})
+
+function promote(param: string): void {
+  const id = nodeId.value
+  if (!id) return
+  const subgraph = openSubgraphId.value
+  if (subgraph) {
+    workflow.promoteSubgraphParam(subgraph, id, param)
+    return
+  }
+  const spec = workflow.specs[workflow.nodes[id]?.type ?? '']?.params.find((p) => p.name === param)
+  const on = workflow.togglePromoted(id, param, { label: spec?.label ?? null })
+  ui.notify(on ? t('promote.added', { label: spec?.label ?? param }) : t('promote.removed'))
+}
 const issues = computed(() => (nodeId.value ? execution.issuesFor(nodeId.value) : []))
 const exec = computed(() => (nodeId.value ? execution.node(nodeId.value) : null))
 
@@ -98,8 +123,11 @@ function setCost(event: Event): void {
           :id-prefix="`insp-${nodeId}`"
           :disabled="node.disabled"
           show-advanced
+          promotable
+          :promoted="promotedParams"
           @update="(name, value) => workflow.setParam(nodeId!, name, value)"
           @toggle-link="(name) => workflow.toggleLink(nodeId!, name)"
+          @promote="promote"
         />
         <button
           v-if="spec.editor"

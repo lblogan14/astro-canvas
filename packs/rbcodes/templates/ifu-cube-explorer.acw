@@ -1,334 +1,504 @@
 {
- "format": "astro-canvas/workflow",
- "version": 1,
- "id": "rbcodes-ifu-cube-explorer",
- "name": "IFU Cube Explorer",
- "description": "rbcodes rb_ifuview as a workflow: a synthetic KCWI cube collapsed to white light, a narrow band and a continuum-subtracted image; three apertures (disc, clump and a background annulus) extracted into spectra through the aperture editor; and the moment maps and SNR map of [O III] 5007, whose velocity field the cube was built with.",
- "nodes": {
-  "load": {
-   "type": "core.io.load_cube",
-   "title": "Synthetic KCWI cube",
-   "pos": [
-    40,
-    360
-   ],
-   "params": {
-    "path": "samples/rbcodes/synthetic_ifu_icubes.fits",
-    "loader": "auto"
-   }
-  },
-  "white": {
-   "type": "rbcodes.ifu.whitelight",
-   "title": "White light",
-   "pos": [
-    400,
-    80
-   ],
-   "params": {
-    "wmin": 0.0,
-    "wmax": 0.0,
-    "method": "mean"
-   }
-  },
-  "nb": {
-   "type": "rbcodes.ifu.narrowband",
-   "title": "[O III] narrow band",
-   "pos": [
-    400,
-    340
-   ],
-   "params": {
-    "wmin": 5000.0,
-    "wmax": 5015.0,
-    "method": "mean"
-   }
-  },
-  "csub": {
-   "type": "rbcodes.ifu.continuum_sub",
-   "title": "Continuum subtracted",
-   "pos": [
-    400,
-    600
-   ],
-   "params": {
-    "wmin": 5000.0,
-    "wmax": 5015.0,
-    "bcont_min": 4905.0,
-    "bcont_max": 4935.0,
-    "rcont_min": 5040.0,
-    "rcont_max": 5055.0,
-    "method": "mean"
-   }
-  },
-  "extract": {
-   "type": "rbcodes.ifu.aperture_extract",
-   "title": "Aperture extract",
-   "pos": [
-    800,
-    300
-   ],
-   "size": [
-    380,
-    400
-   ],
-   "params": {
-    "regions": [
-     {
-      "shape": "circle",
-      "pixel": [
-       17.5,
-       19.5,
-       5.0
+  "format": "astro-canvas/workflow",
+  "version": 1,
+  "id": "rbcodes-ifu-cube-explorer",
+  "name": "IFU Cube Explorer",
+  "description": "rbcodes rb_ifuview as a workflow: a synthetic KCWI cube collapsed to white light, a narrow band and a continuum-subtracted image; three apertures (disc, clump and a background annulus) extracted into spectra through the aperture editor; and the moment maps and SNR map of [O III] 5007, whose velocity field the cube was built with.",
+  "nodes": {
+    "load": {
+      "type": "core.io.load_cube",
+      "title": "Synthetic KCWI cube",
+      "pos": [
+        40,
+        360
       ],
-      "sky": null,
-      "label": "disc",
-      "role": "source"
-     },
-     {
-      "shape": "circle",
-      "pixel": [
-       29.0,
-       32.0,
-       3.0
+      "params": {
+        "path": "samples/rbcodes/synthetic_ifu_icubes.fits",
+        "loader": "auto"
+      }
+    },
+    "white": {
+      "type": "rbcodes.ifu.whitelight",
+      "title": "White light",
+      "pos": [
+        400,
+        80
       ],
-      "sky": null,
-      "label": "clump",
-      "role": "source"
-     },
-     {
-      "shape": "annulus",
-      "pixel": [
-       17.5,
-       19.5,
-       13.0,
-       16.0
+      "params": {
+        "wmin": 0.0,
+        "wmax": 0.0,
+        "method": "mean"
+      }
+    },
+    "nb": {
+      "type": "rbcodes.ifu.narrowband",
+      "title": "[O III] narrow band",
+      "pos": [
+        400,
+        340
       ],
-      "sky": null,
-      "label": "sky",
-      "role": "background"
-     }
+      "params": {
+        "wmin": 5000.0,
+        "wmax": 5015.0,
+        "method": "mean"
+      }
+    },
+    "csub": {
+      "type": "rbcodes.ifu.continuum_sub",
+      "title": "Continuum subtracted",
+      "pos": [
+        400,
+        600
+      ],
+      "params": {
+        "wmin": 5000.0,
+        "wmax": 5015.0,
+        "bcont_min": 4905.0,
+        "bcont_max": 4935.0,
+        "rcont_min": 5040.0,
+        "rcont_max": 5055.0,
+        "method": "mean"
+      }
+    },
+    "extract": {
+      "type": "rbcodes.ifu.aperture_extract",
+      "title": "Aperture extract",
+      "pos": [
+        800,
+        300
+      ],
+      "size": [
+        380,
+        400
+      ],
+      "params": {
+        "regions": [
+          {
+            "shape": "circle",
+            "pixel": [
+              17.5,
+              19.5,
+              5.0
+            ],
+            "sky": null,
+            "label": "disc",
+            "role": "source"
+          },
+          {
+            "shape": "circle",
+            "pixel": [
+              29.0,
+              32.0,
+              3.0
+            ],
+            "sky": null,
+            "label": "clump",
+            "role": "source"
+          },
+          {
+            "shape": "annulus",
+            "pixel": [
+              17.5,
+              19.5,
+              13.0,
+              16.0
+            ],
+            "sky": null,
+            "label": "sky",
+            "role": "background"
+          }
+        ],
+        "method": "sum",
+        "background": "mean"
+      }
+    },
+    "names": {
+      "type": "rbcodes.ifu.iau_names",
+      "title": "IAU names",
+      "pos": [
+        1220,
+        240
+      ],
+      "params": {
+        "prefix": "J"
+      }
+    },
+    "reg": {
+      "type": "rbcodes.ifu.regions_to_ds9",
+      "title": "Export apertures (ds9)",
+      "pos": [
+        1220,
+        500
+      ],
+      "params": {
+        "path": "outputs/ifu-apertures.reg",
+        "frame": "icrs"
+      }
+    },
+    "moments": {
+      "type": "rbcodes.ifu.moment_maps",
+      "title": "Moment maps ([O III] 5007)",
+      "pos": [
+        400,
+        900
+      ],
+      "size": [
+        380,
+        260
+      ],
+      "params": {
+        "wmin": 4980.0,
+        "wmax": 5035.0,
+        "lambda_rest": 5007.0,
+        "bcont_min": 4905.0,
+        "bcont_max": 4935.0,
+        "rcont_min": 5040.0,
+        "rcont_max": 5055.0,
+        "subtract_continuum": true,
+        "snr_min": 5.0
+      }
+    },
+    "snr": {
+      "type": "rbcodes.ifu.snr_map",
+      "title": "SNR map",
+      "pos": [
+        800,
+        900
+      ],
+      "params": {
+        "wmin": 4980.0,
+        "wmax": 5035.0,
+        "bcont_min": 4905.0,
+        "bcont_max": 4935.0,
+        "rcont_min": 5040.0,
+        "rcont_max": 5055.0
+      }
+    },
+    "readme": {
+      "type": "core.note.markdown",
+      "pos": [
+        1220,
+        800
+      ],
+      "size": [
+        460,
+        400
+      ],
+      "params": {
+        "text": "# IFU cube explorer\n\n`rb_ifuview` as a graph, on a synthetic KCWI-style cube (`sample_data/make_cube.py`): a rotating\ndisc with a +-120 km/s velocity gradient, a companion clump offset to +180 km/s, and [O III] 5007\non a flat continuum.\n\n1. **White Light** collapses the whole cube; **Narrow Band** keeps only 5000-5015 A, where the\n   line sits, and **Continuum-Subtracted** removes the mean of the two continuum windows so only\n   the line emission is left.\n2. **Aperture Extract** carries three apertures: the disc, the clump and a background annulus.\n   Open its **aperture editor** to drag them around, draw new ones, import a ds9 `.reg` file or\n   watch the extracted spectrum change as you move an aperture. Its regions leave as an output,\n   so **IAU Names** and **Regions to ds9** always describe exactly what was extracted.\n3. **Moment Maps** measures the line: integrated flux (M0), velocity (M1) and dispersion (M2) with\n   the continuum fitted away first, blanked below SNR 5. The velocity map should show the input\n   gradient, and the clump should stand out as a red patch.\n4. **SNR Map** is the same noise estimate on its own, useful for choosing the threshold above.\n\nPoint **Load Cube** at your own file (KCWI `_icubes`, MUSE `DATA`/`STAT`, MaNGA or generic FITS);\n`loader = rbcodes` reads it through rb_ifuview's own instrument dispatch instead.\n"
+      }
+    }
+  },
+  "edges": {
+    "e1": {
+      "from": [
+        "load",
+        "out"
+      ],
+      "to": [
+        "white",
+        "cube"
+      ]
+    },
+    "e2": {
+      "from": [
+        "load",
+        "out"
+      ],
+      "to": [
+        "nb",
+        "cube"
+      ]
+    },
+    "e3": {
+      "from": [
+        "load",
+        "out"
+      ],
+      "to": [
+        "csub",
+        "cube"
+      ]
+    },
+    "e4": {
+      "from": [
+        "load",
+        "out"
+      ],
+      "to": [
+        "extract",
+        "cube"
+      ]
+    },
+    "e5": {
+      "from": [
+        "load",
+        "out"
+      ],
+      "to": [
+        "moments",
+        "cube"
+      ]
+    },
+    "e6": {
+      "from": [
+        "load",
+        "out"
+      ],
+      "to": [
+        "snr",
+        "cube"
+      ]
+    },
+    "e7": {
+      "from": [
+        "extract",
+        "regions"
+      ],
+      "to": [
+        "names",
+        "regions"
+      ]
+    },
+    "e8": {
+      "from": [
+        "white",
+        "out"
+      ],
+      "to": [
+        "names",
+        "reference"
+      ]
+    },
+    "e9": {
+      "from": [
+        "extract",
+        "regions"
+      ],
+      "to": [
+        "reg",
+        "regions"
+      ]
+    }
+  },
+  "views": [
+    {
+      "id": "whitelight",
+      "node": "white",
+      "port": "out",
+      "kind": "image-thumb"
+    },
+    {
+      "id": "narrowband",
+      "node": "csub",
+      "port": "out",
+      "kind": "image-thumb"
+    },
+    {
+      "id": "spectra",
+      "node": "extract",
+      "port": "spectra",
+      "kind": "spectrum-stack"
+    },
+    {
+      "id": "moments",
+      "node": "moments",
+      "port": "out",
+      "kind": "moment-thumbs"
+    },
+    {
+      "id": "names",
+      "node": "names",
+      "port": "out",
+      "kind": "table"
+    }
+  ],
+  "requires": {
+    "packs": {
+      "astro-canvas-core": ">=0.1,<0.2",
+      "astro-canvas-rbcodes": ">=0.1,<0.2"
+    },
+    "python": ">=3.10"
+  },
+  "meta": {
+    "author": "rbcodes pack",
+    "tags": [
+      "template",
+      "rbcodes",
+      "ifu",
+      "cube",
+      "apertures",
+      "moment maps"
     ],
-    "method": "sum",
-    "background": "mean"
-   }
+    "default_layout": "dashboard"
   },
-  "names": {
-   "type": "rbcodes.ifu.iau_names",
-   "title": "IAU names",
-   "pos": [
-    1220,
-    240
-   ],
-   "params": {
-    "prefix": "J"
-   }
-  },
-  "reg": {
-   "type": "rbcodes.ifu.regions_to_ds9",
-   "title": "Export apertures (ds9)",
-   "pos": [
-    1220,
-    500
-   ],
-   "params": {
-    "path": "outputs/ifu-apertures.reg",
-    "frame": "icrs"
-   }
-  },
-  "moments": {
-   "type": "rbcodes.ifu.moment_maps",
-   "title": "Moment maps ([O III] 5007)",
-   "pos": [
-    400,
-    900
-   ],
-   "size": [
-    380,
-    260
-   ],
-   "params": {
-    "wmin": 4980.0,
-    "wmax": 5035.0,
-    "lambda_rest": 5007.0,
-    "bcont_min": 4905.0,
-    "bcont_max": 4935.0,
-    "rcont_min": 5040.0,
-    "rcont_max": 5055.0,
-    "subtract_continuum": true,
-    "snr_min": 5.0
-   }
-  },
-  "snr": {
-   "type": "rbcodes.ifu.snr_map",
-   "title": "SNR map",
-   "pos": [
-    800,
-    900
-   ],
-   "params": {
-    "wmin": 4980.0,
-    "wmax": 5035.0,
-    "bcont_min": 4905.0,
-    "bcont_max": 4935.0,
-    "rcont_min": 5040.0,
-    "rcont_max": 5055.0
-   }
-  },
-  "readme": {
-   "type": "core.note.markdown",
-   "pos": [
-    1220,
-    800
-   ],
-   "size": [
-    460,
-    400
-   ],
-   "params": {
-    "text": "# IFU cube explorer\n\n`rb_ifuview` as a graph, on a synthetic KCWI-style cube (`sample_data/make_cube.py`): a rotating\ndisc with a +-120 km/s velocity gradient, a companion clump offset to +180 km/s, and [O III] 5007\non a flat continuum.\n\n1. **White Light** collapses the whole cube; **Narrow Band** keeps only 5000-5015 A, where the\n   line sits, and **Continuum-Subtracted** removes the mean of the two continuum windows so only\n   the line emission is left.\n2. **Aperture Extract** carries three apertures: the disc, the clump and a background annulus.\n   Open its **aperture editor** to drag them around, draw new ones, import a ds9 `.reg` file or\n   watch the extracted spectrum change as you move an aperture. Its regions leave as an output,\n   so **IAU Names** and **Regions to ds9** always describe exactly what was extracted.\n3. **Moment Maps** measures the line: integrated flux (M0), velocity (M1) and dispersion (M2) with\n   the continuum fitted away first, blanked below SNR 5. The velocity map should show the input\n   gradient, and the clump should stand out as a red patch.\n4. **SNR Map** is the same noise estimate on its own, useful for choosing the threshold above.\n\nPoint **Load Cube** at your own file (KCWI `_icubes`, MUSE `DATA`/`STAT`, MaNGA or generic FITS);\n`loader = rbcodes` reads it through rb_ifuview's own instrument dispatch instead.\n"
-   }
+  "promoted": [
+    {
+      "node": "load",
+      "param": "path",
+      "label": "Cube",
+      "group": "Load",
+      "order": 1
+    },
+    {
+      "node": "nb",
+      "param": "wmin",
+      "label": "Narrowband min",
+      "group": "Narrowband",
+      "order": 2
+    },
+    {
+      "node": "nb",
+      "param": "wmax",
+      "label": "Narrowband max",
+      "group": "Narrowband",
+      "order": 3
+    },
+    {
+      "node": "extract",
+      "param": "method",
+      "label": "Extraction",
+      "group": "Apertures",
+      "order": 4
+    },
+    {
+      "node": "extract",
+      "param": "background",
+      "label": "Background",
+      "group": "Apertures",
+      "order": 5
+    },
+    {
+      "node": "moments",
+      "param": "wmin",
+      "label": "Moment min",
+      "group": "Moments",
+      "order": 6
+    },
+    {
+      "node": "moments",
+      "param": "wmax",
+      "label": "Moment max",
+      "group": "Moments",
+      "order": 7
+    },
+    {
+      "node": "moments",
+      "param": "lambda_rest",
+      "label": "Rest wavelength",
+      "group": "Moments",
+      "order": 8
+    }
+  ],
+  "layouts": {
+    "dashboard": {
+      "cols": 12,
+      "row_height": 48,
+      "items": [
+        {
+          "ref": "view:whitelight",
+          "x": 0,
+          "y": 0,
+          "w": 4,
+          "h": 4
+        },
+        {
+          "ref": "view:narrowband",
+          "x": 4,
+          "y": 0,
+          "w": 4,
+          "h": 4
+        },
+        {
+          "ref": "view:spectra",
+          "x": 8,
+          "y": 0,
+          "w": 4,
+          "h": 4
+        },
+        {
+          "ref": "view:moments",
+          "x": 0,
+          "y": 4,
+          "w": 8,
+          "h": 4
+        },
+        {
+          "ref": "view:names",
+          "x": 8,
+          "y": 4,
+          "w": 4,
+          "h": 4
+        },
+        {
+          "ref": "promoted:nb.wmin",
+          "x": 0,
+          "y": 8,
+          "w": 3,
+          "h": 2
+        },
+        {
+          "ref": "promoted:nb.wmax",
+          "x": 3,
+          "y": 8,
+          "w": 3,
+          "h": 2
+        },
+        {
+          "ref": "promoted:moments.wmin",
+          "x": 6,
+          "y": 8,
+          "w": 3,
+          "h": 2
+        },
+        {
+          "ref": "promoted:moments.wmax",
+          "x": 9,
+          "y": 8,
+          "w": 3,
+          "h": 2
+        }
+      ]
+    },
+    "app": {
+      "sections": [
+        {
+          "title": "Load",
+          "items": [
+            "promoted:load.path"
+          ]
+        },
+        {
+          "title": "Narrowband",
+          "items": [
+            "promoted:nb.wmin",
+            "promoted:nb.wmax"
+          ]
+        },
+        {
+          "title": "Apertures",
+          "items": [
+            "promoted:extract.method",
+            "promoted:extract.background"
+          ]
+        },
+        {
+          "title": "Moments",
+          "items": [
+            "promoted:moments.wmin",
+            "promoted:moments.wmax",
+            "promoted:moments.lambda_rest"
+          ]
+        },
+        {
+          "title": "Results",
+          "items": [
+            "view:whitelight",
+            "view:spectra",
+            "view:moments"
+          ]
+        }
+      ]
+    }
   }
- },
- "edges": {
-  "e1": {
-   "from": [
-    "load",
-    "out"
-   ],
-   "to": [
-    "white",
-    "cube"
-   ]
-  },
-  "e2": {
-   "from": [
-    "load",
-    "out"
-   ],
-   "to": [
-    "nb",
-    "cube"
-   ]
-  },
-  "e3": {
-   "from": [
-    "load",
-    "out"
-   ],
-   "to": [
-    "csub",
-    "cube"
-   ]
-  },
-  "e4": {
-   "from": [
-    "load",
-    "out"
-   ],
-   "to": [
-    "extract",
-    "cube"
-   ]
-  },
-  "e5": {
-   "from": [
-    "load",
-    "out"
-   ],
-   "to": [
-    "moments",
-    "cube"
-   ]
-  },
-  "e6": {
-   "from": [
-    "load",
-    "out"
-   ],
-   "to": [
-    "snr",
-    "cube"
-   ]
-  },
-  "e7": {
-   "from": [
-    "extract",
-    "regions"
-   ],
-   "to": [
-    "names",
-    "regions"
-   ]
-  },
-  "e8": {
-   "from": [
-    "white",
-    "out"
-   ],
-   "to": [
-    "names",
-    "reference"
-   ]
-  },
-  "e9": {
-   "from": [
-    "extract",
-    "regions"
-   ],
-   "to": [
-    "reg",
-    "regions"
-   ]
-  }
- },
- "views": [
-  {
-   "id": "whitelight",
-   "node": "white",
-   "port": "out",
-   "kind": "image-thumb"
-  },
-  {
-   "id": "narrowband",
-   "node": "csub",
-   "port": "out",
-   "kind": "image-thumb"
-  },
-  {
-   "id": "spectra",
-   "node": "extract",
-   "port": "spectra",
-   "kind": "spectrum-stack"
-  },
-  {
-   "id": "moments",
-   "node": "moments",
-   "port": "out",
-   "kind": "moment-thumbs"
-  },
-  {
-   "id": "names",
-   "node": "names",
-   "port": "out",
-   "kind": "table"
-  }
- ],
- "requires": {
-  "packs": {
-   "astro-canvas-core": ">=0.1,<0.2",
-   "astro-canvas-rbcodes": ">=0.1,<0.2"
-  },
-  "python": ">=3.10"
- },
- "meta": {
-  "author": "rbcodes pack",
-  "tags": [
-   "template",
-   "rbcodes",
-   "ifu",
-   "cube",
-   "apertures",
-   "moment maps"
-  ]
- }
 }

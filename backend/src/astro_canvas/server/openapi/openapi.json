@@ -436,6 +436,98 @@
         "title": "EntryModel",
         "type": "object"
       },
+      "ExportRequest": {
+        "description": "Which outputs to write, and where under the workspace to put them.",
+        "properties": {
+          "dir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Workspace-relative folder; defaults to ``exports/<workflow name>``.",
+            "title": "Dir"
+          },
+          "overwrite": {
+            "default": true,
+            "title": "Overwrite",
+            "type": "boolean"
+          },
+          "refs": {
+            "description": "``'<node>.<port>'`` outputs to write.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Refs",
+            "type": "array"
+          }
+        },
+        "title": "ExportRequest",
+        "type": "object"
+      },
+      "ExportResult": {
+        "properties": {
+          "dir": {
+            "title": "Dir",
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/ExportedFile"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/SkippedExport"
+            },
+            "title": "Skipped",
+            "type": "array"
+          }
+        },
+        "required": [
+          "dir"
+        ],
+        "title": "ExportResult",
+        "type": "object"
+      },
+      "ExportedFile": {
+        "properties": {
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "format": {
+            "enum": [
+              "csv",
+              "npz",
+              "json"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ref",
+          "path",
+          "bytes",
+          "format"
+        ],
+        "title": "ExportedFile",
+        "type": "object"
+      },
       "FileInfoModel": {
         "properties": {
           "blake3": {
@@ -565,6 +657,60 @@
           }
         },
         "title": "InstantiateRequest",
+        "type": "object"
+      },
+      "LayoutIssue": {
+        "description": "One problem with a layout section, addressed by layout name and item position.",
+        "properties": {
+          "code": {
+            "enum": [
+              "bad_layout",
+              "bad_ref",
+              "unknown_promoted",
+              "unknown_view",
+              "unknown_node",
+              "duplicate_view"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Index"
+          },
+          "layout": {
+            "title": "Layout",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          }
+        },
+        "required": [
+          "layout",
+          "code",
+          "message"
+        ],
+        "title": "LayoutIssue",
         "type": "object"
       },
       "MkdirRequest": {
@@ -1527,6 +1673,34 @@
         "title": "SelectRequest",
         "type": "object"
       },
+      "SkippedExport": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "no_output",
+              "bad_ref",
+              "not_written"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ref",
+          "reason",
+          "message"
+        ],
+        "title": "SkippedExport",
+        "type": "object"
+      },
       "SniffResult": {
         "properties": {
           "detail": {
@@ -1695,10 +1869,21 @@
       "TemplateInfo": {
         "description": "A workflow template a pack ships (``GET /api/templates``).",
         "properties": {
+          "default_layout": {
+            "default": "canvas",
+            "description": "The layout the gallery opens the template into.",
+            "title": "Default Layout",
+            "type": "string"
+          },
           "description": {
             "default": "",
             "title": "Description",
             "type": "string"
+          },
+          "figure": {
+            "default": false,
+            "title": "Figure",
+            "type": "boolean"
           },
           "file": {
             "title": "File",
@@ -1707,6 +1892,14 @@
           "id": {
             "title": "Id",
             "type": "string"
+          },
+          "layouts": {
+            "description": "Layout sections the document carries.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Layouts",
+            "type": "array"
           },
           "name": {
             "title": "Name",
@@ -1721,6 +1914,14 @@
             "title": "Pack",
             "type": "string"
           },
+          "packs": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "``requires.packs``: what must be installed.",
+            "title": "Packs",
+            "type": "object"
+          },
           "readme": {
             "anyOf": [
               {
@@ -1731,6 +1932,13 @@
               }
             ],
             "title": "Readme"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
           }
         },
         "required": [
@@ -1973,6 +2181,13 @@
         "properties": {
           "doc": {
             "$ref": "#/components/schemas/WorkflowDoc"
+          },
+          "layout_errors": {
+            "items": {
+              "$ref": "#/components/schemas/LayoutIssue"
+            },
+            "title": "Layout Errors",
+            "type": "array"
           },
           "node_errors": {
             "additionalProperties": {
@@ -2671,6 +2886,47 @@
         ]
       }
     },
+    "/api/templates/{template_id}/figure": {
+      "get": {
+        "description": "The gallery card image a pack ships next to the template document.",
+        "operationId": "get_template_figure_api_templates__template_id__figure_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "title": "Template Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Template Figure",
+        "tags": [
+          "templates"
+        ]
+      }
+    },
     "/api/templates/{template_id}/instantiate": {
       "post": {
         "description": "Create a new workflow from the template (fresh id; ``meta.template`` records the origin).",
@@ -3103,6 +3359,59 @@
         "summary": "Cancel Batch",
         "tags": [
           "batch"
+        ]
+      }
+    },
+    "/api/workflows/{workflow_id}/exports": {
+      "post": {
+        "description": "Write the named outputs into the workspace and return their paths.",
+        "operationId": "create_export_api_workflows__workflow_id__exports_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Export",
+        "tags": [
+          "workflows"
         ]
       }
     },

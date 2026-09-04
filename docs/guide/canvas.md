@@ -86,3 +86,10 @@ a small workflow document holding just the subgraph — to reuse it in another w
 `Ctrl+Shift+L` runs elk's layered algorithm over the whole graph, or over the selection when more
 than one node is selected. The result is anchored at the selection's current top-left corner and
 lands as a single undoable move, so `Ctrl+Z` puts everything back.
+
+## Showing the graph as an app
+
+The toolbar's layout menu switches between the canvas and the four composed layouts (App, Wizard,
+Dashboard, Batch). What they show is what you have **starred** (the promotion star on an Inspector
+parameter) and **pinned** (the pin on a node preview). See
+[modes.md](modes.md).

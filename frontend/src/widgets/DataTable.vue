@@ -35,9 +35,20 @@ const props = withDefaults(
     units?: Record<string, string>
     pageSize?: number
     compact?: boolean
+    /** Row indices highlighted by a linked selection (dashboard mode). */
+    selectedRows?: number[]
   }>(),
-  { arrow: null, head: null, units: () => ({}), pageSize: 200, compact: false },
+  {
+    arrow: null,
+    head: null,
+    units: () => ({}),
+    pageSize: 200,
+    compact: false,
+    selectedRows: () => [],
+  },
 )
+
+const emit = defineEmits<{ 'select-row': [index: number] }>()
 
 const { t } = useI18n()
 const sorting = ref<SortingState>([])
@@ -119,6 +130,7 @@ const rows = computed(() => {
   return table.getRowModel().rows
 })
 const visibleRows = computed(() => rows.value.slice(0, shown.value))
+const selected = computed(() => new Set(props.selectedRows))
 const hasMore = computed(() => rows.value.length > shown.value)
 const headerGroups = computed(() => {
   void columns.value
@@ -185,7 +197,16 @@ watch(
           </tr>
         </thead>
         <tbody>
-          <tr v-for="row in visibleRows" :key="row.id" class="odd:bg-muted/30 hover:bg-accent/40">
+          <tr
+            v-for="(row, position) in visibleRows"
+            :key="row.id"
+            class="odd:bg-muted/30 hover:bg-accent/40"
+            :class="selected.has(position) ? 'bg-primary/15!' : ''"
+            :data-row="position"
+            :data-linked="selected.has(position) ? 'true' : undefined"
+            :aria-selected="selected.has(position) ? 'true' : undefined"
+            @click="emit('select-row', position)"
+          >
             <td
               v-for="cell in row.getAllCells()"
               :key="cell.id"
