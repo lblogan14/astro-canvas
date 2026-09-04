@@ -6,15 +6,16 @@ from collections.abc import Mapping
 from typing import Any
 
 from astro_canvas.sdk import (
-    JSON_TYPE,
-    SCALAR_TYPE_IDS,
+    WRAPPED_TYPE_IDS,
     NodeDef,
     PortType,
     TypeRegistry,
+    effective_ports,
     is_compatible,
+    unwrap_scalar,
 )
 
-WRAPPED_IDS = frozenset([*SCALAR_TYPE_IDS.values(), JSON_TYPE])
+WRAPPED_IDS = WRAPPED_TYPE_IDS
 
 
 class OutputError(TypeError):
@@ -36,8 +37,19 @@ def coerce(value: Any, type_id: str, types: TypeRegistry) -> PortType:
     raise OutputError(f"expected {type_id}, got {type(value).__name__}")
 
 
-def wrap_outputs(node: NodeDef, result: Any, types: TypeRegistry) -> dict[str, PortType]:
-    """Split ``result`` per ``NodeDef.output_kind`` and wrap scalars into port values."""
+def wrap_outputs(
+    node: NodeDef,
+    result: Any,
+    types: TypeRegistry,
+    params: Mapping[str, Any] | None = None,
+) -> dict[str, PortType]:
+    """Split ``result`` per ``NodeDef.output_kind`` and wrap scalars into port values.
+
+    ``params`` is only needed for a node with dynamic output ports (the code node): its outputs
+    are declared in a parameter, so the mapping it returns is checked against that declaration.
+    """
+    if node.output_kind == "dynamic":
+        return _wrap_dynamic(node, result, types, params or {})
     specs = {o.name: o.type for o in node.spec.outputs}
     names = node.output_names
     if node.output_kind == "none" or not names:
@@ -51,8 +63,22 @@ def wrap_outputs(node: NodeDef, result: Any, types: TypeRegistry) -> dict[str, P
     return {n: coerce(getattr(result, n), specs[n], types) for n in names}
 
 
+def _wrap_dynamic(
+    node: NodeDef, result: Any, types: TypeRegistry, params: Mapping[str, Any]
+) -> dict[str, PortType]:
+    """A node with declared output ports must return ``{port name: value}`` covering all of them."""
+    _, outputs = effective_ports(node.spec, params)
+    if not isinstance(result, Mapping):
+        raise OutputError(f"{node.id}: expected a dict of outputs, got {type(result).__name__}")
+    missing = [o.name for o in outputs if o.name not in result]
+    if missing:
+        raise OutputError(f"{node.id}: no value for output {', '.join(sorted(missing))}")
+    extra = sorted(set(result) - {o.name for o in outputs})
+    if extra:
+        raise OutputError(f"{node.id}: undeclared output {', '.join(extra)}")
+    return {o.name: coerce(result[o.name], o.type, types) for o in outputs}
+
+
 def unwrap_linked(value: PortType) -> Any:
     """A linked param receives the plain value carried by scalar/JSON port types."""
-    if value.type_id() in WRAPPED_IDS:
-        return getattr(value, "value")  # noqa: B009 - dynamic attribute of a wrapped scalar
-    return value
+    return unwrap_scalar(value)

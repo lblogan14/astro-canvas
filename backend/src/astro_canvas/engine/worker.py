@@ -105,7 +105,7 @@ def run_job(job: WorkerJob, events: Any = None) -> WorkerResult:
     result = node_def.call(inputs, params, ctx)
     if inspect.isawaitable(result):
         result = asyncio.run(_await(result))
-    outputs = wrap_outputs(node_def, result, registry.types)
+    outputs = wrap_outputs(node_def, result, registry.types, params)
     elapsed_ms = (time.perf_counter() - started) * 1000.0
     refs: dict[str, OutputRef] = {}
     for port, value in outputs.items():

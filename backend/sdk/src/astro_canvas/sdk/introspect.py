@@ -18,7 +18,7 @@ from astro_canvas.sdk.docstrings import DocInfo, parse_docstring
 from astro_canvas.sdk.errors import NodeDefinitionError
 from astro_canvas.sdk.params import Param
 from astro_canvas.sdk.porttype import JSON_TYPE, SCALAR_TYPE_IDS, PortType, is_port_type
-from astro_canvas.sdk.spec import Cost, NodeSpec, ParamSpec, PortSpec
+from astro_canvas.sdk.spec import Cost, DynamicPorts, NodeSpec, ParamSpec, PortSpec
 
 NODE_ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$")
 VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+([-+][0-9A-Za-z.-]+)?$")
@@ -43,6 +43,7 @@ class NodeMeta:
     lazy: tuple[str, ...] = ()
     deprecated: bool = False
     experimental: bool = False
+    dynamic_ports: DynamicPorts | None = None
 
 
 @dataclass
@@ -70,7 +71,9 @@ class NodeShape:
     context_param: str | None = None
     quantity_units: dict[str, str] = field(default_factory=dict)
     output_names: list[str] = field(default_factory=list)
-    output_kind: Literal["none", "single", "tuple", "named"] = "none"
+    output_kind: Literal["none", "single", "tuple", "named", "dynamic"] = "none"
+    values_param: str | None = None
+    """Function parameter receiving ``{port: value}`` for a node with dynamic input ports."""
 
 
 def _is_unit(obj: Any) -> bool:
@@ -280,6 +283,7 @@ def build_shape(func: Any, meta: NodeMeta) -> NodeShape:
     shape_inputs: list[str] = []
     shape_params: list[str] = []
     context_param: str | None = None
+    values_param: str | None = None
     quantity_units: dict[str, str] = {}
 
     for name, parameter in signature.parameters.items():
@@ -291,6 +295,9 @@ def build_shape(func: Any, meta: NodeMeta) -> NodeShape:
         has_default = parameter.default is not inspect.Parameter.empty
         if info.context:
             context_param = name
+            continue
+        if meta.dynamic_ports is not None and name == meta.dynamic_ports.values:
+            values_param = name
             continue
         if info.port is not None:
             inputs.append(
@@ -318,6 +325,18 @@ def build_shape(func: Any, meta: NodeMeta) -> NodeShape:
     for lazy in meta.lazy:
         if lazy not in shape_inputs:
             raise NodeDefinitionError(f"{where}: lazy={lazy!r} is not an input port")
+
+    dynamic = meta.dynamic_ports
+    if dynamic is not None:
+        for role, declared in (("inputs", dynamic.inputs), ("outputs", dynamic.outputs)):
+            if declared is not None and declared not in shape_params:
+                raise NodeDefinitionError(
+                    f"{where}: dynamic_ports.{role}={declared!r} is not a parameter"
+                )
+        if dynamic.inputs and values_param is None:
+            raise NodeDefinitionError(
+                f"{where}: dynamic input ports need a {dynamic.values!r} parameter to receive them"
+            )
 
     model_name = "".join(part.capitalize() for part in meta.id.split(".")) + "Params"
     try:
@@ -356,7 +375,12 @@ def build_shape(func: Any, meta: NodeMeta) -> NodeShape:
         )
 
     return_annotation = hints.get("return", signature.return_annotation)
-    outputs, output_names, output_kind = _analyze_outputs(return_annotation, meta, doc, where)
+    if meta.dynamic_ports is not None and meta.dynamic_ports.outputs:
+        # The node declares its outputs in a param, so the return annotation says nothing about
+        # them: it returns ``{port name: value}`` and the compiler reads the declaration.
+        outputs, output_names, output_kind = [], [], "dynamic"
+    else:
+        outputs, output_names, output_kind = _analyze_outputs(return_annotation, meta, doc, where)
     spec = NodeSpec(
         id=meta.id,
         name=meta.name,
@@ -377,6 +401,7 @@ def build_shape(func: Any, meta: NodeMeta) -> NodeShape:
         expand=meta.expand,
         fingerprint=meta.fingerprint,
         is_async=inspect.iscoroutinefunction(func),
+        dynamic_ports=meta.dynamic_ports,
     )
     return NodeShape(
         spec=spec,
@@ -387,4 +412,5 @@ def build_shape(func: Any, meta: NodeMeta) -> NodeShape:
         quantity_units=quantity_units,
         output_names=output_names,
         output_kind=output_kind,
+        values_param=values_param,
     )

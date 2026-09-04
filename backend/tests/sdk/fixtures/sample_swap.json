@@ -3,6 +3,7 @@
   "cost": "cheap",
   "deprecated": false,
   "description": "Swap two numbers.",
+  "dynamic_ports": null,
   "editor": null,
   "expand": false,
   "experimental": false,

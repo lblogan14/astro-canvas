@@ -16,7 +16,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from astro_canvas.engine.events import NodeIssue
-from astro_canvas.sdk import Cost, NodeDef, NodeRegistry, UnknownNodeError
+from astro_canvas.sdk import Cost, NodeDef, NodeRegistry, UnknownNodeError, effective_ports
 
 FORMAT = "astro-canvas/workflow"
 SUBGRAPH_PREFIX = "subgraph:"
@@ -353,9 +353,10 @@ def _bypass_disabled(flat: _Flat, registry: NodeRegistry) -> None:
             spec = registry.get(node.type).spec
         except UnknownNodeError:
             continue
-        for out in spec.outputs:
+        spec_inputs, spec_outputs = effective_ports(spec, node.params)
+        for out in spec_outputs:
             source: tuple[str, str] | None = None
-            for inp in spec.inputs:
+            for inp in spec_inputs:
                 feed = incoming.get((nid, inp.name))
                 if feed is not None and registry.types.is_compatible(inp.type, out.type):
                     source = (feed.src, feed.src_port)
@@ -443,11 +444,27 @@ def _topological(nodes: Mapping[str, ExecNode]) -> tuple[list[str], set[str]]:
     return order, {nid for nid in nodes if nid not in set(order)}
 
 
-def compile(doc: WorkflowDoc, registry: NodeRegistry) -> ExecGraph | ValidationErrors:  # noqa: A001
-    """Turn a document into an executable graph, or report per-node validation errors."""
+def compile(  # noqa: A001
+    doc: WorkflowDoc,
+    registry: NodeRegistry,
+    *,
+    quarantined: Mapping[str, str] | None = None,
+) -> ExecGraph | ValidationErrors:
+    """Turn a document into an executable graph, or report per-node validation errors.
+
+    Args:
+        doc: The workflow document.
+        registry: Node registry the types are resolved against.
+        quarantined: ``{node id: reason}`` for nodes the trust gate blocks (design 11). They
+            compile to a ``quarantined`` issue, which keeps them - and everything downstream -
+            out of the executable graph until the user reviews the code.
+    """
     flat = _Flat()
     _flatten(doc.nodes, doc.edges, doc.subgraphs, flat)
     _bypass_disabled(flat, registry)
+    for nid, reason in (quarantined or {}).items():
+        if nid in flat.nodes:
+            flat.error(nid, "quarantined", reason)
 
     defs: dict[str, NodeDef] = {}
     for nid, node in flat.nodes.items():
@@ -456,17 +473,22 @@ def compile(doc: WorkflowDoc, registry: NodeRegistry) -> ExecGraph | ValidationE
         except UnknownNodeError:
             flat.error(nid, "unknown_node", f"unknown node type {node.type!r}")
 
-    # Inputs per node: ports plus linked params, with the type each accepts.
+    # Inputs per node: ports plus linked params, with the type each accepts. A node with
+    # ``dynamic_ports`` (the code node) derives its ports from its own params, so both tables are
+    # built from ``effective_ports`` rather than straight off the registry spec.
     accepts: dict[str, dict[str, tuple[str, bool, bool]]] = {}  # port -> (type, required, lazy)
+    produces: dict[str, dict[str, str]] = {}  # port -> type
     for nid, node_def in defs.items():
+        node_inputs, node_outputs = effective_ports(node_def.spec, flat.nodes[nid].params)
         table: dict[str, tuple[str, bool, bool]] = {
-            p.name: (p.type, p.required, p.lazy) for p in node_def.spec.inputs
+            p.name: (p.type, p.required, p.lazy) for p in node_inputs
         }
         for name in flat.nodes[nid].linked:
             param = next((p for p in node_def.spec.params if p.name == name), None)
             if param is not None:
                 table[name] = (param.link_type, param.required, False)
         accepts[nid] = table
+        produces[nid] = {p.name: p.type for p in node_outputs}
 
     wired: dict[str, dict[str, tuple[str, str]]] = {nid: {} for nid in flat.nodes}
     upstream_failed: dict[str, set[str]] = {}  # consumer -> sources whose edge could not be wired
@@ -482,8 +504,8 @@ def compile(doc: WorkflowDoc, registry: NodeRegistry) -> ExecGraph | ValidationE
         upstream_failed.setdefault(e.dst, set()).add(e.src)
         if e.dst not in defs or e.src not in defs:
             continue
-        out_spec = next((o for o in defs[e.src].spec.outputs if o.name == e.src_port), None)
-        if out_spec is None:
+        out_type = produces[e.src].get(e.src_port)
+        if out_type is None:
             flat.error(
                 e.dst, "unknown_port", f"{e.src!r} has no output {e.src_port!r}", port=e.dst_port
             )
@@ -497,12 +519,12 @@ def compile(doc: WorkflowDoc, registry: NodeRegistry) -> ExecGraph | ValidationE
                 e.dst, "multiple_inputs", f"input {e.dst_port!r} has several edges", port=e.dst_port
             )
             continue
-        if not registry.types.is_compatible(out_spec.type, target[0]):
+        if not registry.types.is_compatible(out_type, target[0]):
             bad_ports.add((e.dst, e.dst_port))
             flat.error(
                 e.dst,
                 "type_mismatch",
-                f"{out_spec.type} from {e.src}.{e.src_port} cannot feed {e.dst_port} ({target[0]})",
+                f"{out_type} from {e.src}.{e.src_port} cannot feed {e.dst_port} ({target[0]})",
                 port=e.dst_port,
             )
             continue
@@ -523,7 +545,7 @@ def compile(doc: WorkflowDoc, registry: NodeRegistry) -> ExecGraph | ValidationE
             params=params,
             inputs=dict(wired[nid]),
             linked=frozenset(linked & set(wired[nid])),
-            lazy=frozenset(p.name for p in node_def.spec.inputs if p.lazy),
+            lazy=frozenset(port for port, (_t, _r, is_lazy) in accepts[nid].items() if is_lazy),
             cost=node.cost or node_def.spec.cost,
             doc_id=nid.split("/", 1)[0],
         )

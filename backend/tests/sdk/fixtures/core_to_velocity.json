@@ -3,6 +3,7 @@
   "cost": "cheap",
   "deprecated": false,
   "description": "Convert the wavelength axis to velocity (km/s) relative to a transition at redshift ``z``.\n\nUses ``v = c (lambda / (wrest (1 + z)) - 1)`` like rbcodes' ``rb_spec``. Rest-frame input is\nhandled by treating ``z`` as already applied.",
+  "dynamic_ports": null,
   "editor": null,
   "expand": false,
   "experimental": false,
