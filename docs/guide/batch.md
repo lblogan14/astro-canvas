@@ -6,7 +6,8 @@ per-row status. It generalises `launch_specgui -b`: a specgui batch table import
 column names it uses (`slice_vmin`/`slice_vmax` for the velocity window that is sliced out,
 `ew_vmin`/`ew_vmax` for the integration limits) keep their separate meanings.
 
-Switch layouts with the toolbar menu (**Canvas → Batch**).
+Switch layouts with the toolbar menu (**Canvas → Batch**), or open `/w/<workflow id>/batch`
+directly. Batch is one of the four app modes; see [modes.md](modes.md) for the other three.
 
 ## The table
 
