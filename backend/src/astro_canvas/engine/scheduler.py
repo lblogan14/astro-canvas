@@ -42,7 +42,15 @@ from astro_canvas.engine.executors import ProcessExecutor, ThreadExecutor, Threa
 from astro_canvas.engine.graph import ExecGraph, ExecNode, ValidationErrors, WorkflowDoc, compile
 from astro_canvas.engine.outputs import OutputError, coerce, unwrap_linked, wrap_outputs
 from astro_canvas.engine.worker import WorkerJob
-from astro_canvas.sdk import BlobError, Expansion, NodeDef, NodeRegistry, PortType
+from astro_canvas.sdk import (
+    BlobError,
+    Expansion,
+    NodeDef,
+    NodeRegistry,
+    PortType,
+    UnknownNodeError,
+    effective_ports,
+)
 
 log = structlog.get_logger("astro_canvas.engine")
 
@@ -271,6 +279,17 @@ class Scheduler:
             return None
         outputs = self.cache.lookup(rec.key)
         return None if outputs is None else outputs.get(port)
+
+    def output_ports(self, node_id: str) -> list[str]:
+        """The output port names of one compiled node (declared ports included)."""
+        node = self.graph.nodes.get(node_id)
+        if node is None:
+            return []
+        try:
+            _, outputs = effective_ports(self.registry.spec(node.type), node.params)
+        except UnknownNodeError:  # pragma: no cover - the graph compiled, so the type exists
+            return []
+        return [port.name for port in outputs]
 
     def snapshot(self) -> dict[str, NodeStatus]:
         return {nid: self._status_event(nid) for nid in self.records}
