@@ -127,6 +127,86 @@ describe('api client', () => {
     await expect(api.fetchOutputArrow('wf', 'n', 'out')).rejects.toBeInstanceOf(ApiError)
   })
 
+  it('drives the pack manager endpoints', async () => {
+    fetchMock.mockImplementation(async () => jsonResponse({}))
+    await api.getManagerStatus()
+    await api.listInstalledPacks()
+    await api.resolvePack('astro-canvas-demo')
+    await api.installPack('astro-canvas-demo')
+    await api.updatePack('core')
+    await api.uninstallPack('core')
+    await api.setPackEnabled('core', false)
+    await api.testPackImport('core')
+    await api.listSnapshots()
+    await api.createSnapshot('before')
+    await api.getSnapshotPackages(3)
+    await api.rollbackSnapshot(3)
+    await api.getRegistry(true, 'spectra')
+    await api.setManagerSettings({ security: 'permissive' })
+    expect(fetchMock.mock.calls.map((c) => c[0])).toEqual([
+      '/api/manager/status',
+      '/api/manager/packs',
+      '/api/manager/packs/resolve',
+      '/api/manager/packs/install',
+      '/api/manager/packs/core/update',
+      '/api/manager/packs/core',
+      '/api/manager/packs/core/enabled',
+      '/api/manager/packs/core/import-test',
+      '/api/manager/snapshots',
+      '/api/manager/snapshots',
+      '/api/manager/snapshots/3',
+      '/api/manager/snapshots/3/rollback',
+      '/api/manager/registry?refresh=true&q=spectra',
+      '/api/manager/settings',
+    ])
+    // The install endpoint confirms the plan the dialog already showed.
+    const install = fetchMock.mock.calls[3]?.[1] as RequestInit | undefined
+    expect(JSON.parse(String(install?.body))).toEqual({
+      source: 'astro-canvas-demo',
+      confirm: true,
+    })
+  })
+
+  it('drives the trust endpoints', async () => {
+    fetchMock.mockImplementation(async () => jsonResponse({}))
+    await api.listTrust()
+    await api.setTrust('abc', 'trusted')
+    await api.getWorkflowTrust('wf1')
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }))
+    await api.forgetTrust('abc')
+    expect(fetchMock.mock.calls.map((c) => c[0])).toEqual([
+      '/api/manager/trust',
+      '/api/manager/trust',
+      '/api/workflows/wf1/trust',
+      '/api/manager/trust/abc',
+    ])
+  })
+
+  it('exports, downloads and imports bundles', async () => {
+    window.sessionStorage.setItem('astro-canvas-token', 'tok')
+    fetchMock.mockImplementation(async () => jsonResponse({ path: 'bundles/a.acw' }))
+    await api.exportBundle({ workflow_id: 'wf1', include_outputs: 'all' })
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/bundles/export')
+    expect(api.bundleUrl('bundles/a.acw')).toBe(
+      '/api/bundles/download?path=bundles%2Fa.acw&token=tok',
+    )
+
+    fetchMock.mockResolvedValueOnce(jsonResponse({ workflow_id: 'wf2' }, 201))
+    const imported = await api.importBundle(new Blob(['PK']), 'demo.acw')
+    expect(imported).toEqual({ workflow_id: 'wf2' })
+    const init = fetchMock.mock.calls[1]?.[1] as RequestInit
+    expect(init.method).toBe('POST')
+    expect((init.body as FormData).get('file')).toBeInstanceOf(Blob)
+
+    fetchMock.mockResolvedValueOnce(jsonResponse({ detail: 'unsafe entry' }, 400))
+    await expect(api.importBundle(new Blob(['x']))).rejects.toMatchObject({
+      status: 400,
+      message: 'unsafe entry',
+    })
+    fetchMock.mockResolvedValueOnce(new Response('nope', { status: 500, statusText: 'Boom' }))
+    await expect(api.importBundle(new Blob(['x']))).rejects.toMatchObject({ status: 500 })
+  })
+
   it('uploads small files in one request with progress', async () => {
     window.sessionStorage.setItem('astro-canvas-token', 'tok')
     const progress: number[] = []

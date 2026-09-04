@@ -254,6 +254,30 @@
         "title": "BatchSpec",
         "type": "object"
       },
+      "Body_import_bundle_api_bundles_import_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "open_now": {
+            "default": true,
+            "title": "Open Now",
+            "type": "boolean"
+          },
+          "restore_into": {
+            "default": "imports",
+            "title": "Restore Into",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_bundle_api_bundles_import_post",
+        "type": "object"
+      },
       "Body_upload_file_api_workspace_upload_post": {
         "properties": {
           "chunk_count": {
@@ -325,6 +349,227 @@
         "title": "Body_upload_file_api_workspace_upload_post",
         "type": "object"
       },
+      "BundleExportRequest": {
+        "description": "``POST /api/bundles/export``.",
+        "properties": {
+          "dir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Workspace folder; defaults to ``bundles``.",
+            "title": "Dir"
+          },
+          "embed_inputs_max_mb": {
+            "default": 200,
+            "minimum": 0.0,
+            "title": "Embed Inputs Max Mb",
+            "type": "integer"
+          },
+          "include_figures": {
+            "default": true,
+            "title": "Include Figures",
+            "type": "boolean"
+          },
+          "include_outputs": {
+            "default": "leaves",
+            "enum": [
+              "leaves",
+              "all",
+              "none"
+            ],
+            "title": "Include Outputs",
+            "type": "string"
+          },
+          "workflow_id": {
+            "title": "Workflow Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_id"
+        ],
+        "title": "BundleExportRequest",
+        "type": "object"
+      },
+      "BundleImportResult": {
+        "description": "``POST /api/bundles/import``: what was opened and what the user still has to fix.",
+        "properties": {
+          "inputs": {
+            "items": {
+              "$ref": "#/components/schemas/ImportedInput"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "layout_errors": {
+            "items": {
+              "$ref": "#/components/schemas/LayoutIssue"
+            },
+            "title": "Layout Errors",
+            "type": "array"
+          },
+          "lock": {
+            "$ref": "#/components/schemas/BundleLock"
+          },
+          "missing_packs": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "``requires.packs`` entries not installed here.",
+            "title": "Missing Packs",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "outputs_restored": {
+            "default": 0,
+            "title": "Outputs Restored",
+            "type": "integer"
+          },
+          "quarantined": {
+            "default": false,
+            "title": "Quarantined",
+            "type": "boolean"
+          },
+          "snippets": {
+            "items": {
+              "$ref": "#/components/schemas/CodeSnippet"
+            },
+            "title": "Snippets",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "workflow_id": {
+            "title": "Workflow Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_id",
+          "name"
+        ],
+        "title": "BundleImportResult",
+        "type": "object"
+      },
+      "BundleLock": {
+        "description": "Exactly what ran, so an import can say whether this machine can reproduce it.",
+        "properties": {
+          "app_version": {
+            "default": "0.1.0a0",
+            "title": "App Version",
+            "type": "string"
+          },
+          "created": {
+            "title": "Created",
+            "type": "string"
+          },
+          "packs": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Packs",
+            "type": "object"
+          },
+          "platform": {
+            "title": "Platform",
+            "type": "string"
+          },
+          "python": {
+            "title": "Python",
+            "type": "string"
+          },
+          "requirements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Requirements",
+            "type": "array"
+          }
+        },
+        "title": "BundleLock",
+        "type": "object"
+      },
+      "BundleManifest": {
+        "description": "What ``export_bundle`` wrote (also what ``inspect_bundle`` reads back).",
+        "properties": {
+          "bytes": {
+            "default": 0,
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "code_hashes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Code Hashes",
+            "type": "array"
+          },
+          "figures": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Figures",
+            "type": "array"
+          },
+          "inputs": {
+            "items": {
+              "$ref": "#/components/schemas/InputRef"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "lock": {
+            "$ref": "#/components/schemas/BundleLock"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "outputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Outputs",
+            "type": "array"
+          },
+          "path": {
+            "default": "",
+            "description": "Workspace-relative path of the ``.acw``.",
+            "title": "Path",
+            "type": "string"
+          },
+          "skipped_outputs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Skipped Outputs",
+            "type": "array"
+          },
+          "workflow_id": {
+            "title": "Workflow Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_id",
+          "name"
+        ],
+        "title": "BundleManifest",
+        "type": "object"
+      },
       "CancelResult": {
         "properties": {
           "cancelled": {
@@ -336,6 +581,94 @@
           "cancelled"
         ],
         "title": "CancelResult",
+        "type": "object"
+      },
+      "CodeSnippet": {
+        "description": "One code node found in a document.",
+        "properties": {
+          "decision": {
+            "anyOf": [
+              {
+                "enum": [
+                  "trusted",
+                  "blocked"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
+          "hash": {
+            "title": "Hash",
+            "type": "string"
+          },
+          "lines": {
+            "default": 0,
+            "title": "Lines",
+            "type": "integer"
+          },
+          "node": {
+            "title": "Node",
+            "type": "string"
+          },
+          "source": {
+            "default": "",
+            "title": "Source",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node",
+          "type",
+          "hash"
+        ],
+        "title": "CodeSnippet",
+        "type": "object"
+      },
+      "DynamicPorts": {
+        "description": "Which parameters of a node declare its ports, and where the values arrive.\n\nAttributes:\n    inputs: Param name holding the input declarations, or ``None`` for a fixed input set.\n    outputs: Param name holding the output declarations, or ``None``.\n    values: Function parameter that receives ``{port name: value}`` for the dynamic inputs.",
+        "properties": {
+          "inputs": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inputs"
+          },
+          "outputs": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outputs"
+          },
+          "values": {
+            "default": "values",
+            "title": "Values",
+            "type": "string"
+          }
+        },
+        "title": "DynamicPorts",
         "type": "object"
       },
       "EdgeDoc": {
@@ -375,6 +708,17 @@
           "to"
         ],
         "title": "EdgeDoc",
+        "type": "object"
+      },
+      "EnableRequest": {
+        "properties": {
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          }
+        },
+        "title": "EnableRequest",
         "type": "object"
       },
       "EntryModel": {
@@ -641,6 +985,297 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "ImportTest": {
+        "description": "Result of importing a freshly installed pack in a throw-away subprocess.",
+        "properties": {
+          "error": {
+            "default": "",
+            "title": "Error",
+            "type": "string"
+          },
+          "module": {
+            "title": "Module",
+            "type": "string"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "module",
+          "ok"
+        ],
+        "title": "ImportTest",
+        "type": "object"
+      },
+      "ImportedInput": {
+        "description": "An input file as the import found it in *this* workspace.",
+        "properties": {
+          "actual_blake3": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Blake3"
+          },
+          "expected_blake3": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Blake3"
+          },
+          "param_ref": {
+            "title": "Param Ref",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "status": {
+            "default": "ok",
+            "enum": [
+              "ok",
+              "restored",
+              "missing",
+              "hash_mismatch"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "param_ref",
+          "path"
+        ],
+        "title": "ImportedInput",
+        "type": "object"
+      },
+      "InputRef": {
+        "description": "One file a workflow reads, as ``inputs/refs.json`` records it.",
+        "properties": {
+          "blake3": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blake3"
+          },
+          "bytes": {
+            "default": 0,
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "embedded": {
+            "default": false,
+            "title": "Embedded",
+            "type": "boolean"
+          },
+          "mime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mime"
+          },
+          "missing": {
+            "default": false,
+            "description": "Not present in the exporting workspace.",
+            "title": "Missing",
+            "type": "boolean"
+          },
+          "param_ref": {
+            "description": "``'<node>.<param>'`` that names the file.",
+            "title": "Param Ref",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "param_ref",
+          "path"
+        ],
+        "title": "InputRef",
+        "type": "object"
+      },
+      "InstallPlan": {
+        "description": "What installing ``source`` would do to the environment (design 9).\n\n``ok`` is the gate: the UI shows the diff either way, but only an ``ok`` plan may be confirmed.",
+        "properties": {
+          "action": {
+            "default": "install",
+            "enum": [
+              "install",
+              "update",
+              "uninstall",
+              "rollback"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/PackageChange"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "conflicts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          },
+          "message": {
+            "default": "",
+            "title": "Message",
+            "type": "string"
+          },
+          "ok": {
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "output": {
+            "default": "",
+            "description": "Raw uv output, shown in the dialog's details.",
+            "title": "Output",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "title": "InstallPlan",
+        "type": "object"
+      },
+      "InstallRequest": {
+        "properties": {
+          "confirm": {
+            "default": false,
+            "description": "Must be true: the plan is shown first and the user confirms it (design 9).",
+            "title": "Confirm",
+            "type": "boolean"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "title": "InstallRequest",
+        "type": "object"
+      },
+      "InstallResult": {
+        "description": "Outcome of an environment mutation.",
+        "properties": {
+          "action": {
+            "enum": [
+              "install",
+              "update",
+              "uninstall",
+              "rollback"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "import_test": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImportTest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "default": "",
+            "title": "Message",
+            "type": "string"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "output": {
+            "default": "",
+            "title": "Output",
+            "type": "string"
+          },
+          "packs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Packs",
+            "type": "array"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InstallPlan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "restart_required": {
+            "default": false,
+            "title": "Restart Required",
+            "type": "boolean"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "source": {
+            "default": "",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "action"
+        ],
+        "title": "InstallResult",
+        "type": "object"
+      },
       "InstantiateRequest": {
         "description": "Optional overrides when creating a workflow from a template.",
         "properties": {
@@ -711,6 +1346,149 @@
           "message"
         ],
         "title": "LayoutIssue",
+        "type": "object"
+      },
+      "ManagerSettings": {
+        "description": "The manager's own preferences (``GET/POST /api/manager/settings``).",
+        "properties": {
+          "registry_url": {
+            "default": "",
+            "title": "Registry Url",
+            "type": "string"
+          },
+          "security": {
+            "default": "standard",
+            "enum": [
+              "strict",
+              "standard",
+              "permissive"
+            ],
+            "title": "Security",
+            "type": "string"
+          },
+          "uv_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Explicit uv binary; empty means auto.",
+            "title": "Uv Path"
+          }
+        },
+        "title": "ManagerSettings",
+        "type": "object"
+      },
+      "ManagerSettingsUpdate": {
+        "description": "Partial update; omitted fields keep their current value.",
+        "properties": {
+          "registry_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registry Url"
+          },
+          "security": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strict",
+                  "standard",
+                  "permissive"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Security"
+          },
+          "uv_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uv Path"
+          }
+        },
+        "title": "ManagerSettingsUpdate",
+        "type": "object"
+      },
+      "ManagerStatus": {
+        "description": "What Manager > Settings shows about this installation.",
+        "properties": {
+          "python": {
+            "title": "Python",
+            "type": "string"
+          },
+          "restart_required": {
+            "default": false,
+            "title": "Restart Required",
+            "type": "boolean"
+          },
+          "security_help": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Security Help",
+            "type": "object"
+          },
+          "security_levels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Security Levels",
+            "type": "array"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/ManagerSettings"
+          },
+          "uv_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uv Error"
+          },
+          "uv_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uv Path"
+          },
+          "uv_version": {
+            "default": "",
+            "title": "Uv Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "python",
+          "settings"
+        ],
+        "title": "ManagerStatus",
         "type": "object"
       },
       "MkdirRequest": {
@@ -966,6 +1744,17 @@
             "title": "Description",
             "type": "string"
           },
+          "dynamic_ports": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DynamicPorts"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set when the node's ports come from its own params (the code node)."
+          },
           "editor": {
             "anyOf": [
               {
@@ -1174,6 +1963,116 @@
         "title": "NodeStatus",
         "type": "object"
       },
+      "PackDetail": {
+        "description": "One pack as the Manager's *Installed* tab shows it (``/api/health`` has a summary).",
+        "properties": {
+          "distribution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distribution"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "entry_point": {
+            "default": "",
+            "title": "Entry Point",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "installed": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installed"
+          },
+          "loaded": {
+            "default": false,
+            "description": "Registered in the running server right now.",
+            "title": "Loaded",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "node_count": {
+            "default": 0,
+            "title": "Node Count",
+            "type": "integer"
+          },
+          "security": {
+            "default": "standard",
+            "title": "Security",
+            "type": "string"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "template_count": {
+            "default": 0,
+            "title": "Template Count",
+            "type": "integer"
+          },
+          "traceback": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Traceback"
+          },
+          "type_count": {
+            "default": 0,
+            "title": "Type Count",
+            "type": "integer"
+          },
+          "version": {
+            "default": "unknown",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "PackDetail",
+        "type": "object"
+      },
       "PackInfo": {
         "description": "Summary of a discovered node pack (full detail at ``/api/packs``).",
         "properties": {
@@ -1312,6 +2211,54 @@
           "entry_point"
         ],
         "title": "PackRecord",
+        "type": "object"
+      },
+      "PackageChange": {
+        "description": "One line of the resolution diff.",
+        "properties": {
+          "action": {
+            "enum": [
+              "add",
+              "upgrade",
+              "downgrade",
+              "remove",
+              "reinstall"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "from_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Version"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "to_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Version"
+          }
+        },
+        "required": [
+          "name",
+          "action"
+        ],
+        "title": "PackageChange",
         "type": "object"
       },
       "ParamSpec": {
@@ -1554,6 +2501,196 @@
         "title": "PromotedDoc",
         "type": "object"
       },
+      "RegistryEntry": {
+        "description": "One pack in ``index.json``.",
+        "properties": {
+          "categories": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Categories",
+            "type": "array"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "display_name": {
+            "default": "",
+            "title": "Display Name",
+            "type": "string"
+          },
+          "homepage": {
+            "default": "",
+            "title": "Homepage",
+            "type": "string"
+          },
+          "latest": {
+            "default": "",
+            "title": "Latest",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "publisher": {
+            "default": "",
+            "title": "Publisher",
+            "type": "string"
+          },
+          "requires": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Requires",
+            "type": "object"
+          },
+          "security": {
+            "default": "standard",
+            "title": "Security",
+            "type": "string"
+          },
+          "source": {
+            "description": "What the manager installs: a PyPI requirement or a git URL.",
+            "title": "Source",
+            "type": "string"
+          },
+          "stars": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stars"
+          },
+          "templates": {
+            "items": {
+              "$ref": "#/components/schemas/RegistryTemplate"
+            },
+            "title": "Templates",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "source"
+        ],
+        "title": "RegistryEntry",
+        "type": "object"
+      },
+      "RegistryIndex": {
+        "description": "The fetched index plus where it came from and how fresh it is.",
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/RegistryEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "fetched": {
+            "default": 0.0,
+            "title": "Fetched",
+            "type": "number"
+          },
+          "stale": {
+            "default": false,
+            "description": "True when served from cache after a failure.",
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "url": {
+            "default": "",
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "title": "RegistryIndex",
+        "type": "object"
+      },
+      "RegistryTemplate": {
+        "description": "A template a registry entry advertises; mirrors ``TemplateInfo`` (phase 10).",
+        "properties": {
+          "default_layout": {
+            "default": "canvas",
+            "title": "Default Layout",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "layouts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Layouts",
+            "type": "array"
+          },
+          "name": {
+            "default": "",
+            "title": "Name",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "RegistryTemplate",
+        "type": "object"
+      },
+      "ResolveRequest": {
+        "properties": {
+          "action": {
+            "default": "install",
+            "enum": [
+              "install",
+              "update",
+              "uninstall",
+              "rollback"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "title": "ResolveRequest",
+        "type": "object"
+      },
       "RunAccepted": {
         "properties": {
           "run_id": {
@@ -1699,6 +2836,46 @@
           "message"
         ],
         "title": "SkippedExport",
+        "type": "object"
+      },
+      "SnapshotInfo": {
+        "description": "A recorded ``uv pip freeze`` the environment can be rolled back to.",
+        "properties": {
+          "created": {
+            "title": "Created",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          },
+          "packages": {
+            "default": 0,
+            "title": "Packages",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "created"
+        ],
+        "title": "SnapshotInfo",
+        "type": "object"
+      },
+      "SnapshotRequest": {
+        "properties": {
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "title": "SnapshotRequest",
         "type": "object"
       },
       "SniffResult": {
@@ -1969,6 +3146,89 @@
           "entries"
         ],
         "title": "TreeResponse",
+        "type": "object"
+      },
+      "TrustRecord": {
+        "description": "A stored decision (``GET /api/manager/trust``).",
+        "properties": {
+          "decided": {
+            "title": "Decided",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "trusted",
+              "blocked"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "hash": {
+            "title": "Hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "hash",
+          "decision",
+          "decided"
+        ],
+        "title": "TrustRecord",
+        "type": "object"
+      },
+      "TrustRequest": {
+        "properties": {
+          "decision": {
+            "default": "trusted",
+            "enum": [
+              "trusted",
+              "blocked"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "hash": {
+            "title": "Hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "hash"
+        ],
+        "title": "TrustRequest",
+        "type": "object"
+      },
+      "TrustReview": {
+        "description": "``GET /api/workflows/{id}/trust``: what the quarantine banner and dialog render.",
+        "properties": {
+          "blocked_nodes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Blocked Nodes",
+            "type": "array"
+          },
+          "quarantined": {
+            "default": false,
+            "title": "Quarantined",
+            "type": "boolean"
+          },
+          "snippets": {
+            "items": {
+              "$ref": "#/components/schemas/CodeSnippet"
+            },
+            "title": "Snippets",
+            "type": "array"
+          },
+          "workflow_id": {
+            "title": "Workflow Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_id"
+        ],
+        "title": "TrustReview",
         "type": "object"
       },
       "UploadResult": {
@@ -2389,6 +3649,131 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/bundles/download": {
+      "get": {
+        "description": "Serve a bundle that lives in the workspace.",
+        "operationId": "download_bundle_api_bundles_download_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Bundle",
+        "tags": [
+          "bundles"
+        ]
+      }
+    },
+    "/api/bundles/export": {
+      "post": {
+        "description": "Pack a workflow, its inputs, its finished outputs and its provenance into a ``.acw``.",
+        "operationId": "create_bundle_api_bundles_export_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BundleExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleManifest"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Bundle",
+        "tags": [
+          "bundles"
+        ]
+      }
+    },
+    "/api/bundles/import": {
+      "post": {
+        "description": "Validate an uploaded ``.acw``, restore what it carries and save the workflow.\n\nThe workflow is stored either way so the user can look at it; ``missing_packs``,\n``layout_errors``, ``inputs`` and ``quarantined`` say what still needs attention.",
+        "operationId": "import_bundle_api_bundles_import_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_bundle_api_bundles_import_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleImportResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Bundle",
+        "tags": [
+          "bundles"
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "description": "Return ``ok`` and the server version.",
@@ -2408,6 +3793,693 @@
         "summary": "Health",
         "tags": [
           "system"
+        ]
+      }
+    },
+    "/api/manager/packs": {
+      "get": {
+        "description": "Every discovered pack with its database state and load error.",
+        "operationId": "list_packs_api_manager_packs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PackDetail"
+                  },
+                  "title": "Response List Packs Api Manager Packs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Packs",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/packs/install": {
+      "post": {
+        "description": "Install a source the user has confirmed a plan for.",
+        "operationId": "install_api_manager_packs_install_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Install",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/packs/resolve": {
+      "post": {
+        "description": "Dry-run a source and return the resolution diff (or the conflicts that block it).",
+        "operationId": "resolve_api_manager_packs_resolve_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallPlan"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resolve",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/packs/{name}": {
+      "delete": {
+        "operationId": "uninstall_pack_api_manager_packs__name__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Uninstall Pack",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/packs/{name}/enabled": {
+      "post": {
+        "description": "Enable or disable a pack; disabled packs stay installed but are not registered.",
+        "operationId": "set_enabled_api_manager_packs__name__enabled_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Enabled",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/packs/{name}/import-test": {
+      "post": {
+        "description": "Import the pack in a subprocess and report the traceback if it fails.",
+        "operationId": "import_test_api_manager_packs__name__import_test_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTest"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Test",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/packs/{name}/update": {
+      "post": {
+        "operationId": "update_pack_api_manager_packs__name__update_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Pack",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/registry": {
+      "get": {
+        "description": "The registry index, filtered. Never fails: a stale cached copy beats an empty tab.",
+        "operationId": "get_registry_api_manager_registry_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Refresh",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistryIndex"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Registry",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/settings": {
+      "post": {
+        "description": "Persist the security level, uv path or registry URL for this workspace.",
+        "operationId": "update_settings_api_manager_settings_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManagerSettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerSettings"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Settings",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/snapshots": {
+      "get": {
+        "operationId": "list_snapshots_api_manager_snapshots_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SnapshotInfo"
+                  },
+                  "title": "Response List Snapshots Api Manager Snapshots Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Snapshots",
+        "tags": [
+          "manager"
+        ]
+      },
+      "post": {
+        "description": "Record ``uv pip freeze`` so this environment can be restored later.",
+        "operationId": "create_snapshot_api_manager_snapshots_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/SnapshotRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Snapshot",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/snapshots/{snapshot_id}": {
+      "get": {
+        "operationId": "snapshot_packages_api_manager_snapshots__snapshot_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshot_id",
+            "required": true,
+            "schema": {
+              "title": "Snapshot Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Response Snapshot Packages Api Manager Snapshots  Snapshot Id  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Snapshot Packages",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/snapshots/{snapshot_id}/rollback": {
+      "post": {
+        "description": "Restore a snapshot exactly (``uv pip sync`` against the recorded freeze).",
+        "operationId": "rollback_api_manager_snapshots__snapshot_id__rollback_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snapshot_id",
+            "required": true,
+            "schema": {
+              "title": "Snapshot Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rollback",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/status": {
+      "get": {
+        "description": "uv, the interpreter packs are installed into, and the current preferences.",
+        "operationId": "get_status_api_manager_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Status",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/trust": {
+      "get": {
+        "description": "Every code-snippet decision this workspace has made.",
+        "operationId": "list_trust_api_manager_trust_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TrustRecord"
+                  },
+                  "title": "Response List Trust Api Manager Trust Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Trust",
+        "tags": [
+          "manager"
+        ]
+      },
+      "post": {
+        "description": "Trust or block one snippet hash; every node with that snippet follows.",
+        "operationId": "set_trust_api_manager_trust_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrustRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustRecord"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Trust",
+        "tags": [
+          "manager"
+        ]
+      }
+    },
+    "/api/manager/trust/{snippet_hash}": {
+      "delete": {
+        "description": "Forget a decision, so the snippet is quarantined again.",
+        "operationId": "forget_trust_api_manager_trust__snippet_hash__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "snippet_hash",
+            "required": true,
+            "schema": {
+              "title": "Snippet Hash",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Forget Trust",
+        "tags": [
+          "manager"
         ]
       }
     },
@@ -3609,6 +5681,49 @@
         "summary": "Workflow Status",
         "tags": [
           "workflows"
+        ]
+      }
+    },
+    "/api/workflows/{workflow_id}/trust": {
+      "get": {
+        "description": "The code snippets of one workflow with their decisions: the quarantine banner's source.",
+        "operationId": "review_workflow_api_workflows__workflow_id__trust_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustReview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Review Workflow",
+        "tags": [
+          "manager"
         ]
       }
     },

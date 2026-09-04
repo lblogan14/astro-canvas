@@ -18,6 +18,9 @@ import { useWorkflowStore } from '@/stores/workflow'
 import { useWorkflowsStore } from '@/stores/workflows'
 import { setFileDropTranslator } from '@/canvas/fileDrop'
 import { useWorkspaceStore } from '@/stores/workspace'
+import QuarantineBanner from '@/manager/QuarantineBanner.vue'
+import { setBundleHandlers } from '@/manager/importBundle'
+import { usePacksStore } from '@/stores/packs'
 import BottomDrawer from './drawer/BottomDrawer.vue'
 import CommandPalette from './CommandPalette.vue'
 import InspectorPanel from './inspector/InspectorPanel.vue'
@@ -108,13 +111,21 @@ async function openFromRoute(): Promise<void> {
 }
 
 const workspace = useWorkspaceStore()
+const packs = usePacksStore()
 setFileDropTranslator((key, params) => t(key, params ?? {}))
+// The canvas drop target and the toolbar's Import both land here (they have no component context).
+setBundleHandlers({
+  t: (key, params) => (typeof params === 'number' ? t(key, params) : t(key, params ?? {})),
+  notify: (message, kind) => ui.notify(message, kind ?? 'info'),
+  open: (id) => void router.push({ name: 'workflow', params: { id } }),
+})
 
 onMounted(async () => {
   syncModeFromRoute()
   session.connect()
   if (!schema.isReady) await schema.load()
   void workspace.load()
+  void packs.refresh()
   await openFromRoute()
 })
 
@@ -157,6 +168,7 @@ onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
       </aside>
 
       <div class="relative flex min-w-0 flex-1 flex-col">
+        <QuarantineBanner />
         <div class="relative min-h-0 flex-1">
           <BatchMode v-if="ui.mode === 'batch'" />
           <AppMode v-else-if="ui.mode === 'app'" />

@@ -1,18 +1,31 @@
 import type {
   BatchInfo,
   BatchRequest,
+  BundleImportResult,
+  BundleManifest,
   CancelResult,
   ExportRequest,
   ExportResult,
   HealthResponse,
+  ImportTest,
+  InstallPlan,
+  InstallResult,
+  ManagerSettingsUpdate,
+  ManagerStatus,
   NodeSpec,
+  PackDetail,
   PackRecord,
   PortTypeSpec,
+  RegistryIndex,
   RunAccepted,
   RunDetail,
+  SnapshotInfo,
   SniffResult,
   SystemInfo,
   TemplateInfo,
+  TrustDecision,
+  TrustRecord,
+  TrustReview,
   UploadResult,
   WorkflowDoc,
   WorkflowSaved,
@@ -206,6 +219,81 @@ export const api = {
   },
 
   /** Full output of a node as an Arrow IPC stream (tables) or other formats. */
+  // Phase 11: the pack manager.
+  getManagerStatus: () => request<ManagerStatus>('/api/manager/status'),
+  setManagerSettings: (patch: ManagerSettingsUpdate) =>
+    request<ManagerStatus['settings']>('/api/manager/settings', json('POST', patch)),
+  listInstalledPacks: () => request<PackDetail[]>('/api/manager/packs'),
+  resolvePack: (source: string, action: InstallPlan['action'] = 'install') =>
+    request<InstallPlan>('/api/manager/packs/resolve', json('POST', { source, action })),
+  installPack: (source: string) =>
+    request<InstallResult>('/api/manager/packs/install', json('POST', { source, confirm: true })),
+  updatePack: (name: string) =>
+    request<InstallResult>(`/api/manager/packs/${enc(name)}/update`, { method: 'POST' }),
+  uninstallPack: (name: string) =>
+    request<InstallResult>(`/api/manager/packs/${enc(name)}`, { method: 'DELETE' }),
+  setPackEnabled: (name: string, enabled: boolean) =>
+    request<PackDetail>(`/api/manager/packs/${enc(name)}/enabled`, json('POST', { enabled })),
+  testPackImport: (name: string) =>
+    request<ImportTest>(`/api/manager/packs/${enc(name)}/import-test`, { method: 'POST' }),
+  listSnapshots: () => request<SnapshotInfo[]>('/api/manager/snapshots'),
+  createSnapshot: (label = '') =>
+    request<SnapshotInfo>('/api/manager/snapshots', json('POST', { label })),
+  getSnapshotPackages: (id: number) => request<string[]>(`/api/manager/snapshots/${id}`),
+  rollbackSnapshot: (id: number) =>
+    request<InstallResult>(`/api/manager/snapshots/${id}/rollback`, { method: 'POST' }),
+  getRegistry: (refresh = false, q = '') =>
+    request<RegistryIndex>(
+      `/api/manager/registry?refresh=${refresh ? 'true' : 'false'}&q=${enc(q)}`,
+    ),
+
+  // Phase 11: the code-node trust gate.
+  listTrust: () => request<TrustRecord[]>('/api/manager/trust'),
+  setTrust: (hash: string, decision: TrustDecision) =>
+    request<TrustRecord>('/api/manager/trust', json('POST', { hash, decision })),
+  forgetTrust: (hash: string) =>
+    request<void>(`/api/manager/trust/${enc(hash)}`, { method: 'DELETE' }),
+  getWorkflowTrust: (id: string) => request<TrustReview>(`/api/workflows/${enc(id)}/trust`),
+
+  // Phase 11: .acw bundles.
+  exportBundle: (body: {
+    workflow_id: string
+    embed_inputs_max_mb?: number
+    include_outputs?: 'leaves' | 'all' | 'none'
+    include_figures?: boolean
+    dir?: string | null
+  }) => request<BundleManifest>('/api/bundles/export', json('POST', body)),
+  /** Download URL of an exported bundle (the bearer token travels as a query parameter). */
+  bundleUrl: (path: string) => {
+    const token = getToken()
+    return `/api/bundles/download?path=${enc(path)}${token ? `&token=${enc(token)}` : ''}`
+  },
+  importBundle: async (file: File | Blob, filename = 'workflow.acw') => {
+    const form = new FormData()
+    form.set('file', file, filename)
+    const response = await fetch('/api/bundles/import', {
+      method: 'POST',
+      headers: { Accept: 'application/json', ...authHeaders() },
+      body: form,
+    })
+    if (!response.ok) {
+      let detail: unknown
+      try {
+        detail = (await response.json()) as unknown
+      } catch {
+        detail = undefined
+      }
+      const message =
+        typeof detail === 'object' &&
+        detail !== null &&
+        typeof (detail as { detail?: unknown }).detail === 'string'
+          ? (detail as { detail: string }).detail
+          : `${response.status} ${response.statusText}`
+      throw new ApiError(response.status, message, detail)
+    }
+    return (await response.json()) as BundleImportResult
+  },
+
   outputUrl: (workflowId: string, nodeId: string, port: string, fmt: 'arrow' | 'json' | 'npz') =>
     `/api/outputs/${enc(nodeId)}/${enc(port)}?workflow_id=${enc(workflowId)}&fmt=${fmt}`,
   fetchOutputArrow: async (workflowId: string, nodeId: string, port: string) => {

@@ -164,7 +164,7 @@ export function useFlowElements(): { nodes: ComputedRef<FlowNode[]>; edges: Comp
     for (const id of Object.keys(docEdges)) {
       const edge = docEdges[id] as EdgeDoc
       const sourceNode = docNodes[edge.from[0]]
-      const spec = sourceNode ? workflow.specs[sourceNode.type] : undefined
+      const spec = workflow.specFor(sourceNode)
       const typeId = spec ? outputType(spec, edge.from[1]) : undefined
       const color = typeId ? portStyle(typeId).color : '#999999'
       const cached = edgeCache.get(id)

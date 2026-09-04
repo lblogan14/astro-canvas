@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from 'reka-ui'
 import {
+  Boxes,
   Check,
   ChevronDown,
   FolderOpen,
@@ -19,16 +20,22 @@ import {
   PanelRight,
   Play,
   Redo2,
+  Share2,
   Square,
   Star,
   TriangleAlert,
   Undo2,
+  Upload,
   Workflow,
   Zap,
 } from '@lucide/vue'
 
+import { useRouter } from 'vue-router'
+
 import { Button } from '@/components/ui/button'
 import { useCanvasAdapter } from '@/canvas/CanvasAdapter'
+import BundleDialog from '@/manager/BundleDialog.vue'
+import { bundleFrom, dropBundle } from '@/manager/importBundle'
 import { useExecutionStore } from '@/stores/execution'
 import { useSessionStore } from '@/stores/session'
 import { type AppMode, useUiStore } from '@/stores/ui'
@@ -40,6 +47,21 @@ const execution = useExecutionStore()
 const session = useSessionStore()
 const ui = useUiStore()
 const canvas = useCanvasAdapter()
+const router = useRouter()
+
+const bundleOpen = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
+
+function chooseBundle(): void {
+  fileInput.value?.click()
+}
+
+async function onBundleChosen(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = bundleFrom(input.files)
+  input.value = ''
+  if (file) await dropBundle(file)
+}
 
 const nameDraft = ref(workflow.name)
 watch(
@@ -224,6 +246,48 @@ const LAYOUTS: readonly AppMode[] = ['canvas', 'app', 'wizard', 'dashboard', 'ba
       <Play v-else />
       {{ running ? t('toolbar.cancel') : t('toolbar.run') }}
     </Button>
+
+    <DropdownMenuRoot>
+      <DropdownMenuTrigger as-child>
+        <Button variant="ghost" size="sm" :title="t('bundle.share')" data-testid="share-menu">
+          <Share2 /> {{ t('bundle.share') }}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuPortal>
+        <DropdownMenuContent
+          align="end"
+          :side-offset="4"
+          class="z-50 min-w-48 rounded-md border bg-popover p-1 text-xs text-popover-foreground shadow-md"
+        >
+          <DropdownMenuItem
+            class="ac-menu-item"
+            data-testid="share-export"
+            @select="bundleOpen = true"
+          >
+            <Share2 class="size-3.5" /> {{ t('bundle.export') }}
+          </DropdownMenuItem>
+          <DropdownMenuItem class="ac-menu-item" data-testid="share-import" @select="chooseBundle">
+            <Upload class="size-3.5" /> {{ t('bundle.import') }}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            class="ac-menu-item"
+            data-testid="share-manager"
+            @select="router.push({ name: 'manager' })"
+          >
+            <Boxes class="size-3.5" /> {{ t('manager.open') }}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenuPortal>
+    </DropdownMenuRoot>
+    <input
+      ref="fileInput"
+      type="file"
+      accept=".acw,application/zip"
+      class="hidden"
+      data-testid="bundle-file"
+      @change="onBundleChosen"
+    />
+    <BundleDialog :open="bundleOpen" @close="bundleOpen = false" />
 
     <span class="mx-1 h-5 w-px bg-border" aria-hidden="true" />
 

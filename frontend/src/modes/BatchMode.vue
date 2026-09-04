@@ -39,7 +39,7 @@ const refs = computed(() =>
 const outputRefs = computed(() => {
   const out: string[] = []
   for (const [nodeId, node] of Object.entries(workflow.nodes)) {
-    for (const port of workflow.specs[node.type]?.outputs ?? []) out.push(`${nodeId}.${port.name}`)
+    for (const port of workflow.specFor(node)?.outputs ?? []) out.push(`${nodeId}.${port.name}`)
   }
   return out
 })

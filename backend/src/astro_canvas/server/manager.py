@@ -15,7 +15,7 @@ from astro_canvas.manager.packs import (
     ImportTest,
     InstallResult,
     ManagerError,
-    PackInfo,
+    PackDetail,
     PackManager,
     SnapshotInfo,
 )
@@ -116,8 +116,8 @@ def update_settings(request: Request, body: ManagerSettingsUpdate) -> ManagerSet
     return updated
 
 
-@router.get("/manager/packs", response_model=list[PackInfo])
-def list_packs(request: Request) -> list[PackInfo]:
+@router.get("/manager/packs", response_model=list[PackDetail])
+def list_packs(request: Request) -> list[PackDetail]:
     """Every discovered pack with its database state and load error."""
     return get_manager(request).installed()
 
@@ -164,8 +164,8 @@ def uninstall_pack(request: Request, name: str) -> InstallResult:
         raise _fail(exc) from exc
 
 
-@router.post("/manager/packs/{name}/enabled", response_model=PackInfo)
-def set_enabled(request: Request, name: str, body: EnableRequest) -> PackInfo:
+@router.post("/manager/packs/{name}/enabled", response_model=PackDetail)
+def set_enabled(request: Request, name: str, body: EnableRequest) -> PackDetail:
     """Enable or disable a pack; disabled packs stay installed but are not registered."""
     manager = get_manager(request)
     try:

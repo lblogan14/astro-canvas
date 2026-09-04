@@ -59,8 +59,8 @@ class ManagerError(RuntimeError):
     """The manager refused an operation (bad source, blocked plan, missing snapshot)."""
 
 
-class PackInfo(BaseModel):
-    """One pack as the Manager's *Installed* tab shows it."""
+class PackDetail(BaseModel):
+    """One pack as the Manager's *Installed* tab shows it (``/api/health`` has a summary)."""
 
     name: str
     version: str = "unknown"
@@ -223,16 +223,16 @@ class PackManager:
             rows = session.scalars(select(Pack).where(Pack.enabled.is_(False))).all()
             return {row.name for row in rows}
 
-    def installed(self) -> list[PackInfo]:
+    def installed(self) -> list[PackDetail]:
         """Every discovered pack, merged with what the database remembers about it."""
         with self.sessions() as session:
             rows = {row.name: row for row in session.scalars(select(Pack)).all()}
-        out: list[PackInfo] = []
+        out: list[PackDetail] = []
         for record in self.records:
             row = rows.get(record.name)
             enabled = row.enabled if row is not None else True
             out.append(
-                PackInfo(
+                PackDetail(
                     name=record.name,
                     version=record.version,
                     distribution=record.distribution,
@@ -251,7 +251,7 @@ class PackManager:
             )
         return sorted(out, key=lambda p: p.name)
 
-    def set_enabled(self, name: str, enabled: bool) -> PackInfo:
+    def set_enabled(self, name: str, enabled: bool) -> PackDetail:
         """Enable or disable a pack. Disabled packs stay installed but are not registered.
 
         Enabling re-registers immediately when the pack was never imported; otherwise the caller
@@ -626,7 +626,7 @@ __all__ = [
     "ImportTest",
     "InstallResult",
     "ManagerError",
-    "PackInfo",
+    "PackDetail",
     "PackManager",
     "SnapshotInfo",
 ]
