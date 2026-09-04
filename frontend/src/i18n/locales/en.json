@@ -215,7 +215,8 @@
     "collapse": "collapse to subgraph",
     "expand": "expand subgraph",
     "promote": "promote parameter",
-    "insert_blueprint": "insert blueprint"
+    "insert_blueprint": "insert blueprint",
+    "batch_row": "apply batch row"
   },
   "widgets": {
     "flux": "flux",
@@ -504,5 +505,39 @@
     "insert": "Insert blueprint",
     "promote": "Promote to the subgraph",
     "default_name": "Subgraph"
+  },
+  "batch": {
+    "title": "Batch",
+    "run_all": "Run all ({n})",
+    "run_selected": "Run selected ({n})",
+    "cancel": "Cancel",
+    "add_row": "Add row",
+    "remove_rows": "Remove rows",
+    "import": "Import…",
+    "paste": "Paste table",
+    "paste_hint": "Paste CSV, TSV or a specgui batch table",
+    "paste_apply": "Use table",
+    "imported": "Imported {rows} rows",
+    "imported_specgui": "Imported {rows} specgui rows and mapped the columns",
+    "continue_on_error": "Continue on error",
+    "save_layout": "Save layout",
+    "collect_title": "Collect into the results table",
+    "no_outputs": "Open a workflow with nodes to choose outputs.",
+    "rows_title": "Rows ({n})",
+    "results_title": "Results",
+    "status": "Status",
+    "unmapped": "— not bound —",
+    "empty": "No rows yet. Add one, paste a table or import a CSV.",
+    "select_row": "Select row {row}",
+    "open_in_canvas": "Open this row in the canvas",
+    "opened_in_canvas": "Row {row} applied to the canvas",
+    "state": {
+      "pending": "Pending",
+      "queued": "Queued",
+      "running": "Running",
+      "done": "Done",
+      "error": "Error",
+      "cancelled": "Cancelled"
+    }
   }
 }

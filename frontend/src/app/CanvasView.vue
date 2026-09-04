@@ -6,6 +6,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { FlowCanvas } from '@/canvas/vueflow'
 import SubgraphBreadcrumb from '@/canvas/SubgraphBreadcrumb.vue'
+import BatchMode from '@/modes/BatchMode.vue'
 import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { useSelectionStore } from '@/stores/selection'
 import { useSessionStore } from '@/stores/session'
@@ -128,8 +129,11 @@ onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
 
       <div class="relative flex min-w-0 flex-1 flex-col">
         <div class="relative min-h-0 flex-1">
-          <FlowCanvas />
-          <SubgraphBreadcrumb />
+          <BatchMode v-if="ui.mode === 'batch'" />
+          <template v-else>
+            <FlowCanvas />
+            <SubgraphBreadcrumb />
+          </template>
           <CommandPalette />
           <ViewerSheet />
           <EditorHost />

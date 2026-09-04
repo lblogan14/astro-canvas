@@ -1,4 +1,6 @@
 import type {
+  BatchInfo,
+  BatchRequest,
   CancelResult,
   HealthResponse,
   NodeSpec,
@@ -147,6 +149,16 @@ export const api = {
       `/api/workflows/${enc(id)}/run`,
       json('POST', { targets: targets ?? null }),
     ),
+  // Phase 09: batch runs over a table of rows.
+  startBatch: (id: string, body: BatchRequest) =>
+    request<BatchInfo>(`/api/workflows/${enc(id)}/batch`, json('POST', body)),
+  getBatch: (id: string, batchId: string) =>
+    request<BatchInfo>(`/api/workflows/${enc(id)}/batch/${enc(batchId)}`),
+  cancelBatch: (id: string, batchId: string) =>
+    request<BatchInfo>(`/api/workflows/${enc(id)}/batch/${enc(batchId)}/cancel`, {
+      method: 'POST',
+    }),
+
   listRuns: (workflowId?: string) =>
     request<RunDetail[]>(
       workflowId === undefined ? '/api/runs' : `/api/runs?workflow_id=${enc(workflowId)}`,

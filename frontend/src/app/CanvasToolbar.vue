@@ -61,7 +61,8 @@ async function toggleRun(): Promise<void> {
   else await session.run()
 }
 
-const LAYOUTS = ['canvas', 'app', 'wizard', 'dashboard', 'batch'] as const
+const LAYOUTS = ['canvas', 'batch', 'app', 'wizard', 'dashboard'] as const
+const ENABLED: ReadonlySet<string> = new Set(['canvas', 'batch'])
 </script>
 
 <template>
@@ -160,8 +161,8 @@ const LAYOUTS = ['canvas', 'app', 'wizard', 'dashboard', 'batch'] as const
 
     <DropdownMenuRoot>
       <DropdownMenuTrigger as-child>
-        <Button variant="ghost" size="sm" :title="t('toolbar.layout')">
-          {{ t('toolbar.layout_canvas') }} <ChevronDown class="size-3" />
+        <Button variant="ghost" size="sm" :title="t('toolbar.layout')" data-testid="layout-menu">
+          {{ t(`toolbar.layout_${ui.mode}`) }} <ChevronDown class="size-3" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
@@ -174,9 +175,11 @@ const LAYOUTS = ['canvas', 'app', 'wizard', 'dashboard', 'batch'] as const
             v-for="layout in LAYOUTS"
             :key="layout"
             class="ac-menu-item data-[disabled]:opacity-50"
-            :disabled="layout !== 'canvas'"
+            :disabled="!ENABLED.has(layout)"
+            :data-testid="`layout-${layout}`"
+            @select="ENABLED.has(layout) && ui.setMode(layout as 'canvas' | 'batch')"
           >
-            <Check v-if="layout === 'canvas'" class="size-3.5" />
+            <Check v-if="layout === ui.mode" class="size-3.5" />
             <span v-else class="size-3.5" />
             {{ t(`toolbar.layout_${layout}`) }}
           </DropdownMenuItem>

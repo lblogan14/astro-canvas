@@ -75,6 +75,37 @@ export interface NodeOutputSummaryEvent extends BaseEvent {
   tag?: string | null
 }
 
+export interface BatchStartedEvent extends BaseEvent {
+  type: 'batch.started'
+  batch_id: string
+  n_rows: number
+  max_workers: number
+  columns: string[]
+}
+
+export type BatchRowState = 'pending' | 'queued' | 'running' | 'done' | 'error' | 'cancelled'
+
+export interface BatchRowEvent extends BaseEvent {
+  type: 'batch.row'
+  batch_id: string
+  row: number
+  state: BatchRowState
+  error: string | null
+  elapsed_ms: number | null
+  outputs: Record<string, unknown>
+}
+
+export interface BatchFinishedEvent extends BaseEvent {
+  type: 'batch.finished'
+  batch_id: string
+  n_rows: number
+  done: number
+  failed: number
+  cancelled: number
+  status: RunStatus
+  elapsed_ms: number
+}
+
 export interface GraphValidationEvent extends BaseEvent {
   type: 'graph.validation'
   node_errors: NodeErrors
@@ -99,6 +130,9 @@ export type EngineEvent =
   | NodeLogEvent
   | NodeErrorEvent
   | NodeOutputSummaryEvent
+  | BatchStartedEvent
+  | BatchRowEvent
+  | BatchFinishedEvent
   | GraphValidationEvent
   | WorkspaceChangedEvent
   | PacksChangedEvent
@@ -128,6 +162,21 @@ export interface RunAcceptedMessage {
 
 export interface CancelResultMessage {
   type: 'cancel.result'
+  cancelled: boolean
+  ts: number
+}
+
+export interface BatchAcceptedMessage {
+  type: 'batch.accepted'
+  batch_id: string
+  workflow_id: string
+  n_rows: number
+  ts: number
+}
+
+export interface BatchCancelledMessage {
+  type: 'batch.cancelled'
+  batch_id: string
   cancelled: boolean
   ts: number
 }
@@ -163,6 +212,8 @@ export type ServerMessage =
   | SubscribedMessage
   | RunAcceptedMessage
   | CancelResultMessage
+  | BatchAcceptedMessage
+  | BatchCancelledMessage
   | PongMessage
   | ErrorMessage
   | PreviewComputedMessage
@@ -177,6 +228,9 @@ const MESSAGE_TYPES: ReadonlySet<string> = new Set<ServerMessageType>([
   'node.log',
   'node.error',
   'node.output.summary',
+  'batch.started',
+  'batch.row',
+  'batch.finished',
   'graph.validation',
   'workspace.changed',
   'packs.changed',
@@ -184,6 +238,8 @@ const MESSAGE_TYPES: ReadonlySet<string> = new Set<ServerMessageType>([
   'subscribed',
   'run.accepted',
   'cancel.result',
+  'batch.accepted',
+  'batch.cancelled',
   'pong',
   'error',
   'preview.computed',
@@ -238,4 +294,6 @@ export type ClientCommand =
     }
   | { type: 'output.request'; node_id: string; port: string }
   | ({ type: 'preview.compute' } & ComputeRequest)
+  | { type: 'batch.run'; rows: Record<string, unknown>[]; spec?: unknown }
+  | { type: 'batch.cancel'; batch_id: string }
   | { type: 'ping' }
