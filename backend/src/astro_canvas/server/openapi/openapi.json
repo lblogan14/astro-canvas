@@ -1869,10 +1869,21 @@
       "TemplateInfo": {
         "description": "A workflow template a pack ships (``GET /api/templates``).",
         "properties": {
+          "default_layout": {
+            "default": "canvas",
+            "description": "The layout the gallery opens the template into.",
+            "title": "Default Layout",
+            "type": "string"
+          },
           "description": {
             "default": "",
             "title": "Description",
             "type": "string"
+          },
+          "figure": {
+            "default": false,
+            "title": "Figure",
+            "type": "boolean"
           },
           "file": {
             "title": "File",
@@ -1881,6 +1892,14 @@
           "id": {
             "title": "Id",
             "type": "string"
+          },
+          "layouts": {
+            "description": "Layout sections the document carries.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Layouts",
+            "type": "array"
           },
           "name": {
             "title": "Name",
@@ -1895,6 +1914,14 @@
             "title": "Pack",
             "type": "string"
           },
+          "packs": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "``requires.packs``: what must be installed.",
+            "title": "Packs",
+            "type": "object"
+          },
           "readme": {
             "anyOf": [
               {
@@ -1905,6 +1932,13 @@
               }
             ],
             "title": "Readme"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
           }
         },
         "required": [
@@ -2847,6 +2881,47 @@
           }
         },
         "summary": "Get Template",
+        "tags": [
+          "templates"
+        ]
+      }
+    },
+    "/api/templates/{template_id}/figure": {
+      "get": {
+        "description": "The gallery card image a pack ships next to the template document.",
+        "operationId": "get_template_figure_api_templates__template_id__figure_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "title": "Template Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Template Figure",
         "tags": [
           "templates"
         ]

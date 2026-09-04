@@ -221,6 +221,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/templates/{template_id}/figure': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get Template Figure
+     * @description The gallery card image a pack ships next to the template document.
+     */
+    get: operations['get_template_figure_api_templates__template_id__figure_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/templates/{template_id}/instantiate': {
     parameters: {
       query?: never
@@ -1554,14 +1574,30 @@ export interface components {
      */
     TemplateInfo: {
       /**
+       * Default Layout
+       * @description The layout the gallery opens the template into.
+       * @default canvas
+       */
+      default_layout: string
+      /**
        * Description
        * @default
        */
       description: string
+      /**
+       * Figure
+       * @default false
+       */
+      figure: boolean
       /** File */
       file: string
       /** Id */
       id: string
+      /**
+       * Layouts
+       * @description Layout sections the document carries.
+       */
+      layouts?: string[]
       /** Name */
       name: string
       /**
@@ -1571,8 +1607,17 @@ export interface components {
       node_count: number
       /** Pack */
       pack: string
+      /**
+       * Packs
+       * @description ``requires.packs``: what must be installed.
+       */
+      packs?: {
+        [key: string]: string
+      }
       /** Readme */
       readme?: string | null
+      /** Tags */
+      tags?: string[]
     }
     /** TreeResponse */
     TreeResponse: {
@@ -2086,6 +2131,37 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['WorkflowDoc']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_template_figure_api_templates__template_id__figure_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        template_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': unknown
         }
       }
       /** @description Validation Error */

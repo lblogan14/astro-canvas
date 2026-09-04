@@ -624,5 +624,16 @@
     "range": "{axis} {lo} – {hi}",
     "rows": "{n} rows selected",
     "clear_selection": "Clear the linked selection"
+  },
+  "gallery": {
+    "title": "Templates",
+    "back": "Back",
+    "search": "Search templates…",
+    "empty": "No templates installed. Install a node pack to get some.",
+    "open": "Open",
+    "show_graph_hint": "Open the template as a graph instead of its layout",
+    "figure_alt": "Figure for {name}",
+    "browse": "Browse all templates",
+    "samples_hint": "Opening a template copies the sample files it needs into samples/."
   }
 }

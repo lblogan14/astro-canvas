@@ -210,16 +210,27 @@ function formatDate(iso: string): string {
     </div>
 
     <div class="border-t">
-      <button
-        type="button"
-        class="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold hover:bg-muted"
-        :aria-expanded="showTemplates"
-        data-testid="toggle-templates"
-        @click="showTemplates = !showTemplates"
-      >
-        <LayoutTemplate class="size-3.5" /> {{ t('workflows.templates') }}
-        <span class="ml-auto text-muted-foreground">{{ workflows.templates.length }}</span>
-      </button>
+      <div class="flex items-center">
+        <button
+          type="button"
+          class="flex flex-1 items-center gap-2 px-3 py-2 text-xs font-semibold hover:bg-muted"
+          :aria-expanded="showTemplates"
+          data-testid="toggle-templates"
+          @click="showTemplates = !showTemplates"
+        >
+          <LayoutTemplate class="size-3.5" /> {{ t('workflows.templates') }}
+          <span class="ml-auto text-muted-foreground">{{ workflows.templates.length }}</span>
+        </button>
+        <button
+          type="button"
+          class="px-2 py-2 text-[10px] text-muted-foreground hover:text-foreground"
+          :title="t('gallery.browse')"
+          data-testid="open-gallery"
+          @click="router.push({ name: 'templates' })"
+        >
+          {{ t('gallery.browse') }}
+        </button>
+      </div>
       <ul v-if="showTemplates" class="space-y-1 px-2 pb-2" data-testid="template-list">
         <li v-if="workflows.templates.length === 0" class="px-1 text-xs text-muted-foreground">
           {{ t('workflows.templates_empty') }}

@@ -8,114 +8,370 @@
     "load_gal": {
       "type": "core.io.load_spectrum",
       "title": "SDSS galaxy (z = 0.0059)",
-      "pos": [40, 120],
-      "params": { "path": "samples/rbcodes/spec-0398-51789-0282.fits" }
+      "pos": [
+        40,
+        120
+      ],
+      "params": {
+        "path": "samples/rbcodes/spec-0398-51789-0282.fits"
+      }
     },
     "lines_gal": {
       "type": "rbcodes.zfind.curated_linelist",
       "title": "Galaxy lines",
-      "pos": [40, 380],
-      "params": { "name": "zfind_galaxy" }
+      "pos": [
+        40,
+        380
+      ],
+      "params": {
+        "name": "zfind_galaxy"
+      }
     },
     "pf_gal": {
       "type": "rbcodes.zfind.picket_fence_search",
       "title": "Picket fence (galaxy)",
-      "pos": [400, 40],
-      "params": { "z_min": 0.0, "z_max": 0.5, "n_steps": 3000, "smooth_fwhm_pix": 2.0, "fwhm_ang": 3.0 }
+      "pos": [
+        400,
+        40
+      ],
+      "params": {
+        "z_min": 0.0,
+        "z_max": 0.5,
+        "n_steps": 3000,
+        "smooth_fwhm_pix": 2.0,
+        "fwhm_ang": 3.0
+      }
     },
     "ls_gal": {
       "type": "rbcodes.zfind.line_search",
       "title": "Line search (galaxy)",
-      "pos": [400, 340],
-      "params": { "z_min": 0.0, "z_max": 0.5, "n_steps": 3000 }
+      "pos": [
+        400,
+        340
+      ],
+      "params": {
+        "z_min": 0.0,
+        "z_max": 0.5,
+        "n_steps": 3000
+      }
     },
     "tpl_gal": {
       "type": "rbcodes.zfind.template_search",
       "title": "Template (late-type)",
-      "pos": [400, 640],
-      "params": { "template_name": "LateTypeEmission", "z_min": 0.0, "z_max": 0.5, "n_steps": 2000 }
+      "pos": [
+        400,
+        640
+      ],
+      "params": {
+        "template_name": "LateTypeEmission",
+        "z_min": 0.0,
+        "z_max": 0.5,
+        "n_steps": 2000
+      }
     },
     "pca_gal": {
       "type": "rbcodes.zfind.pca_search",
       "title": "PCA (galaxy, press Run)",
-      "pos": [400, 940],
-      "params": { "template_set": "galaxy", "z_min": 0.0, "z_max": 0.5, "n_steps": 1000 }
+      "pos": [
+        400,
+        940
+      ],
+      "params": {
+        "template_set": "galaxy",
+        "z_min": 0.0,
+        "z_max": 0.5,
+        "n_steps": 1000
+      }
     },
     "rank_gal": {
       "type": "rbcodes.zfind.rank",
       "title": "Rank and accept (galaxy)",
-      "pos": [800, 240],
-      "params": { "accepted": null }
+      "pos": [
+        800,
+        240
+      ],
+      "params": {
+        "accepted": null
+      }
     },
     "zshift_gal": {
       "type": "rbcodes.absorption.set_redshift",
       "title": "Galaxy rest frame",
-      "pos": [1160, 120],
-      "params": { "z": 0.0 }
+      "pos": [
+        1160,
+        120
+      ],
+      "params": {
+        "z": 0.0
+      }
     },
     "load_qso": {
       "type": "core.io.load_spectrum",
       "title": "SDSS quasar (z = 3.01)",
-      "pos": [40, 1300],
-      "params": { "path": "samples/rbcodes/sdss1.fits" }
+      "pos": [
+        40,
+        1300
+      ],
+      "params": {
+        "path": "samples/rbcodes/sdss1.fits"
+      }
     },
     "lines_qso": {
       "type": "rbcodes.zfind.curated_linelist",
       "title": "QSO lines",
-      "pos": [40, 1560],
-      "params": { "name": "zfind_qso" }
+      "pos": [
+        40,
+        1560
+      ],
+      "params": {
+        "name": "zfind_qso"
+      }
     },
     "pf_qso": {
       "type": "rbcodes.zfind.picket_fence_search",
       "title": "Picket fence (QSO)",
-      "pos": [400, 1300],
-      "params": { "z_min": 0.0, "z_max": 5.0, "n_steps": 5000, "smooth_fwhm_pix": 3.0, "fwhm_ang": 20.0 }
+      "pos": [
+        400,
+        1300
+      ],
+      "params": {
+        "z_min": 0.0,
+        "z_max": 5.0,
+        "n_steps": 5000,
+        "smooth_fwhm_pix": 3.0,
+        "fwhm_ang": 20.0
+      }
     },
     "rank_qso": {
       "type": "rbcodes.zfind.rank",
       "title": "Rank and accept (QSO)",
-      "pos": [800, 1300],
-      "params": { "accepted": null }
+      "pos": [
+        800,
+        1300
+      ],
+      "params": {
+        "accepted": null
+      }
     },
     "zshift_qso": {
       "type": "rbcodes.absorption.set_redshift",
       "title": "QSO rest frame",
-      "pos": [1160, 1300],
-      "params": { "z": 0.0 }
+      "pos": [
+        1160,
+        1300
+      ],
+      "params": {
+        "z": 0.0
+      }
     },
     "readme": {
       "type": "core.note.markdown",
-      "pos": [800, 640],
-      "size": [560, 320],
+      "pos": [
+        800,
+        640
+      ],
+      "size": [
+        560,
+        320
+      ],
       "params": {
         "text": "# Redshift finder\n\nThe `rb_zfind` engine as nodes.\n\n1. **Load** the SDSS star-forming galaxy `spec-0398-51789-0282.fits` (pipeline z = 0.00586) and pick the **Curated Line List** `zfind_galaxy`.\n2. Three searches run on it: the weighted **Picket Fence**, the plain **Line Search** and a MARZ **Template Search** (late-type emission galaxy). The **PCA Search** is expensive: press Run on it to see progress and cancellation in the process pool.\n3. **Rank and Accept** collects their candidates; open its editor (pencil-ruler button) to click a candidate on the curve, check the line list overlaid on the spectrum, and Apply. Its `redshift` output drives **Set Redshift**.\n4. The same for the quasar `sdss1.fits` (z = 3.0133) with `zfind_qso`.\n\nEvery curve is a score where minima are the best redshifts (chi-square for templates/PCA)."
       }
     }
   },
   "edges": {
-    "e1": { "from": ["load_gal", "out"], "to": ["pf_gal", "spec"] },
-    "e2": { "from": ["lines_gal", "out"], "to": ["pf_gal", "linelist"] },
-    "e3": { "from": ["load_gal", "out"], "to": ["ls_gal", "spec"] },
-    "e4": { "from": ["lines_gal", "out"], "to": ["ls_gal", "linelist"] },
-    "e5": { "from": ["load_gal", "out"], "to": ["tpl_gal", "spec"] },
-    "e6": { "from": ["load_gal", "out"], "to": ["pca_gal", "spec"] },
-    "e7": { "from": ["pf_gal", "out"], "to": ["rank_gal", "results"] },
-    "e8": { "from": ["ls_gal", "out"], "to": ["rank_gal", "results_2"] },
-    "e9": { "from": ["tpl_gal", "out"], "to": ["rank_gal", "results_3"] },
-    "e10": { "from": ["load_gal", "out"], "to": ["zshift_gal", "spec"] },
-    "e11": { "from": ["rank_gal", "redshift"], "to": ["zshift_gal", "redshift"] },
-    "e12": { "from": ["load_qso", "out"], "to": ["pf_qso", "spec"] },
-    "e13": { "from": ["lines_qso", "out"], "to": ["pf_qso", "linelist"] },
-    "e14": { "from": ["pf_qso", "out"], "to": ["rank_qso", "results"] },
-    "e15": { "from": ["load_qso", "out"], "to": ["zshift_qso", "spec"] },
-    "e16": { "from": ["rank_qso", "redshift"], "to": ["zshift_qso", "redshift"] }
+    "e1": {
+      "from": [
+        "load_gal",
+        "out"
+      ],
+      "to": [
+        "pf_gal",
+        "spec"
+      ]
+    },
+    "e2": {
+      "from": [
+        "lines_gal",
+        "out"
+      ],
+      "to": [
+        "pf_gal",
+        "linelist"
+      ]
+    },
+    "e3": {
+      "from": [
+        "load_gal",
+        "out"
+      ],
+      "to": [
+        "ls_gal",
+        "spec"
+      ]
+    },
+    "e4": {
+      "from": [
+        "lines_gal",
+        "out"
+      ],
+      "to": [
+        "ls_gal",
+        "linelist"
+      ]
+    },
+    "e5": {
+      "from": [
+        "load_gal",
+        "out"
+      ],
+      "to": [
+        "tpl_gal",
+        "spec"
+      ]
+    },
+    "e6": {
+      "from": [
+        "load_gal",
+        "out"
+      ],
+      "to": [
+        "pca_gal",
+        "spec"
+      ]
+    },
+    "e7": {
+      "from": [
+        "pf_gal",
+        "out"
+      ],
+      "to": [
+        "rank_gal",
+        "results"
+      ]
+    },
+    "e8": {
+      "from": [
+        "ls_gal",
+        "out"
+      ],
+      "to": [
+        "rank_gal",
+        "results_2"
+      ]
+    },
+    "e9": {
+      "from": [
+        "tpl_gal",
+        "out"
+      ],
+      "to": [
+        "rank_gal",
+        "results_3"
+      ]
+    },
+    "e10": {
+      "from": [
+        "load_gal",
+        "out"
+      ],
+      "to": [
+        "zshift_gal",
+        "spec"
+      ]
+    },
+    "e11": {
+      "from": [
+        "rank_gal",
+        "redshift"
+      ],
+      "to": [
+        "zshift_gal",
+        "redshift"
+      ]
+    },
+    "e12": {
+      "from": [
+        "load_qso",
+        "out"
+      ],
+      "to": [
+        "pf_qso",
+        "spec"
+      ]
+    },
+    "e13": {
+      "from": [
+        "lines_qso",
+        "out"
+      ],
+      "to": [
+        "pf_qso",
+        "linelist"
+      ]
+    },
+    "e14": {
+      "from": [
+        "pf_qso",
+        "out"
+      ],
+      "to": [
+        "rank_qso",
+        "results"
+      ]
+    },
+    "e15": {
+      "from": [
+        "load_qso",
+        "out"
+      ],
+      "to": [
+        "zshift_qso",
+        "spec"
+      ]
+    },
+    "e16": {
+      "from": [
+        "rank_qso",
+        "redshift"
+      ],
+      "to": [
+        "zshift_qso",
+        "redshift"
+      ]
+    }
   },
   "views": [
-    { "id": "curve", "node": "pf_gal", "port": "out", "kind": "zfind-curve" },
-    { "id": "spectrum", "node": "load_gal", "port": "out", "kind": "spectrum" },
-    { "id": "candidates", "node": "rank_gal", "port": "candidates", "kind": "candidates-table" },
-    { "id": "qso_curve", "node": "pf_qso", "port": "out", "kind": "zfind-curve" },
-    { "id": "qso_candidates", "node": "rank_qso", "port": "candidates", "kind": "candidates-table" }
+    {
+      "id": "curve",
+      "node": "pf_gal",
+      "port": "out",
+      "kind": "zfind-curve"
+    },
+    {
+      "id": "spectrum",
+      "node": "load_gal",
+      "port": "out",
+      "kind": "spectrum-thumb"
+    },
+    {
+      "id": "candidates",
+      "node": "rank_gal",
+      "port": "candidates",
+      "kind": "candidates-table"
+    },
+    {
+      "id": "qso_curve",
+      "node": "pf_qso",
+      "port": "out",
+      "kind": "zfind-curve"
+    },
+    {
+      "id": "qso_candidates",
+      "node": "rank_qso",
+      "port": "candidates",
+      "kind": "candidates-table"
+    }
   ],
   "requires": {
     "packs": {
@@ -126,6 +382,160 @@
   },
   "meta": {
     "author": "rbcodes pack",
-    "tags": ["template", "rbcodes", "redshift", "zfind"]
+    "tags": [
+      "template",
+      "rbcodes",
+      "redshift",
+      "zfind"
+    ],
+    "default_layout": "dashboard"
+  },
+  "promoted": [
+    {
+      "node": "load_gal",
+      "param": "path",
+      "label": "Spectrum",
+      "group": "Load",
+      "order": 1
+    },
+    {
+      "node": "lines_gal",
+      "param": "name",
+      "label": "Line list",
+      "group": "Load",
+      "order": 2
+    },
+    {
+      "node": "pf_gal",
+      "param": "z_min",
+      "label": "z min",
+      "group": "Search",
+      "order": 3
+    },
+    {
+      "node": "pf_gal",
+      "param": "z_max",
+      "label": "z max",
+      "group": "Search",
+      "order": 4
+    },
+    {
+      "node": "pf_gal",
+      "param": "n_steps",
+      "label": "Steps",
+      "group": "Search",
+      "order": 5
+    },
+    {
+      "node": "rank_gal",
+      "param": "accepted",
+      "label": "Accepted candidate",
+      "group": "Accept",
+      "order": 6
+    }
+  ],
+  "layouts": {
+    "dashboard": {
+      "cols": 12,
+      "row_height": 48,
+      "items": [
+        {
+          "ref": "view:curve",
+          "x": 0,
+          "y": 0,
+          "w": 7,
+          "h": 5
+        },
+        {
+          "ref": "view:candidates",
+          "x": 7,
+          "y": 0,
+          "w": 5,
+          "h": 5
+        },
+        {
+          "ref": "view:spectrum",
+          "x": 0,
+          "y": 5,
+          "w": 12,
+          "h": 5
+        },
+        {
+          "ref": "promoted:pf_gal.z_min",
+          "x": 0,
+          "y": 10,
+          "w": 3,
+          "h": 2
+        },
+        {
+          "ref": "promoted:pf_gal.z_max",
+          "x": 3,
+          "y": 10,
+          "w": 3,
+          "h": 2
+        },
+        {
+          "ref": "promoted:pf_gal.n_steps",
+          "x": 6,
+          "y": 10,
+          "w": 3,
+          "h": 2
+        },
+        {
+          "ref": "promoted:rank_gal.accepted",
+          "x": 9,
+          "y": 10,
+          "w": 3,
+          "h": 2
+        },
+        {
+          "ref": "view:qso_curve",
+          "x": 0,
+          "y": 12,
+          "w": 7,
+          "h": 5
+        },
+        {
+          "ref": "view:qso_candidates",
+          "x": 7,
+          "y": 12,
+          "w": 5,
+          "h": 5
+        }
+      ]
+    },
+    "app": {
+      "sections": [
+        {
+          "title": "Load",
+          "items": [
+            "promoted:load_gal.path",
+            "promoted:lines_gal.name"
+          ]
+        },
+        {
+          "title": "Search",
+          "items": [
+            "promoted:pf_gal.z_min",
+            "promoted:pf_gal.z_max",
+            "promoted:pf_gal.n_steps"
+          ]
+        },
+        {
+          "title": "Accept",
+          "items": [
+            "promoted:rank_gal.accepted"
+          ]
+        },
+        {
+          "title": "Results",
+          "items": [
+            "view:curve",
+            "view:candidates",
+            "view:spectrum"
+          ]
+        }
+      ]
+    }
   }
 }

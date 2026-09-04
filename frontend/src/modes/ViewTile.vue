@@ -9,7 +9,7 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Maximize2 } from '@lucide/vue'
+import { Maximize2, SquarePen } from '@lucide/vue'
 
 import type { ViewDoc } from '@/api/types'
 import { previewBudget, previewComponent, rendererFor } from '@/previews'
@@ -250,6 +250,17 @@ const dragBand = computed<{ left: string; width: string } | null>(() => {
       <span v-else-if="exec.stale" class="rounded bg-amber-500/15 px-1 text-amber-600">
         {{ t('node.state.stale') }}
       </span>
+      <button
+        v-if="spec?.editor"
+        type="button"
+        class="inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+        :aria-label="t('inspector.open_editor')"
+        :title="t('inspector.open_editor')"
+        :data-testid="`view-editor-${view.id}`"
+        @click="ui.openEditor({ nodeId: view.node })"
+      >
+        <SquarePen class="size-3" />
+      </button>
       <button
         type="button"
         class="inline-flex size-5 items-center justify-center rounded text-muted-foreground hover:text-foreground"

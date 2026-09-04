@@ -26,6 +26,10 @@ TEMPLATE = {
         "b": {"type": "core.math.expr", "params": {"expression": "x + 1"}, "linked": ["x"]},
     },
     "edges": {"e": {"from": ["a", "out"], "to": ["b", "x"]}},
+    "promoted": [{"node": "a", "param": "value", "label": "Value", "group": "Setup"}],
+    "views": [{"id": "total", "node": "b", "port": "out", "kind": "value-chip"}],
+    "layouts": {"app": {"sections": [{"title": "Setup", "items": ["promoted:a.value"]}]}},
+    "requires": {"packs": {"astro-canvas-core": ">=0.1,<0.2"}},
     "meta": {"created": "2020-01-01T00:00:00", "tags": ["sample"]},
 }
 
@@ -36,6 +40,7 @@ def templates_dir(tmp_path: Path, registry: NodeRegistry) -> Iterator[Path]:
     folder.mkdir()
     (folder / "math.acw").write_text(json.dumps(TEMPLATE), encoding="utf-8")
     (folder / "math.md").write_text("# Math\nAdds one.", encoding="utf-8")
+    (folder / "math.png").write_bytes(b"\x89PNG\r\n\x1a\n")
     (folder / "broken.acw").write_text("{not json", encoding="utf-8")
     (folder / "notes.txt").write_text("ignored", encoding="utf-8")
     registry.add_templates(folder, pack="testpack")
@@ -61,6 +66,31 @@ def test_lists_templates_with_readme_and_skips_broken_files(api: TestClient) -> 
     assert info["name"] == "Math template" and info["description"] == "Two constants added."
     assert info["node_count"] == 2 and info["file"] == "math.acw"
     assert info["readme"] == "# Math\nAdds one."
+    # Gallery card fields (phase 10).
+    assert info["packs"] == {"astro-canvas-core": ">=0.1,<0.2"}
+    assert info["tags"] == ["sample"] and info["layouts"] == ["app"]
+    assert info["default_layout"] == "app" and info["figure"] is True
+
+
+def test_serves_the_gallery_figure(api: TestClient) -> None:
+    figure = api.get("/api/templates/testpack.math/figure")
+    assert figure.status_code == 200 and figure.content.startswith(b"\x89PNG")
+    assert api.get("/api/templates/nope.missing/figure").status_code == 404
+
+
+def test_default_layout_prefers_the_declared_one(api: TestClient, templates_dir: Path) -> None:
+    doc = dict(TEMPLATE)
+    doc["id"] = "template-wizard"
+    doc["layouts"] = {"app": {"sections": []}, "wizard": {"steps": []}}
+    doc["meta"] = {"default_layout": "app"}
+    (templates_dir / "wizardy.acw").write_text(json.dumps(doc), encoding="utf-8")
+    listed = {t["id"]: t for t in api.get("/api/templates").json()}
+    # Declared wins over the wizard-first order; a nonsense value falls back to it.
+    assert listed["testpack.wizardy"]["default_layout"] == "app"
+    doc["meta"] = {"default_layout": "hologram"}
+    (templates_dir / "wizardy.acw").write_text(json.dumps(doc), encoding="utf-8")
+    listed = {t["id"]: t for t in api.get("/api/templates").json()}
+    assert listed["testpack.wizardy"]["default_layout"] == "wizard"
 
 
 def test_reads_the_template_document(api: TestClient) -> None:

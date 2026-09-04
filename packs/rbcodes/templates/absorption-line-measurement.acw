@@ -8,36 +8,72 @@
     "load": {
       "type": "core.io.load_spectrum",
       "title": "SDSS quasar (sdss1)",
-      "pos": [40, 200],
-      "params": { "path": "samples/rbcodes/sdss1.fits" }
+      "pos": [
+        40,
+        200
+      ],
+      "params": {
+        "path": "samples/rbcodes/sdss1.fits"
+      }
     },
     "redshift": {
       "type": "rbcodes.absorption.set_redshift",
       "title": "Absorber z",
-      "pos": [360, 200],
-      "params": { "z": 1.3855 }
+      "pos": [
+        360,
+        200
+      ],
+      "params": {
+        "z": 1.3855
+      }
     },
     "transition": {
       "type": "rbcodes.absorption.set_transition",
       "title": "MgII 2796",
-      "pos": [660, 420],
-      "params": { "wrest": 2796.35, "linelist": "atom", "method": "closest" }
+      "pos": [
+        660,
+        420
+      ],
+      "params": {
+        "wrest": 2796.35,
+        "linelist": "atom",
+        "method": "closest"
+      }
     },
     "slice": {
       "type": "rbcodes.absorption.slice",
       "title": "Slice +/- 1500 km/s",
-      "pos": [960, 200],
-      "params": { "vmin": -1500, "vmax": 1500, "use_vel": true }
+      "pos": [
+        960,
+        200
+      ],
+      "params": {
+        "vmin": -1500,
+        "vmax": 1500,
+        "use_vel": true
+      }
     },
     "continuum": {
       "type": "rbcodes.continuum.fit",
       "title": "Continuum (masked)",
-      "pos": [1280, 200],
+      "pos": [
+        1280,
+        200
+      ],
       "params": {
         "method": "polynomial",
         "order": 3,
         "optimize_order": true,
-        "masks": [[-300, 250], [500, 1000]],
+        "masks": [
+          [
+            -300,
+            250
+          ],
+          [
+            500,
+            1000
+          ]
+        ],
         "sigma_clip": true,
         "n_sigma": 3.0,
         "use_weights": false
@@ -46,80 +82,473 @@
     "ew": {
       "type": "rbcodes.absorption.compute_ew",
       "title": "Equivalent width",
-      "pos": [1620, 200],
-      "params": { "vmin": -200, "vmax": 200, "snr": false }
+      "pos": [
+        1620,
+        200
+      ],
+      "params": {
+        "vmin": -200,
+        "vmax": 200,
+        "snr": false
+      }
     },
     "save": {
       "type": "rbcodes.absorption.save_rbspec_json",
       "title": "rb_spec JSON",
-      "pos": [1940, 260],
-      "params": { "path": "outputs/sdss1_MgII2796_z1.3855.json", "linelist": "atom" }
+      "pos": [
+        1940,
+        260
+      ],
+      "params": {
+        "path": "outputs/sdss1_MgII2796_z1.3855.json",
+        "linelist": "atom"
+      }
     },
     "doublet": {
       "type": "rbcodes.absorption.doublet_check",
       "title": "MgII doublet check",
-      "pos": [1620, 560],
-      "params": { "lam1": 2796.35, "lam2": 2803.53, "vmin": -600, "vmax": 600 }
+      "pos": [
+        1620,
+        560
+      ],
+      "params": {
+        "lam1": 2796.35,
+        "lam2": 2803.53,
+        "vmin": -600,
+        "vmax": 600
+      }
     },
     "readme": {
       "type": "core.note.markdown",
-      "pos": [40, 520],
-      "size": [560, 260],
+      "pos": [
+        40,
+        520
+      ],
+      "size": [
+        560,
+        260
+      ],
       "params": {
         "text": "# Absorption line measurement\n\nThe `launch_specgui` pipeline from rbcodes as nodes.\n\n1. **Load** the SDSS quasar `sdss1.fits` (z_QSO = 3.01).\n2. **Set Redshift** to the intervening absorber at z = 1.3855.\n3. **Set Transition**: MgII 2796 from the `atom` list (open the editor to pick another line).\n4. **Slice** +/- 1500 km/s and **Fit Continuum** with masks over MgII 2796 and 2803 (open the editor to drag masks and watch the fit update).\n5. **Equivalent Width** over +/- 200 km/s and save an `rb_spec` JSON that `launch_specgui` can open.\n\nExpected: W = 2.07 A, log N = 13.99 (rbcodes 2.4.0)."
       }
     }
   },
   "edges": {
-    "e1": { "from": ["load", "out"], "to": ["redshift", "spec"] },
-    "e2": { "from": ["redshift", "out"], "to": ["transition", "spec"] },
-    "e3": { "from": ["redshift", "out"], "to": ["slice", "spec"] },
-    "e4": { "from": ["transition", "out"], "to": ["slice", "transition"] },
-    "e5": { "from": ["slice", "out"], "to": ["continuum", "spec"] },
-    "e6": { "from": ["continuum", "normalized"], "to": ["ew", "spec"] },
-    "e7": { "from": ["transition", "out"], "to": ["ew", "transition"] },
-    "e8": { "from": ["continuum", "normalized"], "to": ["save", "normalized"] },
-    "e9": { "from": ["continuum", "continuum"], "to": ["save", "continuum"] },
-    "e10": { "from": ["ew", "out"], "to": ["save", "measurement"] },
-    "e11": { "from": ["continuum", "normalized"], "to": ["doublet", "spec"] }
+    "e1": {
+      "from": [
+        "load",
+        "out"
+      ],
+      "to": [
+        "redshift",
+        "spec"
+      ]
+    },
+    "e2": {
+      "from": [
+        "redshift",
+        "out"
+      ],
+      "to": [
+        "transition",
+        "spec"
+      ]
+    },
+    "e3": {
+      "from": [
+        "redshift",
+        "out"
+      ],
+      "to": [
+        "slice",
+        "spec"
+      ]
+    },
+    "e4": {
+      "from": [
+        "transition",
+        "out"
+      ],
+      "to": [
+        "slice",
+        "transition"
+      ]
+    },
+    "e5": {
+      "from": [
+        "slice",
+        "out"
+      ],
+      "to": [
+        "continuum",
+        "spec"
+      ]
+    },
+    "e6": {
+      "from": [
+        "continuum",
+        "normalized"
+      ],
+      "to": [
+        "ew",
+        "spec"
+      ]
+    },
+    "e7": {
+      "from": [
+        "transition",
+        "out"
+      ],
+      "to": [
+        "ew",
+        "transition"
+      ]
+    },
+    "e8": {
+      "from": [
+        "continuum",
+        "normalized"
+      ],
+      "to": [
+        "save",
+        "normalized"
+      ]
+    },
+    "e9": {
+      "from": [
+        "continuum",
+        "continuum"
+      ],
+      "to": [
+        "save",
+        "continuum"
+      ]
+    },
+    "e10": {
+      "from": [
+        "ew",
+        "out"
+      ],
+      "to": [
+        "save",
+        "measurement"
+      ]
+    },
+    "e11": {
+      "from": [
+        "continuum",
+        "normalized"
+      ],
+      "to": [
+        "doublet",
+        "spec"
+      ]
+    }
   },
   "promoted": [
-    { "node": "load", "param": "path", "label": "Spectrum", "group": "Load", "order": 1 },
-    { "node": "redshift", "param": "z", "label": "Absorber z", "group": "Load", "order": 2 },
-    { "node": "transition", "param": "wrest", "label": "Transition", "group": "Line", "order": 3 },
-    { "node": "transition", "param": "linelist", "label": "Line list", "group": "Line", "order": 4 },
-    { "node": "transition", "param": "method", "label": "Match", "group": "Line", "order": 5 },
-    { "node": "slice", "param": "vmin", "label": "Slice vmin", "group": "Slice", "order": 6 },
-    { "node": "slice", "param": "vmax", "label": "Slice vmax", "group": "Slice", "order": 7 },
-    { "node": "ew", "param": "vmin", "label": "EW vmin", "group": "Measure", "order": 8 },
-    { "node": "ew", "param": "vmax", "label": "EW vmax", "group": "Measure", "order": 9 }
+    {
+      "node": "load",
+      "param": "path",
+      "label": "Spectrum",
+      "group": "Load",
+      "order": 1
+    },
+    {
+      "node": "redshift",
+      "param": "z",
+      "label": "Absorber z",
+      "group": "Redshift",
+      "order": 2
+    },
+    {
+      "node": "transition",
+      "param": "wrest",
+      "label": "Transition",
+      "group": "Transition",
+      "order": 3
+    },
+    {
+      "node": "transition",
+      "param": "linelist",
+      "label": "Line list",
+      "group": "Transition",
+      "order": 4
+    },
+    {
+      "node": "transition",
+      "param": "method",
+      "label": "Match",
+      "group": "Transition",
+      "order": 5
+    },
+    {
+      "node": "slice",
+      "param": "vmin",
+      "label": "Slice vmin",
+      "group": "Transition",
+      "order": 6
+    },
+    {
+      "node": "slice",
+      "param": "vmax",
+      "label": "Slice vmax",
+      "group": "Transition",
+      "order": 7
+    },
+    {
+      "node": "continuum",
+      "param": "method",
+      "label": "Continuum method",
+      "group": "Continuum",
+      "order": 8
+    },
+    {
+      "node": "continuum",
+      "param": "order",
+      "label": "Polynomial order",
+      "group": "Continuum",
+      "order": 9
+    },
+    {
+      "node": "continuum",
+      "param": "optimize_order",
+      "label": "Optimise order",
+      "group": "Continuum",
+      "order": 10
+    },
+    {
+      "node": "ew",
+      "param": "vmin",
+      "label": "EW vmin",
+      "group": "Measure",
+      "order": 11
+    },
+    {
+      "node": "ew",
+      "param": "vmax",
+      "label": "EW vmax",
+      "group": "Measure",
+      "order": 12
+    },
+    {
+      "node": "save",
+      "param": "path",
+      "label": "Save to",
+      "group": "Save",
+      "order": 13
+    }
   ],
   "layouts": {
     "batch": {
       "columns": [
-        { "promoted": "load.path", "column": "filename" },
-        { "promoted": "redshift.z", "column": "redshift" },
-        { "promoted": "transition.wrest", "column": "transition" },
-        { "promoted": "slice.vmin", "column": "slice_vmin" },
-        { "promoted": "slice.vmax", "column": "slice_vmax" },
-        { "promoted": "ew.vmin", "column": "ew_vmin" },
-        { "promoted": "ew.vmax", "column": "ew_vmax" },
-        { "promoted": "transition.linelist", "column": "linelist" },
-        { "promoted": "transition.method", "column": "method" }
+        {
+          "promoted": "load.path",
+          "column": "filename"
+        },
+        {
+          "promoted": "redshift.z",
+          "column": "redshift"
+        },
+        {
+          "promoted": "transition.wrest",
+          "column": "transition"
+        },
+        {
+          "promoted": "slice.vmin",
+          "column": "slice_vmin"
+        },
+        {
+          "promoted": "slice.vmax",
+          "column": "slice_vmax"
+        },
+        {
+          "promoted": "ew.vmin",
+          "column": "ew_vmin"
+        },
+        {
+          "promoted": "ew.vmax",
+          "column": "ew_vmax"
+        },
+        {
+          "promoted": "transition.linelist",
+          "column": "linelist"
+        },
+        {
+          "promoted": "transition.method",
+          "column": "method"
+        }
       ],
-      "collect": ["ew.out"],
+      "collect": [
+        "ew.out"
+      ],
       "continue_on_error": true,
       "rows": "samples/rbcodes/absorption_batch.csv"
+    },
+    "wizard": {
+      "steps": [
+        {
+          "title": "Load",
+          "description": "Pick a spectrum from the workspace.",
+          "items": [
+            "promoted:load.path"
+          ],
+          "nodes": [
+            "load"
+          ]
+        },
+        {
+          "title": "Redshift",
+          "description": "The absorber redshift the velocity axis is measured against.",
+          "items": [
+            "promoted:redshift.z",
+            "view:spectrum"
+          ],
+          "nodes": [
+            "redshift"
+          ]
+        },
+        {
+          "title": "Transition",
+          "description": "Choose the line and the velocity window around it.",
+          "items": [
+            "promoted:transition.wrest",
+            "promoted:transition.linelist",
+            "promoted:transition.method",
+            "promoted:slice.vmin",
+            "promoted:slice.vmax",
+            "view:spectrum"
+          ],
+          "nodes": [
+            "transition",
+            "slice"
+          ]
+        },
+        {
+          "title": "Continuum",
+          "description": "Fit the continuum; open the editor to mask regions.",
+          "items": [
+            "promoted:continuum.method",
+            "promoted:continuum.order",
+            "promoted:continuum.optimize_order",
+            "view:continuum"
+          ],
+          "nodes": [
+            "continuum"
+          ]
+        },
+        {
+          "title": "Measure",
+          "description": "Integrate the equivalent width over the velocity window.",
+          "items": [
+            "promoted:ew.vmin",
+            "promoted:ew.vmax",
+            "view:measurement",
+            "view:doublet"
+          ],
+          "nodes": [
+            "ew"
+          ]
+        },
+        {
+          "title": "Save",
+          "description": "Write the measurement as rbcodes JSON.",
+          "items": [
+            "promoted:save.path",
+            "view:measurement"
+          ],
+          "nodes": [
+            "save"
+          ]
+        }
+      ]
+    },
+    "app": {
+      "sections": [
+        {
+          "title": "Load",
+          "items": [
+            "promoted:load.path",
+            "promoted:redshift.z"
+          ]
+        },
+        {
+          "title": "Transition",
+          "items": [
+            "promoted:transition.wrest",
+            "promoted:transition.linelist",
+            "promoted:transition.method",
+            "promoted:slice.vmin",
+            "promoted:slice.vmax"
+          ]
+        },
+        {
+          "title": "Continuum",
+          "items": [
+            "promoted:continuum.method",
+            "promoted:continuum.order",
+            "promoted:continuum.optimize_order"
+          ]
+        },
+        {
+          "title": "Measure",
+          "items": [
+            "promoted:ew.vmin",
+            "promoted:ew.vmax",
+            "promoted:save.path"
+          ]
+        },
+        {
+          "title": "Results",
+          "items": [
+            "view:spectrum",
+            "view:continuum",
+            "view:measurement",
+            "view:doublet"
+          ]
+        }
+      ]
     }
   },
   "views": [
-    { "id": "spectrum", "node": "slice", "port": "out", "kind": "spectrum" },
-    { "id": "continuum", "node": "continuum", "port": "normalized", "kind": "spectrum" },
-    { "id": "measurement", "node": "ew", "port": "out", "kind": "ew-summary" }
+    {
+      "id": "spectrum",
+      "node": "slice",
+      "port": "out",
+      "kind": "spectrum-thumb"
+    },
+    {
+      "id": "continuum",
+      "node": "continuum",
+      "port": "normalized",
+      "kind": "spectrum-thumb"
+    },
+    {
+      "id": "measurement",
+      "node": "ew",
+      "port": "out",
+      "kind": "kv-tile"
+    },
+    {
+      "id": "doublet",
+      "node": "doublet",
+      "port": "out",
+      "kind": "kv-tile"
+    }
   ],
   "requires": {
-    "packs": { "astro-canvas-core": ">=0.1,<0.2", "astro-canvas-rbcodes": ">=0.1,<0.2" },
+    "packs": {
+      "astro-canvas-core": ">=0.1,<0.2",
+      "astro-canvas-rbcodes": ">=0.1,<0.2"
+    },
     "python": ">=3.10"
   },
-  "meta": { "author": "rbcodes pack", "tags": ["template", "rbcodes", "absorption"] }
+  "meta": {
+    "author": "rbcodes pack",
+    "tags": [
+      "template",
+      "rbcodes",
+      "absorption"
+    ],
+    "default_layout": "wizard"
+  }
 }
