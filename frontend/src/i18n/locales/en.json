@@ -614,5 +614,15 @@
       "error": "Fix the errors above",
       "done": "Ready"
     }
+  },
+  "dashboard": {
+    "lock": "Lock layout",
+    "unlock": "Edit layout",
+    "lock_hint": "Stop moving and resizing tiles",
+    "unlock_hint": "Drag and resize the tiles",
+    "remove_tile": "Remove {label} from the dashboard",
+    "range": "{axis} {lo} – {hi}",
+    "rows": "{n} rows selected",
+    "clear_selection": "Clear the linked selection"
   }
 }

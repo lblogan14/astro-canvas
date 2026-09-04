@@ -62,8 +62,8 @@ async function toggleRun(): Promise<void> {
   else await session.run()
 }
 
+/** Menu order: the graph first, then the four composed layouts (design 8.1). */
 const LAYOUTS: readonly AppMode[] = ['canvas', 'app', 'wizard', 'dashboard', 'batch']
-const ENABLED: ReadonlySet<string> = new Set(['canvas', 'app', 'wizard', 'batch'])
 </script>
 
 <template>
@@ -186,10 +186,9 @@ const ENABLED: ReadonlySet<string> = new Set(['canvas', 'app', 'wizard', 'batch'
           <DropdownMenuItem
             v-for="layout in LAYOUTS"
             :key="layout"
-            class="ac-menu-item data-[disabled]:opacity-50"
-            :disabled="!ENABLED.has(layout)"
+            class="ac-menu-item"
             :data-testid="`layout-${layout}`"
-            @select="ENABLED.has(layout) && ui.setMode(layout)"
+            @select="ui.setMode(layout)"
           >
             <Check v-if="layout === ui.mode" class="size-3.5" />
             <span v-else class="size-3.5" />

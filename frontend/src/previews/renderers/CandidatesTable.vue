@@ -9,8 +9,14 @@ import { useI18n } from 'vue-i18n'
 import { formatScore, formatZ } from '@/editors/zAccept'
 import type { PreviewProps } from '@/previews/registry'
 
-const props = defineProps<PreviewProps>()
+const props = withDefaults(defineProps<PreviewProps & { selectedRows?: number[] }>(), {
+  selectedRows: () => [],
+})
+const emit = defineEmits<{ 'select-rows': [rows: number[]] }>()
 const { t } = useI18n()
+
+/** Rows highlighted by a linked selection (dashboard mode); empty everywhere else. */
+const selected = computed(() => new Set(props.selectedRows))
 
 const MAX_ROWS = 6
 
@@ -56,13 +62,18 @@ const shown = computed(() => rows.value.slice(0, MAX_ROWS))
     <table v-if="shown.length" class="w-full text-[10px] leading-4">
       <tbody>
         <tr
-          v-for="row in shown"
+          v-for="(row, position) in shown"
           :key="row.index"
-          :class="
-            row.index === accepted ? 'font-semibold text-foreground' : 'text-muted-foreground'
-          "
+          class="cursor-pointer"
+          :class="[
+            row.index === accepted ? 'font-semibold text-foreground' : 'text-muted-foreground',
+            selected.has(position) ? 'bg-primary/15 text-foreground' : '',
+          ]"
           :data-index="row.index"
-          :aria-selected="row.index === accepted"
+          :data-row="position"
+          :data-linked="selected.has(position) ? 'true' : undefined"
+          :aria-selected="selected.has(position) || row.index === accepted"
+          @click="emit('select-rows', selected.has(position) ? [] : [position])"
         >
           <td class="pr-1 font-mono">{{ row.index === accepted ? '●' : '' }}{{ row.index }}</td>
           <td class="pr-1 font-mono">{{ formatZ(row.z, row.zErr) }}</td>
