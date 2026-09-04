@@ -8,6 +8,7 @@ import { FlowCanvas } from '@/canvas/vueflow'
 import SubgraphBreadcrumb from '@/canvas/SubgraphBreadcrumb.vue'
 import AppMode from '@/modes/AppMode.vue'
 import BatchMode from '@/modes/BatchMode.vue'
+import WizardMode from '@/modes/WizardMode.vue'
 import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { useSelectionStore } from '@/stores/selection'
 import { useSessionStore } from '@/stores/session'
@@ -158,6 +159,7 @@ onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
         <div class="relative min-h-0 flex-1">
           <BatchMode v-if="ui.mode === 'batch'" />
           <AppMode v-else-if="ui.mode === 'app'" />
+          <WizardMode v-else-if="ui.mode === 'wizard'" />
           <template v-else>
             <FlowCanvas />
             <SubgraphBreadcrumb />

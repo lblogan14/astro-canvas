@@ -63,7 +63,7 @@ async function toggleRun(): Promise<void> {
 }
 
 const LAYOUTS: readonly AppMode[] = ['canvas', 'app', 'wizard', 'dashboard', 'batch']
-const ENABLED: ReadonlySet<string> = new Set(['canvas', 'app', 'batch'])
+const ENABLED: ReadonlySet<string> = new Set(['canvas', 'app', 'wizard', 'batch'])
 </script>
 
 <template>

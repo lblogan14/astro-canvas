@@ -587,5 +587,32 @@
     "no_views": "No views pinned. Pin a preview on the canvas to show it here.",
     "missing_item": "{ref} is in the layout but no longer in the workflow.",
     "unknown_param": "{ref} is promoted but its node has no such parameter."
+  },
+  "wizard": {
+    "step_n": "Step {n}",
+    "step_title": "Step title",
+    "back": "Back",
+    "next": "Next",
+    "next_blocked": "Finish this step first: its nodes must run without errors",
+    "skip": "Skip to results",
+    "skip_hint": "Jump to the last step",
+    "run_step": "Run step",
+    "run_step_hint": "Run the nodes this step depends on",
+    "no_params": "This step has no parameters — it only shows results.",
+    "edit_layout": "Edit steps",
+    "add_step": "Add step",
+    "remove_step": "Remove {title}",
+    "new_step": "New step",
+    "tray": "Not in any step",
+    "tray_empty": "Every promoted parameter and view is in a step.",
+    "drop_here": "Drop parameters and views here.",
+    "move_earlier": "Move {label} to the previous step",
+    "move_later": "Move {label} to the next step",
+    "state": {
+      "idle": "Not run yet",
+      "running": "Running…",
+      "error": "Fix the errors above",
+      "done": "Ready"
+    }
   }
 }
