@@ -17,7 +17,7 @@ from pydantic import BaseModel, ValidationError
 from astro_canvas.engine.graph import WorkflowDoc, new_id
 from astro_canvas.sdk import NodeRegistry
 from astro_canvas.server.runtime import EngineRuntime
-from astro_canvas.server.workflows import WorkflowSaved
+from astro_canvas.server.workflows import WorkflowSaved, saved_response
 
 log = structlog.get_logger("astro_canvas.templates")
 router = APIRouter(tags=["templates"])
@@ -139,4 +139,4 @@ async def instantiate_template(
         raise _not_found(template_id)
     doc = instantiate(template, name=body.name if body else None)
     saved = runtime.save(doc)
-    return WorkflowSaved(doc=saved, node_errors=runtime.scheduler(saved.id).issues)
+    return saved_response(runtime, saved)

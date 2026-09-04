@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from astro_canvas.engine.events import NodeIssue, NodeStatus
 from astro_canvas.engine.graph import WorkflowDoc
+from astro_canvas.engine.layouts import LayoutIssue, layout_issues
 from astro_canvas.server.runtime import (
     EngineRuntime,
     UnknownWorkflowError,
@@ -27,6 +28,17 @@ class WorkflowSaved(BaseModel):
 
     doc: WorkflowDoc
     node_errors: dict[str, list[NodeIssue]]
+    layout_errors: list[LayoutIssue] = Field(default_factory=list)
+    """Refs in ``promoted``/``views``/``layouts`` that no longer resolve (design 8.4)."""
+
+
+def saved_response(runtime: EngineRuntime, doc: WorkflowDoc) -> WorkflowSaved:
+    """The standard save/create reply: the document, its node errors and its layout errors."""
+    return WorkflowSaved(
+        doc=doc,
+        node_errors=runtime.scheduler(doc.id).issues,
+        layout_errors=layout_issues(doc),
+    )
 
 
 class WorkflowStatus(BaseModel):
@@ -60,7 +72,7 @@ async def create_workflow(request: Request, doc: WorkflowDoc) -> WorkflowSaved:
     if runtime.exists(doc.id):
         raise HTTPException(status_code=409, detail=f"workflow {doc.id!r} already exists")
     saved = runtime.save(doc)
-    return WorkflowSaved(doc=saved, node_errors=runtime.scheduler(saved.id).issues)
+    return saved_response(runtime, saved)
 
 
 @router.get("/workflows/{workflow_id}", response_model=WorkflowDoc)
@@ -78,7 +90,7 @@ async def put_workflow(request: Request, workflow_id: str, doc: WorkflowDoc) -> 
         raise HTTPException(status_code=400, detail="document id does not match the URL")
     runtime = get_runtime(request)
     saved = runtime.save(doc)
-    return WorkflowSaved(doc=saved, node_errors=runtime.scheduler(saved.id).issues)
+    return saved_response(runtime, saved)
 
 
 @router.delete("/workflows/{workflow_id}", status_code=status.HTTP_204_NO_CONTENT)

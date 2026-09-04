@@ -886,6 +886,31 @@ export interface components {
       /** Name */
       name?: string | null
     }
+    /**
+     * LayoutIssue
+     * @description One problem with a layout section, addressed by layout name and item position.
+     */
+    LayoutIssue: {
+      /**
+       * Code
+       * @enum {string}
+       */
+      code:
+        | 'bad_layout'
+        | 'bad_ref'
+        | 'unknown_promoted'
+        | 'unknown_view'
+        | 'unknown_node'
+        | 'duplicate_view'
+      /** Index */
+      index?: number | null
+      /** Layout */
+      layout: string
+      /** Message */
+      message: string
+      /** Ref */
+      ref?: string | null
+    }
     /** MkdirRequest */
     MkdirRequest: {
       /** Path */
@@ -1586,6 +1611,8 @@ export interface components {
      */
     WorkflowSaved: {
       doc: components['schemas']['WorkflowDoc']
+      /** Layout Errors */
+      layout_errors?: components['schemas']['LayoutIssue'][]
       /** Node Errors */
       node_errors: {
         [key: string]: components['schemas']['NodeIssue'][]

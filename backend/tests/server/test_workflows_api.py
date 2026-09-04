@@ -115,6 +115,26 @@ def test_crud_versions_and_status(api: TestClient) -> None:
     assert api.get(f"/api/workflows/{doc['id']}/status").status_code == 404
 
 
+def test_layout_errors_report_stale_promoted_and_view_refs(api: TestClient) -> None:
+    doc = load("math_chain")
+    doc["promoted"] = [{"node": "c", "param": "value", "label": "Value", "group": "Setup"}]
+    doc["views"] = [{"id": "total", "node": "sum", "port": "out", "kind": "value-chip"}]
+    doc["layouts"] = {
+        "app": {"sections": [{"title": "Setup", "items": ["promoted:c.value", "view:total"]}]}
+    }
+    assert api.post("/api/workflows", json=doc).json()["layout_errors"] == []
+
+    doc["layouts"]["app"]["sections"][0]["items"] = ["promoted:c.gone", "view:missing"]
+    errors = api.put(f"/api/workflows/{doc['id']}", json=doc).json()["layout_errors"]
+    assert [(e["code"], e["ref"]) for e in errors] == [
+        ("unknown_promoted", "c.gone"),
+        ("unknown_view", "missing"),
+    ]
+    # The layout itself round-trips untouched, unknown keys included.
+    stored = api.get(f"/api/workflows/{doc['id']}").json()
+    assert stored["layouts"]["app"]["sections"][0]["items"] == ["promoted:c.gone", "view:missing"]
+
+
 def test_invalid_document_reports_node_errors(api: TestClient) -> None:
     doc = load("invalid/missing_input")
     body = api.post("/api/workflows", json=doc).json()

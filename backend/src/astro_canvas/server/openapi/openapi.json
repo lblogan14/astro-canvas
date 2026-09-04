@@ -567,6 +567,60 @@
         "title": "InstantiateRequest",
         "type": "object"
       },
+      "LayoutIssue": {
+        "description": "One problem with a layout section, addressed by layout name and item position.",
+        "properties": {
+          "code": {
+            "enum": [
+              "bad_layout",
+              "bad_ref",
+              "unknown_promoted",
+              "unknown_view",
+              "unknown_node",
+              "duplicate_view"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Index"
+          },
+          "layout": {
+            "title": "Layout",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          }
+        },
+        "required": [
+          "layout",
+          "code",
+          "message"
+        ],
+        "title": "LayoutIssue",
+        "type": "object"
+      },
       "MkdirRequest": {
         "properties": {
           "path": {
@@ -1973,6 +2027,13 @@
         "properties": {
           "doc": {
             "$ref": "#/components/schemas/WorkflowDoc"
+          },
+          "layout_errors": {
+            "items": {
+              "$ref": "#/components/schemas/LayoutIssue"
+            },
+            "title": "Layout Errors",
+            "type": "array"
           },
           "node_errors": {
             "additionalProperties": {
