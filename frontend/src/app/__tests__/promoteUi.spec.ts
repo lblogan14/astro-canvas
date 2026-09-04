@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { createI18n } from 'vue-i18n'
 import { mount } from '@vue/test-utils'
 
-import en from '@/i18n/locales/en.json'
+import { i18n } from '@/i18n'
 import InspectorPanel from '@/app/inspector/InspectorPanel.vue'
 import ParametersPanel from '@/app/params/ParametersPanel.vue'
 import { idleExecution, useExecutionStore } from '@/stores/execution'
@@ -34,7 +33,6 @@ function setup() {
 }
 
 function mountPanel(component: typeof InspectorPanel | typeof ParametersPanel) {
-  const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
   return mount(component, { global: { plugins: [i18n] } })
 }
 
@@ -134,7 +132,6 @@ describe('preview pin', () => {
       summaries: { out: { typeId: 'astro.Float', summary: { data: { value: 7 } }, ts: 1 } },
     }
     const { default: PreviewHost } = await import('@/previews/PreviewHost.vue')
-    const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
     const host = mount(PreviewHost, {
       props: { nodeId: 'sum', spec: workflow.specs['core.math.expr'], exec: execution.node('sum') },
       global: { plugins: [i18n] },

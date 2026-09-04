@@ -568,5 +568,24 @@
     "views": "Views",
     "remove": "Unpin {port}",
     "kind_auto": "auto"
+  },
+  "modes": {
+    "run": "Run",
+    "auto_on": "Auto-run on",
+    "auto_off": "Auto-run off",
+    "progress": "{pct}%",
+    "export": "Export results",
+    "export_hint": "Write {n} outputs into the workspace",
+    "exported": "Exported into {dir}",
+    "save_layout": "Save layout",
+    "save_layout_hint": "Store this layout in the workflow",
+    "save_layout_update": "Update the stored layout",
+    "layout_saved": "Layout saved",
+    "show_graph": "Show graph",
+    "empty": "Nothing promoted yet. Open the graph, star a few parameters and pin a preview.",
+    "section_empty": "No parameters in this section.",
+    "no_views": "No views pinned. Pin a preview on the canvas to show it here.",
+    "missing_item": "{ref} is in the layout but no longer in the workflow.",
+    "unknown_param": "{ref} is promoted but its node has no such parameter."
   }
 }

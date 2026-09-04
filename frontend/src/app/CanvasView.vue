@@ -6,11 +6,12 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { FlowCanvas } from '@/canvas/vueflow'
 import SubgraphBreadcrumb from '@/canvas/SubgraphBreadcrumb.vue'
+import AppMode from '@/modes/AppMode.vue'
 import BatchMode from '@/modes/BatchMode.vue'
 import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { useSelectionStore } from '@/stores/selection'
 import { useSessionStore } from '@/stores/session'
-import { useUiStore } from '@/stores/ui'
+import { isAppMode, useUiStore } from '@/stores/ui'
 import { useWorkflowStore } from '@/stores/workflow'
 import { useWorkflowsStore } from '@/stores/workflows'
 import { setFileDropTranslator } from '@/canvas/fileDrop'
@@ -45,6 +46,27 @@ const routeId = computed(() => {
   const id = route.params.id
   return typeof id === 'string' && id ? id : null
 })
+
+/**
+ * `/w/:id/:mode` is the source of truth for the layout: the route sets `ui.mode`, and switching
+ * mode in the toolbar replaces the URL so the link can be shared or reloaded (brief item 7).
+ */
+const routeMode = computed(() => (isAppMode(route.params.mode) ? route.params.mode : null))
+
+function syncModeFromRoute(): void {
+  const mode = routeMode.value
+  if (mode && mode !== ui.mode) ui.setMode(mode)
+}
+
+function syncRouteFromMode(): void {
+  const id = routeId.value
+  if (!id || routeMode.value === ui.mode) return
+  void router.replace(
+    ui.mode === 'canvas'
+      ? { name: 'workflow', params: { id } }
+      : { name: 'workflow-mode', params: { id, mode: ui.mode } },
+  )
+}
 
 async function openFromRoute(): Promise<void> {
   const id = routeId.value
@@ -87,6 +109,7 @@ const workspace = useWorkspaceStore()
 setFileDropTranslator((key, params) => t(key, params ?? {}))
 
 onMounted(async () => {
+  syncModeFromRoute()
   session.connect()
   if (!schema.isReady) await schema.load()
   void workspace.load()
@@ -94,6 +117,8 @@ onMounted(async () => {
 })
 
 watch(routeId, () => void openFromRoute())
+watch(routeMode, syncModeFromRoute)
+watch(() => ui.mode, syncRouteFromMode)
 
 // Drop runtime records and selection entries for nodes that vanished.
 watch(
@@ -132,6 +157,7 @@ onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
       <div class="relative flex min-w-0 flex-1 flex-col">
         <div class="relative min-h-0 flex-1">
           <BatchMode v-if="ui.mode === 'batch'" />
+          <AppMode v-else-if="ui.mode === 'app'" />
           <template v-else>
             <FlowCanvas />
             <SubgraphBreadcrumb />

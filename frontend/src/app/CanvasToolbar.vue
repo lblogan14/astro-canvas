@@ -31,7 +31,7 @@ import { Button } from '@/components/ui/button'
 import { useCanvasAdapter } from '@/canvas/CanvasAdapter'
 import { useExecutionStore } from '@/stores/execution'
 import { useSessionStore } from '@/stores/session'
-import { useUiStore } from '@/stores/ui'
+import { type AppMode, useUiStore } from '@/stores/ui'
 import { useWorkflowStore } from '@/stores/workflow'
 
 const { t } = useI18n()
@@ -62,8 +62,8 @@ async function toggleRun(): Promise<void> {
   else await session.run()
 }
 
-const LAYOUTS = ['canvas', 'batch', 'app', 'wizard', 'dashboard'] as const
-const ENABLED: ReadonlySet<string> = new Set(['canvas', 'batch'])
+const LAYOUTS: readonly AppMode[] = ['canvas', 'app', 'wizard', 'dashboard', 'batch']
+const ENABLED: ReadonlySet<string> = new Set(['canvas', 'app', 'batch'])
 </script>
 
 <template>
@@ -189,7 +189,7 @@ const ENABLED: ReadonlySet<string> = new Set(['canvas', 'batch'])
             class="ac-menu-item data-[disabled]:opacity-50"
             :disabled="!ENABLED.has(layout)"
             :data-testid="`layout-${layout}`"
-            @select="ENABLED.has(layout) && ui.setMode(layout as 'canvas' | 'batch')"
+            @select="ENABLED.has(layout) && ui.setMode(layout)"
           >
             <Check v-if="layout === ui.mode" class="size-3.5" />
             <span v-else class="size-3.5" />
