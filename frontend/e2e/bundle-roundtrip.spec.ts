@@ -127,7 +127,7 @@ test.describe('bundles', () => {
       expect(await valueOf(page, 'sum')).toBe(before)
     } finally {
       await deleteWorkflow(request, doc.id)
-      if (imported) await deleteWorkflow(request, imported)
+      await deleteWorkflow(request, imported ?? doc.id)
     }
   })
 
@@ -209,7 +209,7 @@ test.describe('bundles', () => {
       expect(await valueOf(page, 'py')).toContain('42')
     } finally {
       await deleteWorkflow(request, source.id)
-      if (imported) await deleteWorkflow(request, imported)
+      await deleteWorkflow(request, imported ?? source.id)
     }
   })
 
@@ -225,7 +225,7 @@ test.describe('bundles', () => {
       // Mark it as arriving from outside, then change the snippet: a different snippet is a
       // different decision, so the gate closes.
       const edited = { ...doc }
-      edited.meta = { ...(doc.meta ?? {}), quarantine: true }
+      edited.meta = { ...doc.meta, quarantine: true }
       edited.nodes.py = {
         ...doc.nodes.py,
         params: {
