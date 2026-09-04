@@ -3,3 +3,11 @@
 *.acw text eol=lf
 *.lst text eol=lf
 *.dat text eol=lf
+
+# Shell scripts and container files must keep LF: they run inside Linux images and on CI runners.
+*.sh text eol=lf
+*.bash text eol=lf
+Dockerfile text eol=lf
+Caddyfile text eol=lf
+*.desktop text eol=lf
+*.ps1 text eol=crlf

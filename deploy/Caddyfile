@@ -1,0 +1,56 @@
+# TLS and the reverse proxy in front of Astro Canvas.
+#
+# `CANVAS_TLS=internal` (the default, and what CI uses) makes Caddy issue a certificate from its
+# own local CA - a real self-signed HTTPS endpoint with no ACME round trip. Set
+# `CANVAS_TLS=you@example.org` with a public `CANVAS_DOMAIN` and Caddy gets a Let's Encrypt
+# certificate instead; nothing else changes.
+
+{
+	admin off
+	email {$CANVAS_TLS}
+}
+
+{$CANVAS_DOMAIN} {
+	tls {$CANVAS_TLS}
+
+	encode zstd gzip
+
+	# The WebSocket carries node events and binary output frames, so it must not be buffered
+	# and needs a long idle timeout: a subscribed client is quiet between runs.
+	@websocket {
+		header Connection *Upgrade*
+		header Upgrade websocket
+	}
+	handle @websocket {
+		reverse_proxy app:8765 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		reverse_proxy app:8765 {
+			# The app reads these to know it is behind TLS; ``public_url`` is the authority for
+			# the cookie's Secure flag, this is for redirects and logs.
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Host {host}
+			# Cubes and FITS files travel through here; 8 GiB is a generous ceiling, not a target.
+			request_body {
+				max_size 8GB
+			}
+		}
+	}
+
+	header {
+		# The SPA is same-origin and loads no third-party script; the canvas needs blob: workers.
+		Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-eval' blob:; worker-src 'self' blob:; connect-src 'self' ws: wss:; font-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+		Referrer-Policy "same-origin"
+		X-Content-Type-Options "nosniff"
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

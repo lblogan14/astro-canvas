@@ -75,6 +75,11 @@ tasks:
     cmds:
       - pnpm -C {{.FE}} test:e2e
 
+  test:compose:
+    desc: Build the Docker image and check the lab-server tier end to end (needs Docker)
+    cmds:
+      - bash deploy/tests/compose.sh
+
   fmt:
     desc: Format and auto-fix backend and frontend
     cmds:
