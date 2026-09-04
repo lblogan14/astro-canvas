@@ -15,14 +15,30 @@ from astro_canvas.sdk.memmap import MMAP_MIN_BYTES_ENV
 CODE_SECURITY_ENV = "ASTRO_CANVAS_CODE_SECURITY"
 """Read by ``core.code.python``; worker processes inherit it from the server's environment."""
 
+AuthMode = Literal["none", "token", "users"]
+"""``astro-canvas serve --auth <mode>`` (design 11-12)."""
+
+LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1", "[::1]"})
+"""Bind addresses that are only reachable from this machine."""
+
 
 def default_workspace() -> Path:
-    """Return the default workspace folder (``<Documents>/AstroCanvas``)."""
-    return Path(platformdirs.user_documents_dir()) / "AstroCanvas"
+    """The workspace to open: the one the user last chose, else ``<Documents>/AstroCanvas``."""
+    from astro_canvas.store.recent import RecentWorkspaces  # noqa: PLC0415 - avoids a cycle
+
+    chosen = RecentWorkspaces(default_config_dir()).selected()
+    return chosen if chosen is not None else Path(platformdirs.user_documents_dir()) / "AstroCanvas"
 
 
 def default_config_dir() -> Path:
-    """Per-user config folder holding the ``token`` file."""
+    """Per-user config folder holding the ``token`` file.
+
+    Reads ``ASTRO_CANVAS_CONFIG_DIR`` itself rather than leaving it to pydantic-settings, because
+    ``default_workspace`` needs the folder *before* a ``Settings`` object exists.
+    """
+    override = os.environ.get("ASTRO_CANVAS_CONFIG_DIR")
+    if override:
+        return Path(override)
     return Path(platformdirs.user_config_dir("AstroCanvas", appauthor=False))
 
 
@@ -41,9 +57,39 @@ class Settings(BaseSettings):
     log_level: str = "info"
 
     # Security (design 11): bearer token for /api and /ws; generated when unset.
-    auth: bool = True
+    auth: AuthMode = "token"
+    """``none`` serves unauthenticated, ``token`` uses one bearer token for the whole server,
+    ``users`` enables the multi-user login backend (design 12; needs the ``users`` extra)."""
     token: str | None = None
     config_dir: Path = Field(default_factory=default_config_dir)
+
+    # Lab server (design 12). Only read when ``auth == "users"``.
+    users_dir: Path | None = None
+    """Parent of the per-user workspaces; defaults to ``<workspace>/users``."""
+    shared_dir: Path | None = None
+    """Read-only folder mounted as ``shared/`` in every user's workspace."""
+    database_url: str = ""
+    """Identity database; empty means ``<config>/users.db`` (SQLite)."""
+    secret: str | None = None
+    """Signs login cookies and JWTs; generated and persisted next to the token when unset."""
+    cookie_secure: bool | None = None
+    """Force the ``Secure`` cookie flag; ``None`` derives it from ``public_url``/``https``."""
+    public_url: str = ""
+    """External origin (``https://canvas.lab.example``) a reverse proxy serves this app on."""
+    registration: bool = True
+    """Allow self-service sign-up; turn it off to invite users with ``astro-canvas user add``."""
+    admin_emails: str = ""
+    """Comma-separated addresses that become superusers on registration."""
+    oauth_github_client_id: str = ""
+    oauth_github_client_secret: str = ""
+    oidc_name: str = "oidc"
+    """Label of the generic OpenID provider (``orcid`` for ORCID)."""
+    oidc_client_id: str = ""
+    oidc_client_secret: str = ""
+    oidc_configuration_url: str = ""
+    """The provider's ``.well-known/openid-configuration``."""
+    allow_public_bind: bool = False
+    """``--i-know-what-i-am-doing``: serve on a public interface without user accounts."""
 
     # Execution engine (design 6.2-6.3).
     cache_memory_mb: int = Field(default=2048, ge=1)
@@ -72,6 +118,43 @@ class Settings(BaseSettings):
     """Pack registry ``index.json``; empty uses the built-in default."""
     manager: bool = True
     """Set false to serve without ``/api/manager`` (a locked-down lab deployment)."""
+
+    @property
+    def token_auth(self) -> bool:
+        """True when one shared bearer token guards ``/api`` and ``/ws``."""
+        return self.auth == "token"
+
+    @property
+    def user_auth(self) -> bool:
+        """True when the multi-user login backend is enabled."""
+        return self.auth == "users"
+
+    @property
+    def is_loopback(self) -> bool:
+        """True when ``host`` is only reachable from this machine."""
+        return self.host in LOOPBACK
+
+    @property
+    def users_root(self) -> Path:
+        """Parent folder of the per-user workspaces."""
+        return Path(self.users_dir) if self.users_dir else Path(self.workspace) / "users"
+
+    @property
+    def https(self) -> bool:
+        """True when the app is reached over TLS (directly or through a proxy)."""
+        return self.public_url.startswith("https://")
+
+    @property
+    def secure_cookies(self) -> bool:
+        """Whether login cookies get the ``Secure`` flag."""
+        return self.https if self.cookie_secure is None else self.cookie_secure
+
+    @property
+    def admins(self) -> frozenset[str]:
+        """Normalised ``admin_emails``."""
+        return frozenset(
+            part.strip().lower() for part in self.admin_emails.split(",") if part.strip()
+        )
 
 
 def apply_array_settings(settings: Settings) -> None:

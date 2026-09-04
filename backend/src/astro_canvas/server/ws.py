@@ -1,4 +1,4 @@
-"""``WS /ws?token=…&client_id=…``: event stream plus ``subscribe`` / ``run`` / ``cancel`` /
+"""``WS /ws?token=â€¦&client_id=â€¦``: event stream plus ``subscribe`` / ``run`` / ``cancel`` /
 ``preview.request`` / ``output.request`` / ``preview.compute`` commands (design 6.4)."""
 
 from __future__ import annotations
@@ -343,7 +343,7 @@ class WsSession:
 async def websocket_endpoint(websocket: WebSocket) -> None:
     """Authenticated, same-origin event stream for one client."""
     settings = websocket.app.state.settings
-    token = websocket.app.state.token if settings.auth else None
+    token = websocket.app.state.token if settings.token_auth else None
     if not ws_authorized(websocket.scope, token):
         await websocket.close(code=WS_UNAUTHORIZED, reason="missing or invalid token")
         return

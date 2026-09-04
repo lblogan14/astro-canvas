@@ -61,7 +61,7 @@ def test_requires_bearer_token(settings: Settings, test_discovery: DiscoveryResu
 
 
 def test_auth_can_be_disabled(tmp_path: Path, test_discovery: DiscoveryResult) -> None:
-    settings = Settings(workspace=tmp_path / "ws", auth=False, config_dir=tmp_path / "cfg")
+    settings = Settings(workspace=tmp_path / "ws", auth="none", config_dir=tmp_path / "cfg")
     app = create_app(settings, test_discovery)
     assert app.state.token is None
     assert TestClient(app).get("/api/workflows").json() == []

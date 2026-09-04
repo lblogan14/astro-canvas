@@ -22,7 +22,7 @@ def render() -> str:
     from astro_canvas.settings import Settings  # noqa: PLC0415
 
     workspace = Path(tempfile.mkdtemp(prefix="astro-canvas-openapi-"))
-    app = create_app(Settings(workspace=workspace, auth=False), discover())
+    app = create_app(Settings(workspace=workspace, auth="none"), discover())
     return json.dumps(app.openapi(), indent=2, sort_keys=True) + "\n"
 
 

@@ -17,6 +17,7 @@ from astro_canvas.server.auth import TokenAuthMiddleware, ensure_token
 from astro_canvas.server.batch import router as batch_router
 from astro_canvas.server.bundles import router as bundles_router
 from astro_canvas.server.exports import router as exports_router
+from astro_canvas.server.guard import check_exposure
 from astro_canvas.server.health import router as health_router
 from astro_canvas.server.manager import router as manager_router
 from astro_canvas.server.nodes import router as nodes_router
@@ -46,8 +47,12 @@ def create_app(
     Args:
         settings: Explicit settings; defaults to reading ``ASTRO_CANVAS_*`` env vars.
         discovery: Pre-built node registry; defaults to loading every installed pack.
+
+    Raises:
+        ExposureError: when the bind address would expose the server without user accounts.
     """
     settings = settings or get_settings()
+    check_exposure(settings)
     apply_array_settings(settings)
     discovery = discovery if discovery is not None else discover()
     for pack in discovery.packs:
@@ -57,8 +62,8 @@ def create_app(
         log.warning("registry problem", detail=problem)
 
     runtime = EngineRuntime(settings, discovery.registry)
-    manager = _build_manager(settings, runtime, discovery) if settings.manager else None
-    token = ensure_token(settings) if settings.auth else None
+    manager = build_manager(settings, runtime, discovery) if settings.manager else None
+    token = ensure_token(settings) if settings.token_auth else None
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
@@ -101,7 +106,7 @@ def create_app(
     return app
 
 
-def _build_manager(
+def build_manager(
     settings: Settings, runtime: EngineRuntime, discovery: DiscoveryResult
 ) -> PackManager | None:
     """Wire the pack manager to the runtime: trust gate, save hook and recompile-on-decision.

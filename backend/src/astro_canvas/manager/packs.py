@@ -116,8 +116,8 @@ def _snapshot_payload(freeze: Iterable[str], label: str) -> str:
 def freeze_index(lines: Iterable[str]) -> dict[str, str]:
     """``{distribution name: requirement line}`` for a ``uv pip freeze``.
 
-    Freeze lines come in three shapes: ``name==version``, ``name @ file:///…`` (a direct URL or
-    a workspace member) and ``-e file:///…`` (editable). Editable lines carry no name, so they
+    Freeze lines come in three shapes: ``name==version``, ``name @ file:///â€¦`` (a direct URL or
+    a workspace member) and ``-e file:///â€¦`` (editable). Editable lines carry no name, so they
     are skipped: a rollback leaves them alone rather than guessing what they were.
     """
     index: dict[str, str] = {}
@@ -212,12 +212,16 @@ class PackManager:
         return self._registry_client
 
     def uv_status(self) -> tuple[str | None, str]:
-        """``(path, version)`` of the located uv, or ``(None, <why not>)``."""
+        """``(path, version)`` of the located uv, or ``(None, <why not>)``.
+
+        Running it is part of the check: a configured path that no longer exists is exactly the
+        case ``doctor`` and Manager > Settings have to report, not raise on.
+        """
         try:
             runner = self.uv
+            return str(runner.uv_path), runner.version()
         except UvNotFoundError as exc:
             return None, str(exc)
-        return str(runner.uv_path), runner.version()
 
     # --- installed packs ---------------------------------------------------------------------
 

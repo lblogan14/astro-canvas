@@ -8,14 +8,41 @@ from pathlib import Path
 
 MAX_RECENT = 10
 FILE_NAME = "workspaces.json"
+SELECTED_FILE = "workspace"
 
 
 class RecentWorkspaces:
-    """A small most-recent-first list of workspace roots (absolute paths)."""
+    """A small most-recent-first list of workspace roots, plus the chosen default.
+
+    The list is a convenience (the *Open workspace* menu); the single-line ``workspace`` file
+    beside it is the *decision* -- what ``astro-canvas serve`` opens next time. Only an explicit
+    choice writes it (``astro-canvas workspace use``, or switching folders in the app), so a
+    headless ``astro-canvas run --workspace /tmp/x`` never moves the user's default.
+    """
 
     def __init__(self, config_dir: Path, *, limit: int = MAX_RECENT) -> None:
         self.path = Path(config_dir) / FILE_NAME
+        self.selected_path = Path(config_dir) / SELECTED_FILE
         self.limit = limit
+
+    def selected(self) -> Path | None:
+        """The workspace the user last chose, or ``None`` when they never did."""
+        try:
+            text = self.selected_path.read_text(encoding="utf-8").strip()
+        except OSError:
+            return None
+        return Path(text) if text else None
+
+    def select(self, root: Path) -> Path:
+        """Record ``root`` as the default workspace and move it to the front of the list."""
+        target = Path(root).resolve()
+        self.touch(target)
+        try:
+            self.selected_path.parent.mkdir(parents=True, exist_ok=True)
+            self.selected_path.write_text(str(target), encoding="utf-8")
+        except OSError:
+            pass  # an unwritable config dir only loses the default; the folder still opens
+        return target
 
     def list(self) -> builtins.list[str]:
         try:
