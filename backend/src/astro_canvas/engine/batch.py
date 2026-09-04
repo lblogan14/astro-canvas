@@ -52,6 +52,8 @@ TIMESTAMP_COLUMN = "calculation_timestamp"
 
 DEFAULT_CHEAP_WORKERS = 8
 MAX_ROWS = 5000
+KEEP_BATCHES = 20
+"""Finished batches kept for polling; older ones are forgotten so the server does not grow."""
 
 
 # --- specification -----------------------------------------------------------------------------
@@ -374,7 +376,15 @@ class BatchRunner:
             ],
         )
         self.runs[run.batch_id] = run
+        self._forget_old()
         return run
+
+    def _forget_old(self) -> None:
+        """Drop the oldest finished batches once more than ``KEEP_BATCHES`` are remembered."""
+        finished = [bid for bid, r in self.runs.items() if r.status != "running"]
+        for batch_id in finished[: max(0, len(self.runs) - KEEP_BATCHES)]:
+            del self.runs[batch_id]
+            self._tasks.pop(batch_id, None)
 
     def get(self, batch_id: str) -> BatchRun | None:
         return self.runs.get(batch_id)

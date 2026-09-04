@@ -185,6 +185,20 @@ async def test_cancel_stops_queued_rows_and_running_nodes(harness: Harness) -> N
     assert not any(r.state == "done" for r in run.records)
 
 
+async def test_only_the_last_batches_are_remembered(harness: Harness) -> None:
+    from astro_canvas.engine.batch import KEEP_BATCHES
+
+    doc = pipeline()
+    spec = spec_from_layout(doc.layouts["batch"])
+    batch = runner(harness)
+    ids = []
+    for i in range(KEEP_BATCHES + 3):
+        run = await batch.execute(doc, [{"x0": float(i), "add.y": 1.0}], spec)
+        ids.append(run.batch_id)
+    assert len(batch.runs) == KEEP_BATCHES
+    assert batch.get(ids[0]) is None and batch.get(ids[-1]) is not None
+
+
 async def test_a_batch_over_more_than_the_row_cap_is_refused(harness: Harness) -> None:
     doc = pipeline()
     with pytest.raises(ValueError, match="limited to"):
