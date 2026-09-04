@@ -3,6 +3,7 @@
   "cost": "expensive",
   "deprecated": false,
   "description": "Measure a sample quantity on a spectrum.\n\nThe long description survives in ``NodeSpec.description``.",
+  "dynamic_ports": null,
   "editor": "range-editor",
   "expand": false,
   "experimental": true,

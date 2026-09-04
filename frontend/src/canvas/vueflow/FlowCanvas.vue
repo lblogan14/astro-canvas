@@ -32,6 +32,7 @@ import {
 } from '@/canvas/CanvasAdapter'
 import { FILE_DRAG_TYPE, NODE_DRAG_TYPE, isCanvasDrop } from '@/canvas/dnd'
 import { addLoaderNode, addUploadedFiles } from '@/canvas/fileDrop'
+import { bundleFrom, dropBundle } from '@/manager/importBundle'
 import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { useSelectionStore } from '@/stores/selection'
 import { useUiStore } from '@/stores/ui'
@@ -222,6 +223,13 @@ function onDrop(event: DragEvent): void {
     void addLoaderNode(filePath, pos).then((id) => {
       if (id) selection.set([id])
     })
+    return
+  }
+  // A `.acw` dropped on the canvas is a workflow, not a data file: import and open it.
+  const bundle = bundleFrom(transfer.files)
+  if (bundle) {
+    event.preventDefault()
+    void dropBundle(bundle)
     return
   }
   // OS files: upload into the workspace first, then add loaders.

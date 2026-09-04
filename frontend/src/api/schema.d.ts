@@ -4,6 +4,69 @@
  */
 
 export interface paths {
+  '/api/bundles/download': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Download Bundle
+     * @description Serve a bundle that lives in the workspace.
+     */
+    get: operations['download_bundle_api_bundles_download_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/bundles/export': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Create Bundle
+     * @description Pack a workflow, its inputs, its finished outputs and its provenance into a ``.acw``.
+     */
+    post: operations['create_bundle_api_bundles_export_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/bundles/import': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Import Bundle
+     * @description Validate an uploaded ``.acw``, restore what it carries and save the workflow.
+     *
+     *     The workflow is stored either way so the user can look at it; ``missing_packs``,
+     *     ``layout_errors``, ``inputs`` and ``quarantined`` say what still needs attention.
+     */
+    post: operations['import_bundle_api_bundles_import_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/health': {
     parameters: {
       query?: never
@@ -19,6 +82,302 @@ export interface paths {
     put?: never
     post?: never
     delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/packs': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List Packs
+     * @description Every discovered pack with its database state and load error.
+     */
+    get: operations['list_packs_api_manager_packs_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/packs/install': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Install
+     * @description Install a source the user has confirmed a plan for.
+     */
+    post: operations['install_api_manager_packs_install_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/packs/resolve': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Resolve
+     * @description Dry-run a source and return the resolution diff (or the conflicts that block it).
+     */
+    post: operations['resolve_api_manager_packs_resolve_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/packs/{name}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /** Uninstall Pack */
+    delete: operations['uninstall_pack_api_manager_packs__name__delete']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/packs/{name}/enabled': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Set Enabled
+     * @description Enable or disable a pack; disabled packs stay installed but are not registered.
+     */
+    post: operations['set_enabled_api_manager_packs__name__enabled_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/packs/{name}/import-test': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Import Test
+     * @description Import the pack in a subprocess and report the traceback if it fails.
+     */
+    post: operations['import_test_api_manager_packs__name__import_test_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/packs/{name}/update': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Update Pack */
+    post: operations['update_pack_api_manager_packs__name__update_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/registry': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get Registry
+     * @description The registry index, filtered. Never fails: a stale cached copy beats an empty tab.
+     */
+    get: operations['get_registry_api_manager_registry_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/settings': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Update Settings
+     * @description Persist the security level, uv path or registry URL for this workspace.
+     */
+    post: operations['update_settings_api_manager_settings_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/snapshots': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** List Snapshots */
+    get: operations['list_snapshots_api_manager_snapshots_get']
+    put?: never
+    /**
+     * Create Snapshot
+     * @description Record ``uv pip freeze`` so this environment can be restored later.
+     */
+    post: operations['create_snapshot_api_manager_snapshots_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/snapshots/{snapshot_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Snapshot Packages */
+    get: operations['snapshot_packages_api_manager_snapshots__snapshot_id__get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/snapshots/{snapshot_id}/rollback': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Rollback
+     * @description Restore a snapshot exactly (``uv pip sync`` against the recorded freeze).
+     */
+    post: operations['rollback_api_manager_snapshots__snapshot_id__rollback_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/status': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get Status
+     * @description uv, the interpreter packs are installed into, and the current preferences.
+     */
+    get: operations['get_status_api_manager_status_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/trust': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List Trust
+     * @description Every code-snippet decision this workspace has made.
+     */
+    get: operations['list_trust_api_manager_trust_get']
+    put?: never
+    /**
+     * Set Trust
+     * @description Trust or block one snippet hash; every node with that snippet follows.
+     */
+    post: operations['set_trust_api_manager_trust_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/manager/trust/{snippet_hash}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /**
+     * Forget Trust
+     * @description Forget a decision, so the snippet is quarantined again.
+     */
+    delete: operations['forget_trust_api_manager_trust__snippet_hash__delete']
     options?: never
     head?: never
     patch?: never
@@ -471,6 +830,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/workflows/{workflow_id}/trust': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Review Workflow
+     * @description The code snippets of one workflow with their decisions: the quarantine banner's source.
+     */
+    get: operations['review_workflow_api_workflows__workflow_id__trust_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/workflows/{workflow_id}/versions': {
     parameters: {
       query?: never
@@ -788,6 +1167,21 @@ export interface components {
        */
       max_workers?: number | null
     }
+    /** Body_import_bundle_api_bundles_import_post */
+    Body_import_bundle_api_bundles_import_post: {
+      /** File */
+      file: string
+      /**
+       * Open Now
+       * @default true
+       */
+      open_now: boolean
+      /**
+       * Restore Into
+       * @default imports
+       */
+      restore_into: string
+    }
     /** Body_upload_file_api_workspace_upload_post */
     Body_upload_file_api_workspace_upload_post: {
       /**
@@ -830,10 +1224,179 @@ export interface components {
        */
       upload_id?: string | null
     }
+    /**
+     * BundleExportRequest
+     * @description ``POST /api/bundles/export``.
+     */
+    BundleExportRequest: {
+      /**
+       * Dir
+       * @description Workspace folder; defaults to ``bundles``.
+       */
+      dir?: string | null
+      /**
+       * Embed Inputs Max Mb
+       * @default 200
+       */
+      embed_inputs_max_mb: number
+      /**
+       * Include Figures
+       * @default true
+       */
+      include_figures: boolean
+      /**
+       * Include Outputs
+       * @default leaves
+       * @enum {string}
+       */
+      include_outputs: 'leaves' | 'all' | 'none'
+      /** Workflow Id */
+      workflow_id: string
+    }
+    /**
+     * BundleImportResult
+     * @description ``POST /api/bundles/import``: what was opened and what the user still has to fix.
+     */
+    BundleImportResult: {
+      /** Inputs */
+      inputs?: components['schemas']['ImportedInput'][]
+      /** Layout Errors */
+      layout_errors?: components['schemas']['LayoutIssue'][]
+      lock?: components['schemas']['BundleLock']
+      /**
+       * Missing Packs
+       * @description ``requires.packs`` entries not installed here.
+       */
+      missing_packs?: {
+        [key: string]: string
+      }
+      /** Name */
+      name: string
+      /**
+       * Outputs Restored
+       * @default 0
+       */
+      outputs_restored: number
+      /**
+       * Quarantined
+       * @default false
+       */
+      quarantined: boolean
+      /** Snippets */
+      snippets?: components['schemas']['CodeSnippet'][]
+      /** Warnings */
+      warnings?: string[]
+      /** Workflow Id */
+      workflow_id: string
+    }
+    /**
+     * BundleLock
+     * @description Exactly what ran, so an import can say whether this machine can reproduce it.
+     */
+    BundleLock: {
+      /**
+       * App Version
+       * @default 0.1.0a0
+       */
+      app_version: string
+      /** Created */
+      created?: string
+      /** Packs */
+      packs?: {
+        [key: string]: string
+      }
+      /** Platform */
+      platform?: string
+      /** Python */
+      python?: string
+      /** Requirements */
+      requirements?: string[]
+    }
+    /**
+     * BundleManifest
+     * @description What ``export_bundle`` wrote (also what ``inspect_bundle`` reads back).
+     */
+    BundleManifest: {
+      /**
+       * Bytes
+       * @default 0
+       */
+      bytes: number
+      /** Code Hashes */
+      code_hashes?: string[]
+      /** Figures */
+      figures?: string[]
+      /** Inputs */
+      inputs?: components['schemas']['InputRef'][]
+      lock?: components['schemas']['BundleLock']
+      /** Name */
+      name: string
+      /** Outputs */
+      outputs?: string[]
+      /**
+       * Path
+       * @description Workspace-relative path of the ``.acw``.
+       * @default
+       */
+      path: string
+      /** Skipped Outputs */
+      skipped_outputs?: string[]
+      /** Workflow Id */
+      workflow_id: string
+    }
     /** CancelResult */
     CancelResult: {
       /** Cancelled */
       cancelled: boolean
+    }
+    /**
+     * CodeSnippet
+     * @description One code node found in a document.
+     */
+    CodeSnippet: {
+      /** Decision */
+      decision?: ('trusted' | 'blocked') | null
+      /** Hash */
+      hash: string
+      /**
+       * Lines
+       * @default 0
+       */
+      lines: number
+      /** Node */
+      node: string
+      /**
+       * Source
+       * @default
+       */
+      source: string
+      /**
+       * Title
+       * @default
+       */
+      title: string
+      /** Type */
+      type: string
+    }
+    /**
+     * DynamicPorts
+     * @description Which parameters of a node declare its ports, and where the values arrive.
+     *
+     *     Attributes:
+     *         inputs: Param name holding the input declarations, or ``None`` for a fixed input set.
+     *         outputs: Param name holding the output declarations, or ``None``.
+     *         values: Function parameter that receives ``{port name: value}`` for the dynamic inputs.
+     */
+    DynamicPorts: {
+      /** Inputs */
+      inputs?: string | null
+      /** Outputs */
+      outputs?: string | null
+      /**
+       * Values
+       * @default values
+       */
+      values: string
     }
     /**
      * EdgeDoc
@@ -844,6 +1407,14 @@ export interface components {
       from: [string, string]
       /** To */
       to: [string, string]
+    }
+    /** EnableRequest */
+    EnableRequest: {
+      /**
+       * Enabled
+       * @default true
+       */
+      enabled: boolean
     }
     /** EntryModel */
     EntryModel: {
@@ -963,6 +1534,160 @@ export interface components {
       version: string
     }
     /**
+     * ImportTest
+     * @description Result of importing a freshly installed pack in a throw-away subprocess.
+     */
+    ImportTest: {
+      /**
+       * Error
+       * @default
+       */
+      error: string
+      /** Module */
+      module: string
+      /** Ok */
+      ok: boolean
+    }
+    /**
+     * ImportedInput
+     * @description An input file as the import found it in *this* workspace.
+     */
+    ImportedInput: {
+      /** Actual Blake3 */
+      actual_blake3?: string | null
+      /** Expected Blake3 */
+      expected_blake3?: string | null
+      /** Param Ref */
+      param_ref: string
+      /** Path */
+      path: string
+      /**
+       * Status
+       * @default ok
+       * @enum {string}
+       */
+      status: 'ok' | 'restored' | 'missing' | 'hash_mismatch'
+    }
+    /**
+     * InputRef
+     * @description One file a workflow reads, as ``inputs/refs.json`` records it.
+     */
+    InputRef: {
+      /** Blake3 */
+      blake3?: string | null
+      /**
+       * Bytes
+       * @default 0
+       */
+      bytes: number
+      /**
+       * Embedded
+       * @default false
+       */
+      embedded: boolean
+      /** Mime */
+      mime?: string | null
+      /**
+       * Missing
+       * @description Not present in the exporting workspace.
+       * @default false
+       */
+      missing: boolean
+      /**
+       * Param Ref
+       * @description ``'<node>.<param>'`` that names the file.
+       */
+      param_ref: string
+      /** Path */
+      path: string
+    }
+    /**
+     * InstallPlan
+     * @description What installing ``source`` would do to the environment (design 9).
+     *
+     *     ``ok`` is the gate: the UI shows the diff either way, but only an ``ok`` plan may be confirmed.
+     */
+    InstallPlan: {
+      /**
+       * Action
+       * @default install
+       * @enum {string}
+       */
+      action: 'install' | 'update' | 'uninstall' | 'rollback'
+      /** Changes */
+      changes?: components['schemas']['PackageChange'][]
+      /** Conflicts */
+      conflicts?: string[]
+      /**
+       * Message
+       * @default
+       */
+      message: string
+      /**
+       * Ok
+       * @default true
+       */
+      ok: boolean
+      /**
+       * Output
+       * @description Raw uv output, shown in the dialog's details.
+       * @default
+       */
+      output: string
+      /** Source */
+      source: string
+    }
+    /** InstallRequest */
+    InstallRequest: {
+      /**
+       * Confirm
+       * @description Must be true: the plan is shown first and the user confirms it (design 9).
+       * @default false
+       */
+      confirm: boolean
+      /** Source */
+      source: string
+    }
+    /**
+     * InstallResult
+     * @description Outcome of an environment mutation.
+     */
+    InstallResult: {
+      /**
+       * Action
+       * @enum {string}
+       */
+      action: 'install' | 'update' | 'uninstall' | 'rollback'
+      import_test?: components['schemas']['ImportTest'] | null
+      /**
+       * Message
+       * @default
+       */
+      message: string
+      /** Ok */
+      ok: boolean
+      /**
+       * Output
+       * @default
+       */
+      output: string
+      /** Packs */
+      packs?: string[]
+      plan?: components['schemas']['InstallPlan'] | null
+      /**
+       * Restart Required
+       * @default false
+       */
+      restart_required: boolean
+      /** Snapshot Id */
+      snapshot_id?: number | null
+      /**
+       * Source
+       * @default
+       */
+      source: string
+    }
+    /**
      * InstantiateRequest
      * @description Optional overrides when creating a workflow from a template.
      */
@@ -994,6 +1719,69 @@ export interface components {
       message: string
       /** Ref */
       ref?: string | null
+    }
+    /**
+     * ManagerSettings
+     * @description The manager's own preferences (``GET/POST /api/manager/settings``).
+     */
+    ManagerSettings: {
+      /**
+       * Registry Url
+       * @default
+       */
+      registry_url: string
+      /**
+       * Security
+       * @default standard
+       * @enum {string}
+       */
+      security: 'strict' | 'standard' | 'permissive'
+      /**
+       * Uv Path
+       * @description Explicit uv binary; empty means auto.
+       */
+      uv_path?: string | null
+    }
+    /**
+     * ManagerSettingsUpdate
+     * @description Partial update; omitted fields keep their current value.
+     */
+    ManagerSettingsUpdate: {
+      /** Registry Url */
+      registry_url?: string | null
+      /** Security */
+      security?: ('strict' | 'standard' | 'permissive') | null
+      /** Uv Path */
+      uv_path?: string | null
+    }
+    /**
+     * ManagerStatus
+     * @description What Manager > Settings shows about this installation.
+     */
+    ManagerStatus: {
+      /** Python */
+      python: string
+      /**
+       * Restart Required
+       * @default false
+       */
+      restart_required: boolean
+      /** Security Help */
+      security_help?: {
+        [key: string]: string
+      }
+      /** Security Levels */
+      security_levels?: string[]
+      settings: components['schemas']['ManagerSettings']
+      /** Uv Error */
+      uv_error?: string | null
+      /** Uv Path */
+      uv_path?: string | null
+      /**
+       * Uv Version
+       * @default
+       */
+      uv_version: string
     }
     /** MkdirRequest */
     MkdirRequest: {
@@ -1095,6 +1883,8 @@ export interface components {
        * @default
        */
       description: string
+      /** @description Set when the node's ports come from its own params (the code node). */
+      dynamic_ports?: components['schemas']['DynamicPorts'] | null
       /** Editor */
       editor?: string | null
       /**
@@ -1202,6 +1992,65 @@ export interface components {
       workflow_id: string
     }
     /**
+     * PackDetail
+     * @description One pack as the Manager's *Installed* tab shows it (``/api/health`` has a summary).
+     */
+    PackDetail: {
+      /** Distribution */
+      distribution?: string | null
+      /**
+       * Enabled
+       * @default true
+       */
+      enabled: boolean
+      /**
+       * Entry Point
+       * @default
+       */
+      entry_point: string
+      /** Error */
+      error?: string | null
+      /** Installed */
+      installed?: string | null
+      /**
+       * Loaded
+       * @description Registered in the running server right now.
+       * @default false
+       */
+      loaded: boolean
+      /** Name */
+      name: string
+      /**
+       * Node Count
+       * @default 0
+       */
+      node_count: number
+      /**
+       * Security
+       * @default standard
+       */
+      security: string
+      /** Source */
+      source?: string | null
+      /**
+       * Template Count
+       * @default 0
+       */
+      template_count: number
+      /** Traceback */
+      traceback?: string | null
+      /**
+       * Type Count
+       * @default 0
+       */
+      type_count: number
+      /**
+       * Version
+       * @default unknown
+       */
+      version: string
+    }
+    /**
      * PackInfo
      * @description Summary of a discovered node pack (full detail at ``/api/packs``).
      */
@@ -1283,6 +2132,23 @@ export interface components {
        * @default unknown
        */
       version: string
+    }
+    /**
+     * PackageChange
+     * @description One line of the resolution diff.
+     */
+    PackageChange: {
+      /**
+       * Action
+       * @enum {string}
+       */
+      action: 'add' | 'upgrade' | 'downgrade' | 'remove' | 'reinstall'
+      /** From Version */
+      from_version?: string | null
+      /** Name */
+      name: string
+      /** To Version */
+      to_version?: string | null
     }
     /**
      * ParamSpec
@@ -1426,6 +2292,123 @@ export interface components {
     } & {
       [key: string]: unknown
     }
+    /**
+     * RegistryEntry
+     * @description One pack in ``index.json``.
+     */
+    RegistryEntry: {
+      /** Categories */
+      categories?: string[]
+      /**
+       * Description
+       * @default
+       */
+      description: string
+      /**
+       * Display Name
+       * @default
+       */
+      display_name: string
+      /**
+       * Homepage
+       * @default
+       */
+      homepage: string
+      /**
+       * Latest
+       * @default
+       */
+      latest: string
+      /** Name */
+      name: string
+      /**
+       * Publisher
+       * @default
+       */
+      publisher: string
+      /** Requires */
+      requires?: {
+        [key: string]: string
+      }
+      /**
+       * Security
+       * @default standard
+       */
+      security: string
+      /**
+       * Source
+       * @description What the manager installs: a PyPI requirement or a git URL.
+       */
+      source: string
+      /** Stars */
+      stars?: number | null
+      /** Templates */
+      templates?: components['schemas']['RegistryTemplate'][]
+    }
+    /**
+     * RegistryIndex
+     * @description The fetched index plus where it came from and how fresh it is.
+     */
+    RegistryIndex: {
+      /** Entries */
+      entries?: components['schemas']['RegistryEntry'][]
+      /** Error */
+      error?: string | null
+      /**
+       * Fetched
+       * @default 0
+       */
+      fetched: number
+      /**
+       * Stale
+       * @description True when served from cache after a failure.
+       * @default false
+       */
+      stale: boolean
+      /**
+       * Url
+       * @default
+       */
+      url: string
+    }
+    /**
+     * RegistryTemplate
+     * @description A template a registry entry advertises; mirrors ``TemplateInfo`` (phase 10).
+     */
+    RegistryTemplate: {
+      /**
+       * Default Layout
+       * @default canvas
+       */
+      default_layout: string
+      /**
+       * Description
+       * @default
+       */
+      description: string
+      /** Id */
+      id: string
+      /** Layouts */
+      layouts?: string[]
+      /**
+       * Name
+       * @default
+       */
+      name: string
+      /** Tags */
+      tags?: string[]
+    }
+    /** ResolveRequest */
+    ResolveRequest: {
+      /**
+       * Action
+       * @default install
+       * @enum {string}
+       */
+      action: 'install' | 'update' | 'uninstall' | 'rollback'
+      /** Source */
+      source: string
+    }
     /** RunAccepted */
     RunAccepted: {
       /** Run Id */
@@ -1485,6 +2468,34 @@ export interface components {
       reason: 'no_output' | 'bad_ref' | 'not_written'
       /** Ref */
       ref: string
+    }
+    /**
+     * SnapshotInfo
+     * @description A recorded ``uv pip freeze`` the environment can be rolled back to.
+     */
+    SnapshotInfo: {
+      /** Created */
+      created: string
+      /** Id */
+      id: number
+      /**
+       * Label
+       * @default
+       */
+      label: string
+      /**
+       * Packages
+       * @default 0
+       */
+      packages: number
+    }
+    /** SnapshotRequest */
+    SnapshotRequest: {
+      /**
+       * Label
+       * @default
+       */
+      label: string
     }
     /** SniffResult */
     SniffResult: {
@@ -1625,6 +2636,49 @@ export interface components {
       entries: components['schemas']['EntryModel'][]
       /** Path */
       path: string
+    }
+    /**
+     * TrustRecord
+     * @description A stored decision (``GET /api/manager/trust``).
+     */
+    TrustRecord: {
+      /** Decided */
+      decided: string
+      /**
+       * Decision
+       * @enum {string}
+       */
+      decision: 'trusted' | 'blocked'
+      /** Hash */
+      hash: string
+    }
+    /** TrustRequest */
+    TrustRequest: {
+      /**
+       * Decision
+       * @default trusted
+       * @enum {string}
+       */
+      decision: 'trusted' | 'blocked'
+      /** Hash */
+      hash: string
+    }
+    /**
+     * TrustReview
+     * @description ``GET /api/workflows/{id}/trust``: what the quarantine banner and dialog render.
+     */
+    TrustReview: {
+      /** Blocked Nodes */
+      blocked_nodes?: string[]
+      /**
+       * Quarantined
+       * @default false
+       */
+      quarantined: boolean
+      /** Snippets */
+      snippets?: components['schemas']['CodeSnippet'][]
+      /** Workflow Id */
+      workflow_id: string
     }
     /** UploadResult */
     UploadResult: {
@@ -1838,6 +2892,103 @@ export interface components {
 }
 export type $defs = Record<string, never>
 export interface operations {
+  download_bundle_api_bundles_download_get: {
+    parameters: {
+      query: {
+        path: string
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  create_bundle_api_bundles_export_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BundleExportRequest']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['BundleManifest']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  import_bundle_api_bundles_import_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['Body_import_bundle_api_bundles_import_post']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['BundleImportResult']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
   health_api_health_get: {
     parameters: {
       query?: never
@@ -1854,6 +3005,503 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['HealthResponse']
+        }
+      }
+    }
+  }
+  list_packs_api_manager_packs_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PackDetail'][]
+        }
+      }
+    }
+  }
+  install_api_manager_packs_install_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InstallRequest']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['InstallResult']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  resolve_api_manager_packs_resolve_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ResolveRequest']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['InstallPlan']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  uninstall_pack_api_manager_packs__name__delete: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        name: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['InstallResult']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  set_enabled_api_manager_packs__name__enabled_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        name: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EnableRequest']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PackDetail']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  import_test_api_manager_packs__name__import_test_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        name: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ImportTest']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  update_pack_api_manager_packs__name__update_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        name: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['InstallResult']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_registry_api_manager_registry_get: {
+    parameters: {
+      query?: {
+        refresh?: boolean
+        q?: string
+        category?: string | null
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RegistryIndex']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  update_settings_api_manager_settings_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ManagerSettingsUpdate']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ManagerSettings']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  list_snapshots_api_manager_snapshots_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SnapshotInfo'][]
+        }
+      }
+    }
+  }
+  create_snapshot_api_manager_snapshots_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['SnapshotRequest'] | null
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SnapshotInfo']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  snapshot_packages_api_manager_snapshots__snapshot_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        snapshot_id: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': string[]
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  rollback_api_manager_snapshots__snapshot_id__rollback_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        snapshot_id: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['InstallResult']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_status_api_manager_status_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ManagerStatus']
+        }
+      }
+    }
+  }
+  list_trust_api_manager_trust_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['TrustRecord'][]
+        }
+      }
+    }
+  }
+  set_trust_api_manager_trust_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TrustRequest']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['TrustRecord']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  forget_trust_api_manager_trust__snippet_hash__delete: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        snippet_hash: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
         }
       }
     }
@@ -2631,6 +4279,37 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['WorkflowStatus']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  review_workflow_api_workflows__workflow_id__trust_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['TrustReview']
         }
       }
       /** @description Validation Error */

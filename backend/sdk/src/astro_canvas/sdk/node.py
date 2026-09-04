@@ -9,7 +9,7 @@ from typing import Any
 
 from astro_canvas.sdk.context import NodeContext
 from astro_canvas.sdk.introspect import NodeMeta, build_shape
-from astro_canvas.sdk.spec import Cost, NodeSpec
+from astro_canvas.sdk.spec import Cost, DynamicPorts, NodeSpec
 
 
 class NodeDef:
@@ -36,6 +36,7 @@ class NodeDef:
         self.output_names: list[str] = shape.output_names
         self.output_kind = shape.output_kind
         self.context_param = shape.context_param
+        self.values_param = shape.values_param
         self.quantity_units: dict[str, str] = shape.quantity_units
         self.fingerprint = fingerprint
         self.fingerprint_wants_workspace = _accepts_workspace(fingerprint)
@@ -78,6 +79,10 @@ class NodeDef:
         kwargs = self.validate_params(params or {})
         given = dict(inputs or {})
         unknown = set(given) - set(self.input_names)
+        if self.values_param is not None:
+            # Ports declared in a param arrive here by name; they are not function parameters.
+            kwargs[self.values_param] = {name: given.pop(name) for name in sorted(unknown)}
+            unknown = set()
         if unknown:
             raise TypeError(f"{self.spec.id}: unknown inputs {sorted(unknown)}")
         kwargs.update(given)
@@ -121,6 +126,7 @@ def node(
     lazy: Sequence[str] = (),
     deprecated: bool = False,
     experimental: bool = False,
+    dynamic_ports: DynamicPorts | None = None,
 ) -> Callable[[Callable[..., Any]], NodeDef]:
     """Declare a node. See ``astro_canvas.sdk`` for the parameter/port rules.
 
@@ -141,6 +147,8 @@ def node(
         lazy: Input ports resolved on demand through ``ctx.needs(port)``.
         deprecated: Hide from the menu, keep loadable.
         experimental: Flag in the UI.
+        dynamic_ports: For nodes whose ports are declared by their own params (the code node):
+            names the declaring params and the parameter that receives the input values.
     """
     meta = NodeMeta(
         id=id,
@@ -157,6 +165,7 @@ def node(
         lazy=tuple(lazy),
         deprecated=deprecated,
         experimental=experimental,
+        dynamic_ports=dynamic_ports,
     )
 
     def decorate(func: Callable[..., Any]) -> NodeDef:

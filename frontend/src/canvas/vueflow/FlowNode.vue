@@ -32,7 +32,7 @@ const ui = useUiStore()
 const lod = inject(CANVAS_LOD_KEY, ref(false))
 
 const node = computed(() => workflow.nodes[props.id])
-const spec = computed(() => (node.value ? workflow.specs[node.value.type] : undefined))
+const spec = computed(() => workflow.specFor(node.value))
 const exec = computed(() => execution.node(props.id))
 const issues = computed(() => execution.issuesFor(props.id))
 const singleSelected = computed(() => props.selected && selection.nodeIds.length === 1)

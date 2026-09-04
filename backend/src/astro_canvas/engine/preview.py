@@ -58,17 +58,19 @@ def compute_preview(
             else:
                 call_inputs[port] = value
         ctx = NullContext(workspace=Path(root), inputs=lazy)
+        merged_params = merged
         result = node_def.call(call_inputs, merged, ctx)
     elif node_type is not None:
         node_def = registry.get(node_type)
         if node_def.spec.expand or node_def.input_names:
             raise PreviewError(f"{node_type} needs inputs; preview it through a node instance")
+        merged_params = overrides
         result = node_def.call({}, overrides, NullContext(workspace=Path(root)))
     else:
         raise PreviewError("preview.compute needs node_id or node_type")
     if inspect.isawaitable(result):
         result = asyncio.run(_await(result))
-    return node_def.spec.id, wrap_outputs(node_def, result, registry.types)
+    return node_def.spec.id, wrap_outputs(node_def, result, registry.types, merged_params)
 
 
 async def _await(value: Any) -> Any:

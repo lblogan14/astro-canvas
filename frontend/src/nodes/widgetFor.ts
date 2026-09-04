@@ -15,6 +15,7 @@ export type WidgetKind =
   | 'range'
   | 'list'
   | 'path'
+  | 'ports'
   | 'color'
   | 'redshift'
   | 'wavelength'
@@ -36,6 +37,7 @@ const KNOWN_KINDS: ReadonlySet<string> = new Set<WidgetKind>([
   'range',
   'list',
   'path',
+  'ports',
   'color',
   'redshift',
   'wavelength',

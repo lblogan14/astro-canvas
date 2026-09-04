@@ -3,6 +3,7 @@
   "cost": "cheap",
   "deprecated": false,
   "description": "Basic statistics of the flux.",
+  "dynamic_ports": null,
   "editor": null,
   "expand": false,
   "experimental": false,

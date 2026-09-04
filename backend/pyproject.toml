@@ -96,6 +96,8 @@ path = "src/astro_canvas/_version.py"
 packages = ["src/astro_canvas"]
 # The built SPA (frontend/dist) is copied here by `task build` / CI before `uv build`.
 artifacts = ["src/astro_canvas/static/**"]
+# The registry seed (a copy of ``registry/index.json``) is package data, not build output.
+include = ["src/astro_canvas/manager/builtin_index.json"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src/astro_canvas", "tests", "README.md"]

@@ -4,6 +4,7 @@
  * `reason` code so the UI can explain it (`t('canvas.reject.<reason>')`).
  */
 import type { EdgeDoc, NodeDoc, NodeSpec, PortTypeSpec } from '@/api/types'
+import { applyDynamicPorts } from '@/nodes/dynamicPorts'
 
 export const ANY_TYPE = 'astro.Any'
 export const JSON_TYPE = 'astro.Json'
@@ -43,6 +44,15 @@ export interface GraphView {
   edges: Readonly<Record<string, EdgeDoc>>
   specs: Readonly<Record<string, NodeSpec>>
   types: TypeIndex
+}
+
+/**
+ * The spec a node instance behaves as. A node that declares its ports in its own params (the
+ * code node) needs them merged in before an edge can be judged.
+ */
+function specOf(graph: GraphView, node: NodeDoc): NodeSpec | undefined {
+  const spec = graph.specs[node.type]
+  return spec ? applyDynamicPorts(spec, node) : undefined
 }
 
 /** Type of an output port of a node (by its spec). */
@@ -109,8 +119,8 @@ export function checkConnection(
   const sourceNode = graph.nodes[source]
   const targetNode = graph.nodes[target]
   if (!sourceNode || !targetNode) return { ok: false, reason: 'unknown_node' }
-  const sourceSpec = graph.specs[sourceNode.type]
-  const targetSpec = graph.specs[targetNode.type]
+  const sourceSpec = specOf(graph, sourceNode)
+  const targetSpec = specOf(graph, targetNode)
   if (!sourceSpec || !targetSpec) return { ok: false, reason: 'unknown_node' }
   const sourceType = outputType(sourceSpec, sourcePort)
   const targetType = inputType(targetSpec, targetNode, targetPort)

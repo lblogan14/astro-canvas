@@ -46,15 +46,24 @@ from astro_canvas.sdk.expand import ExpandNode, Expansion
 from astro_canvas.sdk.memmap import is_memmapped, memmap_part, mmap_min_bytes
 from astro_canvas.sdk.node import NodeDef, node, validate_call
 from astro_canvas.sdk.params import Param, Widget
+from astro_canvas.sdk.ports import (
+    DynamicPorts,
+    PortDecl,
+    declared_ports,
+    effective_ports,
+    parse_declarations,
+)
 from astro_canvas.sdk.porttype import (
     ANY_TYPE,
     JSON_TYPE,
     SCALAR_TYPE_IDS,
+    WRAPPED_TYPE_IDS,
     PortType,
     TypeRegistry,
     is_compatible,
     is_port_type,
     port_type,
+    unwrap_scalar,
 )
 from astro_canvas.sdk.registry import (
     ENTRY_POINT_GROUP,
@@ -62,6 +71,8 @@ from astro_canvas.sdk.registry import (
     NodeRegistry,
     PackRegistry,
     discover,
+    load_pack,
+    pack_entry_points,
 )
 from astro_canvas.sdk.spec import (
     Cost,
@@ -80,10 +91,12 @@ __all__ = [
     "ENTRY_POINT_GROUP",
     "JSON_TYPE",
     "SCALAR_TYPE_IDS",
+    "WRAPPED_TYPE_IDS",
     "Blob",
     "BlobError",
     "Cost",
     "DiscoveryResult",
+    "DynamicPorts",
     "DocInfo",
     "DuplicateNodeError",
     "ExpandNode",
@@ -107,6 +120,7 @@ __all__ = [
     "PackRegistry",
     "Param",
     "ParamSpec",
+    "PortDecl",
     "PortSpec",
     "PortType",
     "PortTypeSpec",
@@ -120,7 +134,13 @@ __all__ = [
     "arrays_equal",
     "decimate",
     "decimate_indices",
+    "declared_ports",
     "discover",
+    "effective_ports",
+    "load_pack",
+    "parse_declarations",
+    "unwrap_scalar",
+    "pack_entry_points",
     "errors",
     "is_compatible",
     "is_memmapped",

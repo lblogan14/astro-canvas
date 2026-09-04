@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import shutil
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -110,6 +110,10 @@ class EngineRuntime:
         )
         self.recent = RecentWorkspaces(settings.config_dir)
         self.schedulers: dict[str, Scheduler] = {}
+        self.gate: Callable[[WorkflowDoc], Mapping[str, str]] | None = None
+        """Trust gate installed by the pack manager; blocks untrusted code nodes (design 11)."""
+        self.before_save: Callable[[WorkflowDoc], None] | None = None
+        """Called on every save; the pack manager uses it to trust locally authored snippets."""
         self.watcher: WorkspaceWatcher | None = None
         self._open_workspace(Path(settings.workspace))
         self.batches = BatchRunner(
@@ -220,10 +224,17 @@ class EngineRuntime:
                 config=self.scheduler_config(),
                 workflow_id=doc.id,
                 after_run=self._after_run,
+                gate=lambda document: self.gate(document) if self.gate else {},
             )
             self.schedulers[doc.id] = scheduler
         scheduler.update(doc)
         return scheduler
+
+    def recompile_all(self) -> None:
+        """Recompile every open workflow (a trust decision or a pack change moved the goalposts)."""
+        for scheduler in list(self.schedulers.values()):
+            if scheduler.doc is not None:
+                scheduler.update(scheduler.doc)
 
     def _after_run(self, _info: RunInfo) -> None:
         if self.index.total_bytes() > (self.cache.max_disk_bytes or 0):
@@ -281,6 +292,8 @@ class EngineRuntime:
 
     def save(self, doc: WorkflowDoc, *, label: str | None = None) -> WorkflowDoc:
         """Upsert ``doc`` (snapshotting a version when it changed) and recompile it."""
+        if self.before_save is not None:
+            self.before_save(doc)
         now = utcnow()
         doc.meta = {**doc.meta, "modified": now.isoformat()}
         doc.meta.setdefault("created", now.isoformat())

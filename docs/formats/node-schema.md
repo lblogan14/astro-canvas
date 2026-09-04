@@ -33,12 +33,30 @@ The full machine-readable contract is `backend/src/astro_canvas/server/openapi/o
 | `pack` | string \| null | Entry-point name of the pack that registered the node. |
 | `module` | string | Python module defining the function. |
 | `deprecated`, `experimental`, `expand`, `fingerprint`, `is_async` | bool | Flags. |
+| `dynamic_ports` | object \| null | Set when the node's ports come from its own params (phase 11). |
 
 ### `PortSpec`
 
 `{name, type, description, required, lazy}`. `type` is a port type id such as `astro.Spectrum1D`.
 `required` is false when the annotation is `Optional` or has a default. `lazy` ports are resolved on
 demand through `ctx.needs(name)`.
+
+### `dynamic_ports`
+
+Almost every node has a fixed shape. The exception is a node that lets the *user* declare its
+ports — the code node — where `dynamic_ports` names the parameters holding them:
+
+```jsonc
+"dynamic_ports": { "inputs": "inputs", "outputs": "outputs", "values": "values" }
+```
+
+The `inputs` param holds `[{"name": "spec", "type": "astro.Spectrum1D"}, …]` and so does
+`outputs`; `values` is the function parameter that receives `{port name: value}`. `inputs` and
+`outputs` in the spec itself list only the node's *fixed* ports, so a consumer must merge the
+declared ones in: `astro_canvas.sdk.ports.effective_ports(spec, params)` on the server,
+`applyDynamicPorts(spec, node)` on the client. A declared name must be a Python identifier;
+malformed or duplicate entries are dropped rather than raising, because a half-typed row is a
+normal state while editing.
 
 ### `ParamSpec`
 

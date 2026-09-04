@@ -3,6 +3,7 @@
   "cost": "cheap",
   "deprecated": false,
   "description": "Evaluate an arithmetic expression of ``x``, ``y`` and ``z``.\n\nSupports ``+ - * / // % **``, parentheses, the constants ``pi`` and ``e``, and the functions\n``abs, min, max, round, sqrt, exp, log, log10, sin, cos, tan, atan2, floor, ceil``.",
+  "dynamic_ports": null,
   "editor": null,
   "expand": false,
   "experimental": false,

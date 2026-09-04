@@ -44,6 +44,22 @@ class ParamSpec(BaseModel):
     )
 
 
+class DynamicPorts(BaseModel):
+    """Which parameters of a node declare its ports, and where the values arrive.
+
+    Attributes:
+        inputs: Param name holding the input declarations, or ``None`` for a fixed input set.
+        outputs: Param name holding the output declarations, or ``None``.
+        values: Function parameter that receives ``{port name: value}`` for the dynamic inputs.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    inputs: str | None = None
+    outputs: str | None = None
+    values: str = "values"
+
+
 class NodeSpec(BaseModel):
     """Everything the frontend and engine need to know about a node type."""
 
@@ -71,6 +87,10 @@ class NodeSpec(BaseModel):
         default=False, description="True when the node declares a ``fingerprint`` callable."
     )
     is_async: bool = False
+    dynamic_ports: DynamicPorts | None = Field(
+        default=None,
+        description="Set when the node's ports come from its own params (the code node).",
+    )
 
 
 class PortTypeSpec(BaseModel):

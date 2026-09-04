@@ -60,7 +60,7 @@ let requested: number | null = null
 const exec = computed(() => execution.node(props.view.node))
 const entry = computed(() => exec.value.summaries[props.view.port])
 const node = computed(() => workflow.rootNodes[props.view.node])
-const spec = computed(() => (node.value ? workflow.specs[node.value.type] : undefined))
+const spec = computed(() => workflow.specFor(node.value))
 const typeId = computed(
   () =>
     entry.value?.typeId ??

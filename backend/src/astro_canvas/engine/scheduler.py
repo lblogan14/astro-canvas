@@ -16,7 +16,7 @@ import threading
 import time
 import traceback
 import uuid
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, Protocol
@@ -42,7 +42,15 @@ from astro_canvas.engine.executors import ProcessExecutor, ThreadExecutor, Threa
 from astro_canvas.engine.graph import ExecGraph, ExecNode, ValidationErrors, WorkflowDoc, compile
 from astro_canvas.engine.outputs import OutputError, coerce, unwrap_linked, wrap_outputs
 from astro_canvas.engine.worker import WorkerJob
-from astro_canvas.sdk import BlobError, Expansion, NodeDef, NodeRegistry, PortType
+from astro_canvas.sdk import (
+    BlobError,
+    Expansion,
+    NodeDef,
+    NodeRegistry,
+    PortType,
+    UnknownNodeError,
+    effective_ports,
+)
 
 log = structlog.get_logger("astro_canvas.engine")
 
@@ -126,8 +134,11 @@ class Scheduler:
         config: SchedulerConfig | None = None,
         workflow_id: str = "",
         after_run: Callable[[RunInfo], None] | None = None,
+        gate: Callable[[WorkflowDoc], Mapping[str, str]] | None = None,
     ) -> None:
         self.after_run = after_run
+        self.gate = gate
+        """Optional trust gate: returns ``{node id: reason}`` for nodes that may not run."""
         self.registry = registry
         self.cache = cache
         self.bus = bus
@@ -159,7 +170,7 @@ class Scheduler:
         """Recompile ``doc``; mark changed nodes dirty; arm the debounce for auto-run."""
         self.doc = doc
         self.workflow_id = doc.id
-        result = compile(doc, self.registry)
+        result = compile(doc, self.registry, quarantined=self.gate(doc) if self.gate else None)
         if isinstance(result, ValidationErrors):
             self.graph, self.issues = result.graph, dict(result.node_errors)
         else:
@@ -268,6 +279,17 @@ class Scheduler:
             return None
         outputs = self.cache.lookup(rec.key)
         return None if outputs is None else outputs.get(port)
+
+    def output_ports(self, node_id: str) -> list[str]:
+        """The output port names of one compiled node (declared ports included)."""
+        node = self.graph.nodes.get(node_id)
+        if node is None:
+            return []
+        try:
+            _, outputs = effective_ports(self.registry.spec(node.type), node.params)
+        except UnknownNodeError:  # pragma: no cover - the graph compiled, so the type exists
+            return []
+        return [port.name for port in outputs]
 
     def snapshot(self) -> dict[str, NodeStatus]:
         return {nid: self._status_event(nid) for nid in self.records}
@@ -567,7 +589,7 @@ class Scheduler:
                 result if isinstance(result, Expansion) else Expansion.model_validate(result)
             )
             return await self._run_expansion(run_id, node, node_def, expansion, inputs)
-        return wrap_outputs(node_def, result, self.registry.types)
+        return wrap_outputs(node_def, result, self.registry.types, params)
 
     def _process_refs(self, node: ExecNode) -> dict[str, OutputRef] | None:
         """Blob refs for every connected input, or ``None`` if one is memory-only."""
@@ -674,7 +696,7 @@ class Scheduler:
             )
             started = time.perf_counter()
             raw = await self.threads.run(ThreadJob(sub_def, inputs, params, ctx))
-            outputs = wrap_outputs(sub_def, raw, self.registry.types)
+            outputs = wrap_outputs(sub_def, raw, self.registry.types, params)
             self.cache.store(key, sub.type, outputs)
             results[sub_id] = outputs
             rec.state, rec.elapsed_ms = "done", (time.perf_counter() - started) * 1000.0

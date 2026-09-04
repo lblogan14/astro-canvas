@@ -117,8 +117,7 @@ export function useMode() {
     const refs: string[] = []
     for (const [nodeId, node] of Object.entries(workflow.rootNodes)) {
       if (consumed.has(nodeId)) continue
-      for (const port of workflow.specs[node.type]?.outputs ?? [])
-        refs.push(`${nodeId}.${port.name}`)
+      for (const port of workflow.specFor(node)?.outputs ?? []) refs.push(`${nodeId}.${port.name}`)
     }
     return refs
   })

@@ -3,6 +3,7 @@
   "cost": "cheap",
   "deprecated": false,
   "description": "Split a spectrum at ``pivot``.",
+  "dynamic_ports": null,
   "editor": null,
   "expand": false,
   "experimental": false,

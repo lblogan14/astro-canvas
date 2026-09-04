@@ -6,7 +6,7 @@ import builtins
 import importlib.metadata
 import logging
 import traceback
-from collections.abc import Iterable
+from collections.abc import Container, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import ModuleType
@@ -172,50 +172,69 @@ class DiscoveryResult:
         return [p.error for p in self.packs if p.error is not None]
 
 
+def pack_entry_points(
+    group: str = ENTRY_POINT_GROUP,
+) -> list[importlib.metadata.EntryPoint]:
+    """Every installed ``astro_canvas.nodes`` entry point, sorted by pack name.
+
+    ``importlib.metadata`` caches its view of ``sys.path``; call
+    ``importlib.invalidate_caches()`` first when a pack was installed after start-up.
+    """
+    return sorted(importlib.metadata.entry_points(group=group), key=lambda e: e.name)
+
+
+def load_pack(registry: NodeRegistry, ep: importlib.metadata.EntryPoint) -> PackRecord:
+    """Import one pack and call its ``register(registry)``; never raises.
+
+    A pack that fails leaves no partial registration behind (they are rolled back) and comes back
+    as a ``PackRecord`` carrying a ``PackLoadError`` with the traceback the Manager shows.
+    """
+    dist = getattr(ep, "dist", None)
+    version = getattr(dist, "version", None) or "unknown"
+    distribution: str | None = getattr(dist, "name", None) if dist is not None else None
+    nodes_before, types_before = len(registry), len(registry.types)
+    error: PackLoadError | None = None
+    try:
+        target: Any = ep.load()
+        if not callable(target):
+            raise TypeError(f"entry point {ep.value!r} is not callable")
+        target(registry.for_pack(ep.name))
+    except Exception as exc:  # noqa: BLE001 - per-pack isolation is the point
+        registry.remove_pack(ep.name)
+        error = PackLoadError(
+            pack=ep.name,
+            entry_point=ep.value,
+            error=f"{type(exc).__name__}: {exc}",
+            traceback=traceback.format_exc(),
+        )
+        log.warning("pack %s failed to load: %s", ep.name, error.error)
+    return PackRecord(
+        name=ep.name,
+        version=version,
+        distribution=distribution,
+        entry_point=ep.value,
+        node_count=len(registry) - nodes_before if error is None else 0,
+        type_count=len(registry.types) - types_before if error is None else 0,
+        security=registry.security.get(ep.name, "standard"),
+        error=error,
+    )
+
+
 def discover(
     entry_points: Iterable[importlib.metadata.EntryPoint] | None = None,
     *,
     registry: NodeRegistry | None = None,
+    skip: Container[str] = (),
 ) -> DiscoveryResult:
     """Load every ``astro_canvas.nodes`` entry point into a registry.
 
     A pack that raises during import or registration is recorded as a ``PackLoadError`` (its
-    partial registrations are rolled back) and does not prevent other packs from loading.
+    partial registrations are rolled back) and does not prevent other packs from loading. Packs
+    named in ``skip`` are not imported at all (the Manager's disabled list).
     """
     registry = registry if registry is not None else NodeRegistry()
-    if entry_points is None:
-        entry_points = importlib.metadata.entry_points(group=ENTRY_POINT_GROUP)
-    records: list[PackRecord] = []
-    for ep in sorted(entry_points, key=lambda e: e.name):
-        dist = getattr(ep, "dist", None)
-        version = getattr(dist, "version", None) or "unknown"
-        distribution: str | None = getattr(dist, "name", None) if dist is not None else None
-        nodes_before, types_before = len(registry), len(registry.types)
-        error: PackLoadError | None = None
-        try:
-            target: Any = ep.load()
-            if not callable(target):
-                raise TypeError(f"entry point {ep.value!r} is not callable")
-            target(registry.for_pack(ep.name))
-        except Exception as exc:  # noqa: BLE001 - per-pack isolation is the point
-            registry.remove_pack(ep.name)
-            error = PackLoadError(
-                pack=ep.name,
-                entry_point=ep.value,
-                error=f"{type(exc).__name__}: {exc}",
-                traceback=traceback.format_exc(),
-            )
-            log.warning("pack %s failed to load: %s", ep.name, error.error)
-        records.append(
-            PackRecord(
-                name=ep.name,
-                version=version,
-                distribution=distribution,
-                entry_point=ep.value,
-                node_count=len(registry) - nodes_before if error is None else 0,
-                type_count=len(registry.types) - types_before if error is None else 0,
-                security=registry.security.get(ep.name, "standard"),
-                error=error,
-            )
-        )
+    eps = (
+        pack_entry_points() if entry_points is None else sorted(entry_points, key=lambda e: e.name)
+    )
+    records = [load_pack(registry, ep) for ep in eps if ep.name not in skip]
     return DiscoveryResult(registry=registry, packs=records)

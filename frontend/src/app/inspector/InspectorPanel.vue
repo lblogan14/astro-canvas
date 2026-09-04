@@ -26,7 +26,7 @@ const groupId = computed(() =>
 )
 const node = computed(() => (nodeId.value ? workflow.nodes[nodeId.value] : undefined))
 const group = computed(() => (groupId.value ? workflow.groups[groupId.value] : undefined))
-const spec = computed(() => (node.value ? workflow.specs[node.value.type] : undefined))
+const spec = computed(() => workflow.specFor(node.value))
 /**
  * The star promotes into the open container: the document's `promoted` on the root canvas, the
  * body's own `promoted` inside a subgraph (which is what an instance may then override).

@@ -75,6 +75,20 @@ onMounted(() => {
     </header>
     <main class="relative min-h-0 flex-1 overflow-hidden">
       <RouterView />
+      <!-- One toast for the whole shell: the Manager and the gallery notify from their own pages. -->
+      <div
+        v-if="ui.toast"
+        class="pointer-events-none absolute bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-md border px-3 py-2 text-xs shadow-md"
+        :class="
+          ui.toast.kind === 'error'
+            ? 'border-destructive/40 bg-destructive/10 text-destructive'
+            : 'bg-popover text-popover-foreground'
+        "
+        role="status"
+        data-testid="toast"
+      >
+        {{ ui.toast.message }}
+      </div>
     </main>
   </div>
 </template>

@@ -42,6 +42,7 @@ import {
   refOf,
 } from '@/modes/layouts'
 import { newId } from '@/lib/ids'
+import { applyDynamicPorts } from '@/nodes/dynamicPorts'
 import { useExecutionStore } from './execution'
 import { useNodesSchemaStore } from './nodesSchema'
 
@@ -259,6 +260,17 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const extra = subgraphSpecs(subgraphs.value, registry)
     return Object.keys(extra).length ? { ...registry, ...extra } : registry
   })
+
+  /**
+   * The spec **one node instance** behaves as. Identical to `specs[node.type]` for every node
+   * whose ports are fixed; a node that declares its ports in its params (the code node) gets
+   * them merged in, exactly as `effective_ports` does on the server.
+   */
+  function specFor(node: NodeDoc | undefined): NodeSpec | undefined {
+    if (!node) return undefined
+    const spec = specs.value[node.type]
+    return spec ? applyDynamicPorts(spec, node) : undefined
+  }
   const id = computed(() => doc.value?.id ?? null)
   const name = computed(() => doc.value?.name ?? '')
   const isOpen = computed(() => doc.value !== null)
@@ -1214,6 +1226,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     groups,
     subgraphs,
     specs,
+    specFor,
     path,
     breadcrumbs,
     openSubgraphId,

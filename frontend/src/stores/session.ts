@@ -11,6 +11,8 @@ import type { DecodedFrame } from '@/api/frames'
 import { type WsStatus, WsClient } from '@/api/ws'
 import { useBatchStore } from './batch'
 import { useExecutionStore } from './execution'
+import { useNodesSchemaStore } from './nodesSchema'
+import { usePacksStore } from './packs'
 import { useWorkflowStore } from './workflow'
 import { useWorkspaceStore } from './workspace'
 
@@ -36,6 +38,13 @@ export const useSessionStore = defineStore('session', () => {
       if (status === 'open' && attempt === 0 && ws.workflowId) void refreshStatus(ws.workflowId)
     })
     ws.onMessage((message) => {
+      if (message.type === 'packs.changed') {
+        // A pack was installed, enabled or rolled back: the node library and the Manager's
+        // Installed tab both describe a registry that just changed under them.
+        void usePacksStore().refresh()
+        void useNodesSchemaStore().load()
+        return
+      }
       if (message.type === 'workspace.changed') {
         useWorkspaceStore().applyChange(message.paths)
         return

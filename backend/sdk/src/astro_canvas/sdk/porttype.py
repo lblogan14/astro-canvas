@@ -66,6 +66,9 @@ SCALAR_TYPE_IDS: dict[type, str] = {
 }
 """Port type ids that JSON-native params become when linked (implemented by the core pack)."""
 
+WRAPPED_TYPE_IDS: frozenset[str] = frozenset([*SCALAR_TYPE_IDS.values(), JSON_TYPE, ANY_TYPE])
+"""Types that merely box a plain Python value; consumers see the value, not the wrapper."""
+
 _ID_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$")
 
 
@@ -320,3 +323,13 @@ def is_compatible(source: str, target: str, registry: TypeRegistry | None = None
     if registry is not None and source in registry:
         return target in registry.spec(source).compatible_with
     return False
+
+
+def unwrap_scalar(value: PortType) -> Any:
+    """The plain Python value inside a boxing port type (``astro.Float``, ``astro.Any``, ...).
+
+    Anything else is returned unchanged: a ``Spectrum1D`` *is* the value a node wants.
+    """
+    if value.type_id() in WRAPPED_TYPE_IDS:
+        return getattr(value, "value")  # noqa: B009 - dynamic attribute of a wrapped scalar
+    return value

@@ -22,6 +22,7 @@ import {
   ListField,
   NumberField,
   PathField,
+  PortsField,
   RangeField,
   RedshiftField,
   SelectField,
@@ -350,6 +351,15 @@ const invalid = computed(() => clientMessages.value.length > 0 || serverIssues.v
               :id="inputId"
               :model-value="arrayValue"
               :item-type="listItemType(param.json_schema)"
+              :disabled="disabled"
+              :invalid="invalid"
+              :label="param.label"
+              @update:model-value="update"
+            />
+            <PortsField
+              v-else-if="kind === 'ports'"
+              :id="inputId"
+              :model-value="arrayValue"
               :disabled="disabled"
               :invalid="invalid"
               :label="param.label"
