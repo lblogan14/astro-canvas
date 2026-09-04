@@ -375,6 +375,9 @@ def build_shape(func: Any, meta: NodeMeta) -> NodeShape:
         )
 
     return_annotation = hints.get("return", signature.return_annotation)
+    outputs: list[PortSpec]
+    output_names: list[str]
+    output_kind: Literal["none", "single", "tuple", "named", "dynamic"]
     if meta.dynamic_ports is not None and meta.dynamic_ports.outputs:
         # The node declares its outputs in a param, so the return annotation says nothing about
         # them: it returns ``{port name: value}`` and the compiler reads the declaration.
