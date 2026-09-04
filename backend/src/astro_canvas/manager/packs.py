@@ -23,7 +23,6 @@ import sys
 from collections.abc import Callable, Iterable
 from datetime import datetime
 from importlib.metadata import EntryPoint
-from pathlib import Path
 
 import structlog
 from pydantic import BaseModel, Field
@@ -112,6 +111,24 @@ class InstallResult(BaseModel):
 
 def _snapshot_payload(freeze: Iterable[str], label: str) -> str:
     return json.dumps({"label": label, "packages": sorted(freeze)}, indent=2)
+
+
+def freeze_index(lines: Iterable[str]) -> dict[str, str]:
+    """``{distribution name: requirement line}`` for a ``uv pip freeze``.
+
+    Freeze lines come in three shapes: ``name==version``, ``name @ file:///…`` (a direct URL or
+    a workspace member) and ``-e file:///…`` (editable). Editable lines carry no name, so they
+    are skipped: a rollback leaves them alone rather than guessing what they were.
+    """
+    index: dict[str, str] = {}
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith(("#", "-e ", "--")):
+            continue
+        name = line.split(" @ ", 1)[0].split("==", 1)[0].split("[", 1)[0].strip()
+        if name:
+            index[name.replace("_", "-").lower()] = line
+    return index
 
 
 class PackManager:
@@ -511,28 +528,47 @@ class PackManager:
             return list(json.loads(row.lock_json).get("packages", []))
 
     def rollback(self, snapshot_id: int) -> InstallResult:
-        """Restore a snapshot exactly: ``uv pip sync`` against the recorded freeze."""
-        packages = self.snapshot_packages(snapshot_id)
-        scratch = Path(self.uv.python).parent / f".astro-canvas-rollback-{snapshot_id}.txt"
-        scratch.write_text("\n".join(packages) + "\n", encoding="utf-8")
-        try:
-            result = self.uv.pip(["sync", str(scratch)], check=False)
-        finally:
-            scratch.unlink(missing_ok=True)
+        """Restore a snapshot: reinstall what changed, remove what was added since.
+
+        Deliberately a *diff* rather than ``uv pip sync``. A sync rebuilds every entry, which in a
+        development checkout means rebuilding the editable workspace members from an unrelated
+        working directory -- and failing. Touching only what actually differs restores the freeze
+        just as exactly, and leaves editable installs (identical in both freezes) alone.
+        """
+        wanted = freeze_index(self.snapshot_packages(snapshot_id))
+        current = freeze_index(self.uv.freeze())
+        install = [req for name, req in sorted(wanted.items()) if current.get(name) != req]
+        remove = sorted(name for name in current if name not in wanted)
+        pinned = [req for req in install if "==" in req]
+        unpinned = [req for req in install if "==" not in req]
+
+        outputs: list[str] = []
+        ok = True
+        if remove:
+            result = self.uv.pip(["uninstall", *remove], check=False)
+            outputs.append(result.output)
+            ok = ok and result.ok
+        if pinned:
+            result = self.uv.pip(["install", *pinned], check=False)
+            outputs.append(result.output)
+            ok = ok and result.ok
         self.restart_required = True
         self._changed("rolled-back", [])
+        changed = len(remove) + len(pinned)
+        message = (
+            f"restored {changed} packages from snapshot {snapshot_id}" if ok else "rollback failed"
+        )
+        if ok and unpinned:
+            # A direct-URL or editable entry cannot be reinstalled from a freeze line alone.
+            message += f"; {len(unpinned)} entries could not be restored automatically"
         return InstallResult(
-            ok=result.ok,
+            ok=ok,
             action="rollback",
             source=f"snapshot {snapshot_id}",
             snapshot_id=snapshot_id,
             restart_required=True,
-            message=(
-                f"restored {len(packages)} packages from snapshot {snapshot_id}"
-                if result.ok
-                else "rollback failed"
-            ),
-            output=result.output,
+            message=message,
+            output="\n".join(part for part in outputs if part),
         )
 
     # --- registration ------------------------------------------------------------------------
@@ -629,4 +665,5 @@ __all__ = [
     "PackDetail",
     "PackManager",
     "SnapshotInfo",
+    "freeze_index",
 ]

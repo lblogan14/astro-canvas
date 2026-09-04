@@ -192,6 +192,10 @@ class UvRunner:
                 argv,
                 capture_output=True,
                 text=True,
+                # uv writes UTF-8 whatever the console code page is; decoding with the locale
+                # encoding turns its box-drawing report into mojibake the parser cannot read.
+                encoding="utf-8",
+                errors="replace",
                 timeout=timeout if timeout is not None else self.timeout,
                 env=env,
                 check=False,

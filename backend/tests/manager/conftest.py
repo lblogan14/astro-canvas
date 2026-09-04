@@ -92,12 +92,17 @@ def diff_lines(state, changes):
     return lines
 
 
+def say(text):
+    """Progress and the diff go to stderr, exactly where the real uv puts them."""
+    sys.stderr.write(text + "\n")
+
+
 def main(argv):
     if argv[:1] == ["--version"]:
         print("uv 0.0.0-fake")
         return 0
     if argv[:1] != ["pip"]:
-        sys.stderr.write(f"fake uv: unsupported command {argv}\n")
+        say(f"fake uv: unsupported command {argv}")
         return 2
     args = [a for a in argv[1:] if a != "--python"]
     args = [a for a in args if not a.endswith("python.exe") and not a.endswith("/python")]
@@ -112,35 +117,34 @@ def main(argv):
             r.partition("==")[0]: r.partition("==")[2] for r in wanted if r.strip()
         }
         save(state)
-        print(f"Would install {len(state['installed'])} packages")
+        say(f"Installed {len(state['installed'])} packages")
         return 0
     dry = "--dry-run" in rest
     requirements = [r for r in rest if not r.startswith("-")]
     if command == "uninstall":
         removed = [r for r in requirements if r in state["installed"]]
-        verb = "Would uninstall" if dry else "Uninstalled"
-        print(f"{verb} {len(removed)} package")
+        say(f"{'Would uninstall' if dry else 'Uninstalled'} {len(removed)} package")
         for name in removed:
-            print(f" - {name}=={state['installed'][name]}")
+            say(f" - {name}=={state['installed'][name]}")
             if not dry:
                 state["installed"].pop(name, None)
         if not dry:
             save(state)
         return 0
     if command != "install":
-        sys.stderr.write(f"fake uv: unsupported pip command {command}\n")
+        say(f"fake uv: unsupported pip command {command}")
         return 2
     changes, conflict = resolve(state, requirements)
     if conflict:
-        sys.stderr.write(conflict + "\n")
+        say(conflict)
         return 1
     lines = diff_lines(state, changes)
-    print(f"Resolved {len(changes)} packages in 1ms")
+    say(f"Resolved {len(changes)} packages in 1ms")
     if not lines:
-        print("Would make no changes" if dry else "Audited 1 package")
+        say("Would make no changes" if dry else "Audited 1 package")
         return 0
-    print(f"Would install {len(changes)} packages" if dry else f"Installed {len(changes)} packages")
-    print("\n".join(lines))
+    say(f"Would install {len(changes)} packages" if dry else f"Installed {len(changes)} packages")
+    say("\n".join(lines))
     if not dry:
         state["installed"].update(changes)
         save(state)

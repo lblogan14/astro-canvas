@@ -26,7 +26,8 @@ REQUIREMENT_PATTERN = re.compile(
 )
 _CHANGE = re.compile(r"^\s*([+\-~])\s*(?P<name>[A-Za-z0-9][A-Za-z0-9._-]*)==(?P<version>\S+)")
 _NO_SOLUTION = re.compile(r"No solution found when resolving dependencies", re.IGNORECASE)
-_BECAUSE_YOU_REQUIRE = re.compile(r"you require (.+?),? we can conclude", re.DOTALL)
+_LEADING = re.compile(r"^[^0-9A-Za-z]*")
+"""Strips uv's box-drawing gutter (``╰─▶``, ``│``, ``` `-> ```) off a report line."""
 _NO_CHANGES = re.compile(r"Would make no changes", re.IGNORECASE)
 _AUDIT_ONLY = re.compile(r"^Audited \d+ package", re.MULTILINE)
 
@@ -176,24 +177,26 @@ def parse_dry_run(
 
     uv prints the diff as ``- name==old`` / ``+ name==new`` lines; a package appearing on both
     sides is an upgrade or a downgrade, ``+`` alone is an addition and ``-`` alone a removal.
+    Both streams are scanned: uv writes its progress and diff to **stderr** and reserves stdout
+    for machine output, so a parser that reads stdout alone sees an empty plan.
     A failed resolution has no diff at all -- its stderr carries a "No solution found" report,
     which becomes ``conflicts`` and blocks the install.
     """
     text = f"{stdout}\n{stderr}"
     if returncode != 0 or _NO_SOLUTION.search(text):
-        conflicts = [m.strip().rstrip(",") for m in _BECAUSE_YOU_REQUIRE.findall(text)]
-        summary = _summarize_failure(text)
+        report = resolver_report(text)
+        summary = _summarize_failure(report, text)
         return InstallPlan(
             source=source,
             action=action,
-            conflicts=conflicts or ([summary] if summary else []),
+            conflicts=[report] if report else [],
             ok=False,
             message=summary or "uv could not resolve this source",
             output=text.strip(),
         )
     removed: dict[str, str] = {}
     added: dict[str, str] = {}
-    for line in stdout.splitlines():
+    for line in text.splitlines():
         match = _CHANGE.match(line)
         if match is None:
             continue
@@ -220,15 +223,40 @@ def parse_dry_run(
     )
 
 
-def _summarize_failure(text: str) -> str:
-    """The one sentence worth putting in a dialog title, out of uv's resolver report."""
+def resolver_report(text: str) -> str:
+    """uv's "No solution found" explanation, unwrapped into one readable paragraph.
+
+    uv hard-wraps the report and prefixes it with box-drawing characters, so the raw lines are
+    unreadable in a dialog; the words are what matter.
+    """
+    lines = text.splitlines()
+    start = next((i for i, line in enumerate(lines) if _NO_SOLUTION.search(line)), None)
+    if start is None:
+        return ""
+    collected: list[str] = []
+    for line in lines[start + 1 :]:
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("hint:", "help:")):
+            break
+        collected.append(_LEADING.sub("", line).strip())
+    return " ".join(part for part in collected if part)
+
+
+def _summarize_failure(report: str, text: str) -> str:
+    """The one sentence worth putting in a dialog title: uv's conclusion, not its reasoning.
+
+    Sentences are split on ``". "`` rather than on ``"."`` so version numbers stay intact.
+    """
+    sentences = [part.strip() for part in report.split(". ") if part.strip()]
+    for sentence in reversed(sentences):
+        if "unsatisfiable" in sentence:
+            return sentence.removeprefix("And because ").strip().rstrip(".") + "."
+    if sentences:
+        return sentences[0].rstrip(".") + "."
+    for line in (line.strip() for line in text.splitlines()):
+        if line.startswith(("error:", "Error:", "×")):
+            return line.lstrip("× ").removeprefix("error:").strip()
     lines = [line.strip() for line in text.splitlines() if line.strip()]
-    for line in lines:
-        if "unsatisfiable" in line or "we can conclude" in line:
-            return line.lstrip("×x ").strip()
-    for line in lines:
-        if line.startswith(("×", "error:", "Error:")):
-            return line.lstrip("×x ").removeprefix("error:").strip()
     return lines[-1] if lines else ""
 
 
@@ -243,4 +271,5 @@ __all__ = [
     "classify_source",
     "compare_versions",
     "parse_dry_run",
+    "resolver_report",
 ]

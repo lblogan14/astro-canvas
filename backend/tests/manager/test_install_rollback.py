@@ -8,7 +8,7 @@ import pytest
 from sqlalchemy.orm import Session, sessionmaker
 
 from astro_canvas.manager import packs as packs_module
-from astro_canvas.manager.packs import ManagerError, PackManager
+from astro_canvas.manager.packs import ManagerError, PackManager, freeze_index
 from astro_canvas.manager.plan import SourceError
 from astro_canvas.manager.settings import ManagerSettingsUpdate
 from tests.conftest import fixture_entry_point
@@ -215,3 +215,37 @@ def test_a_disabled_pack_stays_unregistered_on_the_next_start(
     )
     assert "good.text.token" not in restarted.registry
     assert restarted.disabled() == {"good"}
+
+
+def test_freeze_lines_are_indexed_by_distribution_name() -> None:
+    """A rollback diffs freezes, so it has to read all three shapes uv emits."""
+    index = freeze_index(
+        [
+            "numpy==2.5.2",
+            "astro-canvas-core @ file:///C:/repo/packs/core",
+            "Astro_Canvas_SDK==0.1.0a0",
+            "uvicorn[standard]==0.30.0",
+            "-e file:///C:/repo/backend",
+            "",
+            "# a comment",
+        ]
+    )
+    assert index == {
+        "numpy": "numpy==2.5.2",
+        "astro-canvas-core": "astro-canvas-core @ file:///C:/repo/packs/core",
+        "astro-canvas-sdk": "Astro_Canvas_SDK==0.1.0a0",
+        "uvicorn": "uvicorn[standard]==0.30.0",
+    }
+
+
+def test_rollback_touches_only_what_changed(manager: PackManager, fake_uv: FakeEnvironment) -> None:
+    """An editable workspace member is identical in both freezes, so it is never rebuilt."""
+    fake_uv.set_installed({**fake_uv.installed(), "astro-canvas-core": "0.1.0a0"})
+    snapshot = manager.snapshot("baseline")
+    manager.install("astro-canvas-demo")
+
+    rolled = manager.rollback(snapshot.id)
+    assert rolled.ok
+    assert "astro-canvas-core" not in rolled.output
+    assert "astro-canvas-demo" in rolled.output
+    assert manager.uv.freeze() == manager.snapshot_packages(snapshot.id)

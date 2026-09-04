@@ -85,19 +85,54 @@ def test_mixed_diff_splits_into_add_upgrade_and_remove() -> None:
     assert [c.name for c in plan.removals] == ["stale-helper"]
 
 
+def test_the_diff_is_read_from_stderr_too() -> None:
+    """uv writes its progress and diff to stderr; a stdout-only parser sees an empty plan."""
+    plan = parse_dry_run("", ADD, source="astro-canvas-demo")
+    assert [c.name for c in plan.adds] == ["astro-canvas-demo", "click", "rich"]
+
+
 def test_nothing_to_do_is_an_empty_but_valid_plan() -> None:
     plan = parse_dry_run(NO_CHANGES)
     assert plan.ok and plan.is_empty
     assert plan.message == "already satisfied: nothing would change"
 
 
+EXPLANATION = (
+    "Because astropy>=6.0.0 depends on numpy>=1.22 and you require astropy>=6 and "
+    "numpy==1.19.5, we can conclude that your requirements are unsatisfiable."
+)
+
+MULTI_STEP_ERR = """\
+  x No solution found when resolving dependencies:
+  `-> Because astro-canvas was not found in the package registry and
+      astro-canvas==0.1.0a0 depends on numpy>=1.26, we can conclude that
+      astro-canvas==0.1.0a0 depends on numpy>=1.26.
+      And because you require numpy==1.19.5 and astro-canvas==0.1.0a0, we can
+      conclude that your requirements are unsatisfiable.
+
+hint: Pre-releases are available for numpy.
+"""
+
+
 def test_a_failed_resolution_blocks_and_explains() -> None:
     plan = parse_dry_run(NO_SOLUTION_OUT, NO_SOLUTION_ERR, returncode=1, source="astro-canvas-bad")
     assert not plan.ok
     assert plan.changes == []
-    assert plan.conflicts == ["astropy>=6 and\n      numpy==1.19.5"]
-    assert "unsatisfiable" in plan.message
+    # uv hard-wraps its report; the conflict is one readable paragraph, not the raw lines.
+    assert plan.conflicts == [EXPLANATION]
+    assert plan.message == EXPLANATION
     assert "No solution found" in plan.output
+
+
+def test_the_summary_is_uvs_conclusion_not_its_first_step() -> None:
+    """A multi-step report ends with the sentence the user can act on."""
+    plan = parse_dry_run("", MULTI_STEP_ERR, returncode=1)
+    assert plan.message == (
+        "you require numpy==1.19.5 and astro-canvas==0.1.0a0, we can conclude that your "
+        "requirements are unsatisfiable."
+    )
+    # The hint below the blank line is not part of the explanation.
+    assert "hint:" not in plan.conflicts[0]
 
 
 def test_a_nonzero_exit_without_a_resolver_report_still_blocks() -> None:
