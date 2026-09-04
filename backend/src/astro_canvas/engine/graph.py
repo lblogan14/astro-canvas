@@ -73,17 +73,12 @@ class SubgraphPort(BaseModel):
     port: str
 
 
-class SubgraphDoc(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-    name: str = ""
-    nodes: dict[str, NodeDoc] = Field(default_factory=dict)
-    edges: dict[str, EdgeDoc] = Field(default_factory=dict)
-    inputs: list[SubgraphPort] = Field(default_factory=list)
-    outputs: list[SubgraphPort] = Field(default_factory=list)
-
-
 class PromotedDoc(BaseModel):
+    """A param lifted out of a node so a layout (or a subgraph instance) can set it.
+
+    ``ref`` (``"<node>.<param>"``) is how layouts and subgraph instances address it.
+    """
+
     model_config = ConfigDict(extra="allow")
 
     node: str
@@ -91,6 +86,28 @@ class PromotedDoc(BaseModel):
     label: str | None = None
     group: str | None = None
     order: int = 0
+
+    @property
+    def ref(self) -> str:
+        return f"{self.node}.{self.param}"
+
+
+class SubgraphDoc(BaseModel):
+    """A reusable body. Instances are nodes typed ``subgraph:<id>``.
+
+    ``inputs``/``outputs`` name the boundary ports; ``promoted`` lists the inner params an
+    instance may override through its own ``params`` (keyed by ``"<inner node>.<param>"``) or
+    link to an input port through its own ``linked``.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    name: str = ""
+    nodes: dict[str, NodeDoc] = Field(default_factory=dict)
+    edges: dict[str, EdgeDoc] = Field(default_factory=dict)
+    inputs: list[SubgraphPort] = Field(default_factory=list)
+    outputs: list[SubgraphPort] = Field(default_factory=list)
+    promoted: list[PromotedDoc] = Field(default_factory=list)
 
 
 class ViewDoc(BaseModel):
@@ -207,9 +224,57 @@ class _Flat:
     nodes: dict[str, NodeDoc] = field(default_factory=dict)
     edges: list[_Edge] = field(default_factory=list)
     errors: dict[str, list[NodeIssue]] = field(default_factory=dict)
+    instances: set[str] = field(default_factory=set)
+    """Fully-qualified ids of expanded subgraph instances (they are not real nodes)."""
+    port_in: dict[tuple[str, str], tuple[str, str]] = field(default_factory=dict)
+    port_out: dict[tuple[str, str], tuple[str, str]] = field(default_factory=dict)
 
     def error(self, node: str, code: str, message: str, **where: str | None) -> None:
         self.errors.setdefault(node, []).append(NodeIssue(code=code, message=message, **where))
+
+    def resolve(
+        self, table: Mapping[tuple[str, str], tuple[str, str]], node: str, port: str
+    ) -> tuple[str, str] | None:
+        """Follow a boundary port through nested instances down to a real node's port."""
+        for _ in range(MAX_SUBGRAPH_DEPTH + 1):
+            mapped = table.get((node, port))
+            if mapped is None:
+                return None
+            node, port = mapped
+            if node not in self.instances:
+                return node, port
+        return None
+
+
+def _instance_body(
+    sg: SubgraphDoc, promoted: Mapping[str, PromotedDoc], node: NodeDoc, full: str, flat: _Flat
+) -> dict[str, NodeDoc]:
+    """The subgraph's nodes with the instance's promoted param overrides and links applied.
+
+    An instance addresses a promoted param by its ``"<inner node>.<param>"`` ref: a value in
+    ``params`` overrides the inner node's param, a ref in ``linked`` turns it into an input port
+    on the instance (and on the inner node, so an edge can feed it).
+    """
+    body = dict(sg.nodes)
+    for ref in [*node.params, *node.linked]:
+        target = promoted.get(ref)
+        if target is None:
+            flat.error(full, "unknown_param", f"{ref!r} is not promoted by the subgraph", param=ref)
+            continue
+        inner = body.get(target.node)
+        if inner is None:
+            flat.error(
+                full, "unknown_param", f"promoted {ref!r} has no node {target.node!r}", param=ref
+            )
+            continue
+        if ref in node.linked:
+            linked = inner.linked if target.param in inner.linked else [*inner.linked, target.param]
+            body[target.node] = inner.model_copy(update={"linked": linked})
+            continue
+        body[target.node] = inner.model_copy(
+            update={"params": {**inner.params, target.param: node.params[ref]}}
+        )
+    return body
 
 
 def _flatten(
@@ -222,12 +287,11 @@ def _flatten(
     depth: int = 0,
 ) -> None:
     """Inline ``subgraph:<id>`` instances as ``<instance>/<inner>`` nodes."""
-    port_in: dict[tuple[str, str], tuple[str, str]] = {}
-    port_out: dict[tuple[str, str], tuple[str, str]] = {}
-    instances: set[str] = set()
     for nid, node in nodes.items():
         full = f"{prefix}{nid}"
-        if not node.type.startswith(SUBGRAPH_PREFIX):
+        # A disabled instance is left unexpanded so ``_bypass_disabled`` drops it like any
+        # other disabled node (it has no spec, so consumers get ``upstream_disabled``).
+        if not node.type.startswith(SUBGRAPH_PREFIX) or node.disabled:
             flat.nodes[full] = node
             continue
         sg_id = node.type[len(SUBGRAPH_PREFIX) :]
@@ -238,26 +302,32 @@ def _flatten(
         if depth >= MAX_SUBGRAPH_DEPTH:
             flat.error(full, "subgraph_depth", "subgraphs nested too deeply")
             continue
-        instances.add(full)
+        flat.instances.add(full)
         inner_prefix = f"{full}/"
-        _flatten(sg.nodes, sg.edges, subgraphs, flat, prefix=inner_prefix, depth=depth + 1)
+        promoted = {p.ref: p for p in sg.promoted}
+        body = _instance_body(sg, promoted, node, full, flat)
+        _flatten(body, sg.edges, subgraphs, flat, prefix=inner_prefix, depth=depth + 1)
         for p in sg.inputs:
-            port_in[(full, p.name)] = (f"{inner_prefix}{p.node}", p.port)
+            flat.port_in[(full, p.name)] = (f"{inner_prefix}{p.node}", p.port)
         for p in sg.outputs:
-            port_out[(full, p.name)] = (f"{inner_prefix}{p.node}", p.port)
+            flat.port_out[(full, p.name)] = (f"{inner_prefix}{p.node}", p.port)
+        for ref in node.linked:
+            target = promoted.get(ref)
+            if target is not None:
+                flat.port_in[(full, ref)] = (f"{inner_prefix}{target.node}", target.param)
     for edge in edges.values():
         src, src_port = f"{prefix}{edge.source[0]}", edge.source[1]
         dst, dst_port = f"{prefix}{edge.target[0]}", edge.target[1]
-        if src in instances:
-            mapped = port_out.get((src, src_port))
+        if src in flat.instances:
+            mapped = flat.resolve(flat.port_out, src, src_port)
             if mapped is None:
                 flat.error(
                     dst, "unknown_port", f"subgraph has no output {src_port!r}", port=dst_port
                 )
                 continue
             src, src_port = mapped
-        if dst in instances:
-            mapped = port_in.get((dst, dst_port))
+        if dst in flat.instances:
+            mapped = flat.resolve(flat.port_in, dst, dst_port)
             if mapped is None:
                 flat.error(
                     dst, "unknown_port", f"subgraph has no input {dst_port!r}", port=dst_port

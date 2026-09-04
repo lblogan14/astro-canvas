@@ -328,6 +328,12 @@ export const useExecutionStore = defineStore('execution', () => {
       case 'run.accepted':
         currentRunId.value = message.run_id
         return
+      case 'batch.accepted':
+      case 'batch.cancelled':
+      case 'batch.started':
+      case 'batch.row':
+      case 'batch.finished':
+        return // the batch store owns these
       case 'cancel.result':
         return
       case 'error':

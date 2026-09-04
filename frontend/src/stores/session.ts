@@ -9,6 +9,7 @@ import { api } from '@/api/client'
 import type { ComputeRequest, PreviewViewport } from '@/api/events'
 import type { DecodedFrame } from '@/api/frames'
 import { type WsStatus, WsClient } from '@/api/ws'
+import { useBatchStore } from './batch'
 import { useExecutionStore } from './execution'
 import { useWorkflowStore } from './workflow'
 import { useWorkspaceStore } from './workspace'
@@ -37,6 +38,14 @@ export const useSessionStore = defineStore('session', () => {
     ws.onMessage((message) => {
       if (message.type === 'workspace.changed') {
         useWorkspaceStore().applyChange(message.paths)
+        return
+      }
+      if (
+        message.type === 'batch.started' ||
+        message.type === 'batch.row' ||
+        message.type === 'batch.finished'
+      ) {
+        useBatchStore().applyMessage(message)
         return
       }
       useExecutionStore().applyMessage(message)

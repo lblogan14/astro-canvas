@@ -18,7 +18,8 @@ loaders for spectra/tables/images/cubes, archive fetch nodes, inline previews (u
 viewer (Plotly with server-side re-sampling, Canvas2D image view with WCS readout, Arrow tables).
 See [docs/guide/canvas.md](docs/guide/canvas.md), [docs/guide/data.md](docs/guide/data.md),
 [docs/guide/absorption.md](docs/guide/absorption.md), [docs/guide/redshift.md](docs/guide/redshift.md),
-[docs/guide/multispec.md](docs/guide/multispec.md), [docs/guide/ifu.md](docs/guide/ifu.md) and the roadmap below.
+[docs/guide/multispec.md](docs/guide/multispec.md), [docs/guide/ifu.md](docs/guide/ifu.md),
+[docs/guide/batch.md](docs/guide/batch.md) and the roadmap below.
 
 | Phase | Outcome |
 |---|---|
@@ -29,7 +30,8 @@ See [docs/guide/canvas.md](docs/guide/canvas.md), [docs/guide/data.md](docs/guid
 | 06 | rbcodes pack II: `rb_zfind` redshift finding (line search, picket fence, MARZ templates, redrock PCA), z-accept editor, redshift-finder template |
 | 07 | rbcodes pack III: multi-spectrum viewer (stacked panels, line identification, absorber catalogues, quick fits, rb_multispec file formats) |
 | 08 | rbcodes pack IV: IFU cubes (`rb_ifuview` collapses, aperture editor, moment maps, ds9 regions, memory-mapped cubes) |
-| 09–13 | Batch and subgraphs, app modes, pack manager and bundles, distribution, hardening and `v0.1.0` |
+| 09 | Batch runner (a workflow over a table of rows, specgui batch import) and subgraphs (collapse, breadcrumb navigation, blueprints) with elk auto-layout |
+| 10–13 | App modes, pack manager and bundles, distribution, hardening and `v0.1.0` |
 
 ## Quick start (developers)
 
@@ -82,6 +84,7 @@ workspace members) · `launcher/`, `deploy/` (phase 12) · `registry/` (pack ind
   REST endpoints for workflows/runs/outputs, the `/ws` event protocol and binary frames.
 - [docs/guide/canvas.md](docs/guide/canvas.md): using the canvas (panels, nodes, connections, shortcuts).
 - [docs/guide/data.md](docs/guide/data.md): the workspace folder, loaders, fetch nodes, previews and the viewer.
+- [docs/guide/batch.md](docs/guide/batch.md): running a workflow over a table of rows, and the specgui batch import.
 - [backend/sdk/README.md](backend/sdk/README.md): writing nodes with the SDK.
 - [docs/dev/rbcodes-compat.md](docs/dev/rbcodes-compat.md): rbcodes on Python 3.12, test results, and the
   proposed upstream patch ([docs/dev/rbcodes-upstream.patch](docs/dev/rbcodes-upstream.patch)).

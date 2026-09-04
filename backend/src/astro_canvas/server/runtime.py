@@ -14,6 +14,7 @@ import structlog
 from pydantic import BaseModel
 from sqlalchemy import select
 
+from astro_canvas.engine.batch import BatchRunner
 from astro_canvas.engine.cache import (
     BlobStore,
     MemoryLRU,
@@ -111,6 +112,16 @@ class EngineRuntime:
         self.schedulers: dict[str, Scheduler] = {}
         self.watcher: WorkspaceWatcher | None = None
         self._open_workspace(Path(settings.workspace))
+        self.batches = BatchRunner(
+            registry=self.registry,
+            cache=self.cache,
+            bus=self.bus,
+            workspace_root=self.workspace.root,
+            scratch_root=self.workspace.scratch_dir,
+            threads=self.threads,
+            processes=self.processes,
+            config=self.scheduler_config,
+        )
 
     # --- workspace ---------------------------------------------------------------------------
 
@@ -147,10 +158,15 @@ class EngineRuntime:
             target.mkdir(parents=True, exist_ok=True)
         watching = self.watcher is not None and self.watcher.running
         await self.stop_watcher()
+        await self.batches.close()
         await asyncio.gather(*(s.close() for s in self.schedulers.values()), return_exceptions=True)
         self.schedulers.clear()
         self.workspace.close()
         self._open_workspace(target)
+        self.batches.cache = self.cache
+        self.batches.workspace_root = self.workspace.root
+        self.batches.scratch_root = self.workspace.scratch_dir
+        self.batches.runs.clear()
         if watching:
             self.start_watcher()
         log.info("workspace switched", root=str(self.workspace.root))
@@ -319,6 +335,7 @@ class EngineRuntime:
 
     async def shutdown(self) -> None:
         await self.stop_watcher()
+        await self.batches.close()
         await asyncio.gather(*(s.close() for s in self.schedulers.values()), return_exceptions=True)
         self.threads.shutdown()
         if self.processes is not None:

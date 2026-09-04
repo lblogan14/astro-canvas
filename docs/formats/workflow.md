@@ -25,11 +25,16 @@ The machine-readable REST contract is `backend/src/astro_canvas/server/openapi/o
   "subgraphs": {
     "measure": { "name": "Measure line", "nodes": {…}, "edges": {…},
                  "inputs":  [{"name": "spec", "node": "inner1", "port": "spec"}],
-                 "outputs": [{"name": "ew", "node": "inner9", "port": "out"}] }
+                 "outputs": [{"name": "ew", "node": "inner9", "port": "out"}],
+                 "promoted": [{"node": "inner5", "param": "vmin", "label": "EW vmin"}] }
   },
   "promoted": [ {"node": "n2", "param": "z", "label": "Redshift", "group": "Setup", "order": 1} ],
   "views": [ {"id": "v1", "node": "n6", "port": "measurement", "kind": "ew-summary"} ],
-  "layouts": { "app": {…}, "wizard": {…}, "dashboard": {…}, "batch": {…} },
+  "layouts": {
+    "batch": { "columns": [{"promoted": "n1.path", "column": "filename"}, "n2.z"],
+               "collect": ["n6.measurement"], "max_workers": 4, "continue_on_error": true },
+    "app": {…}, "wizard": {…}, "dashboard": {…}
+  },
   "requires": { "packs": {"astro-canvas-core": ">=0.1,<0.2"}, "python": ">=3.10" },
   "meta": { "created": "…", "modified": "…", "author": "…", "tags": ["sample"] }
 }
@@ -42,7 +47,8 @@ Rules the compiler applies (`astro_canvas.engine.graph.compile`):
 | Unknown top-level or node fields | preserved (round-trip safe); `layouts`, `promoted`, `views`, `groups` are passed through untouched |
 | `linked` | the named params become input ports typed by the param's `link_type` (`astro.Float`, `astro.Json`, …); the upstream scalar value is unwrapped into the param |
 | `disabled` | the node is removed; its first output whose type matches a connected input is passed through, otherwise consumers get `upstream_disabled` |
-| `subgraph:<id>` | inlined as `<instance>/<inner id>` nodes; edges to instance `inputs`/`outputs` names are rewired to the inner ports |
+| `subgraph:<id>` | inlined as `<instance>/<inner id>` nodes; edges to instance `inputs`/`outputs` names are rewired to the inner ports (through nested instances too, up to 8 levels). A **disabled** instance is not inlined and behaves like any disabled node without a passthrough |
+| `subgraphs[].promoted` | the inner params an instance may set. The instance addresses one by its ref `"<inner node>.<param>"`: a value in the instance's `params` overrides the inner param, and a ref in the instance's `linked` exposes it as an input port on the instance (and links it on the inner node). Refs nest, so an outer subgraph promotes `"inner.plus.y"` |
 | `cost` | overrides the node type's cost class (`cheap`, `expensive`, `auto`) |
 | `pos`, `size`, `title`, `ui`, `notes` | UI only; they never affect cache keys |
 
@@ -75,6 +81,15 @@ Sample documents live in `backend/tests/fixtures/workflows/` (`math_chain.json`,
 * **Caches**: in-memory LRU (`ASTRO_CANVAS_CACHE_MEMORY_MB`, default 2048), content-addressed
   blob store `<workspace>/.astro-canvas/blobs` indexed in `app.db` (`ASTRO_CANVAS_CACHE_DISK_GB`,
   default 20; `ASTRO_CANVAS_CACHE_MAX_AGE_DAYS`, default 30). `astro.Any` values are memory-only.
+* **Batch** (`astro_canvas.engine.batch`): a batch binds table columns to node params and runs
+  the document once per row through ordinary schedulers that share the cache and executors, so
+  per-row cache keys fall out of the params that differ and unchanged rows re-run for free. Rows
+  run `max_workers` at a time (default `cpu-1` when the graph has expensive nodes, else 8), a
+  failed row does not stop the others unless `continue_on_error` is false, and the results grid
+  flattens each collected output's scalar fields into columns (`EWMeasurement` → `W`, `W_e`, `N`,
+  `N_e`, `logN`, `logN_e`, `vel_centroid`, `vel_disp`, `SNR`, …) plus `status`, `error_message`
+  and `calculation_timestamp`. A collected column that clashes with an input column is qualified
+  with its node id.
 * **Persistence**: `workflows`, `workflow_versions` (snapshot per changed save), `runs`,
   `node_runs`, `outputs`, `node_stats` in `<workspace>/.astro-canvas/app.db` (Alembic-managed).
 
@@ -94,6 +109,8 @@ the `?token=` URL. Set `ASTRO_CANVAS_AUTH=false` to disable.
 | `GET /workflows/{id}/status` | `{node_errors, nodes: {id: node.status}, current_run, auto_run}` for reconnecting clients |
 | `GET /workflows/{id}/settings` · `POST /workflows/{id}/settings` `{auto_run}` | read / toggle the scheduler's auto-run switch (enabling it runs dirty cheap nodes immediately) |
 | `POST /workflows/{id}/run` `{targets?}` | 202 `{run_id}`; runs to the targets (default every leaf) |
+| `POST /workflows/{id}/batch` `{rows, spec?}` | 202 `BatchInfo`; runs the document once per row (`spec` defaults to `layouts.batch`) |
+| `GET /workflows/{id}/batch/{batch_id}` · `POST .../cancel` | per-row states and the results grid assembled so far / stop queued rows and cancel the running ones |
 | `GET /templates` · `GET /templates/{id}` | pack-shipped workflow templates (`id = <pack>.<file stem>`, `name, description, pack, node_count, file, readme`) / the template document itself |
 | `POST /templates/{id}/instantiate` `{name?}` | 201 `{doc, node_errors}`: a stored copy under a fresh id (`meta.template` records the origin) that compiles and auto-runs like any workflow |
 | `GET /runs?workflow_id=` · `GET /runs/{id}` | history (`status, started, finished, targets, nodes[]`) |
@@ -124,6 +141,7 @@ workflow_id`:
 | `workspace.changed` | `paths` (workspace-relative); broadcast to every subscriber (`workflow_id = "*"`) |
 | `run.started` / `run.finished` | `run_id, targets, n_nodes, cached` (+ `status, elapsed_ms`) |
 | `preview.computed` | reply to `preview.compute`: `node_id` or `node_type`, `tag`, `ok`, `ports`, `elapsed_ms`, `error` (the tagged `node.output.summary` events for every output precede it) |
+| `batch.started` / `batch.row` / `batch.finished` | `batch_id, n_rows, max_workers, columns` · `batch_id, row, state, error, elapsed_ms, outputs` · `batch_id, n_rows, done, failed, cancelled, status, elapsed_ms`. Node-level events of the rows themselves are **not** published (they would repaint the canvas) |
 
 Client → server: `subscribe {workflow_id}` (replies with `subscribed`, `graph.validation` and one
 `node.status` per node), `run {targets?}`, `cancel {run_id?, node_id?}`,
@@ -132,7 +150,8 @@ Client → server: `subscribe {workflow_id}` (replies with `subscribed`, `graph.
 `preview.compute {node_id | node_type, params, tag, viewport}` (phase 05: run one node body with candidate
 params outside the scheduler, nothing cached or committed; inputs come from the graph's cached upstream
 outputs for `node_id`, or the node type runs on `params` alone; replies are tagged `node.output.summary`
-events plus `preview.computed`), `ping`.
+events plus `preview.computed`), `batch.run {rows, spec?}` (replies `batch.accepted`),
+`batch.cancel {batch_id}` (replies `batch.cancelled`), `ping`.
 
 Binary frames: `u32 msg_type (1 = output) | u32 header_len | msgpack header | buffers`, header
 `{node_id, port, type_id, data, arrays: [{name, dtype, shape, offset, nbytes}]}`; each array is a

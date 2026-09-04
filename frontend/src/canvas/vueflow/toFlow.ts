@@ -9,7 +9,6 @@ import type { Edge, Node } from '@vue-flow/core'
 import type { EdgeDoc, NodeDoc } from '@/api/types'
 import { outputType } from '@/canvas/compat'
 import { portStyle } from '@/canvas/ports'
-import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { type CanvasGroup, DEFAULT_NODE_SIZE, useWorkflowStore } from '@/stores/workflow'
 
 export const ASTRO_NODE = 'astro'
@@ -110,7 +109,6 @@ function buildEdge(id: string, edge: EdgeDoc, color: string): Edge {
 /** Reactive Vue Flow nodes and edges derived from the workflow store. */
 export function useFlowElements(): { nodes: ComputedRef<FlowNode[]>; edges: ComputedRef<Edge[]> } {
   const workflow = useWorkflowStore()
-  const schema = useNodesSchemaStore()
   const nodeCache = new Map<string, NodeCacheEntry>()
   const groupCache = new Map<string, GroupCacheEntry>()
   const edgeCache = new Map<string, EdgeCacheEntry>()
@@ -166,7 +164,7 @@ export function useFlowElements(): { nodes: ComputedRef<FlowNode[]>; edges: Comp
     for (const id of Object.keys(docEdges)) {
       const edge = docEdges[id] as EdgeDoc
       const sourceNode = docNodes[edge.from[0]]
-      const spec = sourceNode ? schema.byId[sourceNode.type] : undefined
+      const spec = sourceNode ? workflow.specs[sourceNode.type] : undefined
       const typeId = spec ? outputType(spec, edge.from[1]) : undefined
       const color = typeId ? portStyle(typeId).color : '#999999'
       const cached = edgeCache.get(id)

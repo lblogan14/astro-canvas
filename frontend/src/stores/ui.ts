@@ -6,6 +6,8 @@ import { api } from '@/api/client'
 export type Theme = 'system' | 'light' | 'dark'
 export type BackendStatus = 'idle' | 'connecting' | 'online' | 'offline'
 export type SidebarPanel = 'library' | 'workflows' | 'workspace'
+/** Which layout the shell shows (design §8.4); app/wizard/dashboard arrive in phase 10. */
+export type AppMode = 'canvas' | 'batch'
 export type DrawerTab = 'log' | 'errors' | 'system'
 
 /** The node output shown in the full-size viewer sheet. */
@@ -70,6 +72,7 @@ const isPlacement = (value: unknown): value is EditorPlacement =>
 /** Shell-wide UI state: theme, panels, backend connectivity, favourites, transient toasts. */
 export const useUiStore = defineStore('ui', () => {
   const theme = ref<Theme>(readStorage(THEME_KEY, 'system', isTheme))
+  const mode = ref<AppMode>('canvas')
   const sidebarOpen = ref(true)
   const sidebarPanel = ref<SidebarPanel>('library')
   const inspectorOpen = ref(true)
@@ -110,6 +113,10 @@ export const useUiStore = defineStore('ui', () => {
   function cycleTheme(): void {
     const index = THEME_ORDER.indexOf(theme.value)
     setTheme(THEME_ORDER[(index + 1) % THEME_ORDER.length] ?? 'system')
+  }
+
+  function setMode(next: AppMode): void {
+    mode.value = next
   }
 
   function toggleSidebar(): void {
@@ -215,6 +222,7 @@ export const useUiStore = defineStore('ui', () => {
 
   return {
     theme,
+    mode,
     sidebarOpen,
     sidebarPanel,
     inspectorOpen,
@@ -235,6 +243,7 @@ export const useUiStore = defineStore('ui', () => {
     isDark,
     setTheme,
     cycleTheme,
+    setMode,
     toggleSidebar,
     showSidebar,
     toggleInspector,
