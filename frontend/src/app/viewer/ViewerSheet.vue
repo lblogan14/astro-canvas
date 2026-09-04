@@ -60,7 +60,7 @@ const workflow = useWorkflowStore()
 const target = computed(() => ui.viewer)
 const open = computed(() => target.value !== null)
 const node = computed(() => (target.value ? workflow.nodes[target.value.nodeId] : undefined))
-const spec = computed(() => (node.value ? schema.byId[node.value.type] : undefined))
+const spec = computed(() => (node.value ? workflow.specs[node.value.type] : undefined))
 const thumb = computed(() =>
   target.value ? execution.node(target.value.nodeId).summaries[target.value.port] : undefined,
 )

@@ -1,6 +1,7 @@
 /**
  * Keyboard shortcuts (design §8.1): Ctrl+Enter run · Ctrl+Z/Y undo/redo · Ctrl+C/V/D copy, paste,
- * duplicate · Delete · Ctrl+G / Ctrl+Shift+G group/ungroup · Tab library search · `.` fit ·
+ * duplicate · Delete · Ctrl+G / Ctrl+Shift+G group/ungroup · Ctrl+Shift+C / Ctrl+Shift+E collapse
+ * to a subgraph / expand one · Ctrl+Shift+L auto-layout · Tab library search · `.` fit ·
  * `F` fit selection · Ctrl+A select all · Ctrl+S save · Escape.
  * Space-to-pan is handled by the canvas itself.
  */
@@ -8,6 +9,8 @@ import { onBeforeUnmount, onMounted, shallowRef } from 'vue'
 
 import { type ClipboardPayload, parseClipboard } from '@/canvas/clipboard'
 import { useCanvasAdapter } from '@/canvas/CanvasAdapter'
+import { layoutGraph } from '@/canvas/layout'
+import { isSubgraphType } from '@/canvas/subgraph'
 import { groupIdOf, isGroupNodeId } from '@/canvas/vueflow/toFlow'
 import { useSelectionStore } from '@/stores/selection'
 import { useSessionStore } from '@/stores/session'
@@ -34,6 +37,9 @@ export interface ShortcutActions {
   remove(): void
   group(): void
   ungroup(): void
+  collapse(): void
+  expand(): void
+  autoLayout(): Promise<void>
   selectAll(): void
   fitView(): void
   fitSelection(): void
@@ -107,6 +113,28 @@ export function useShortcutActions(): ShortcutActions {
       }
       if (groups.size) workflow.ungroup([...groups])
     },
+    collapse() {
+      const ids = selectedNodeIds()
+      if (ids.length === 0) return
+      const instance = workflow.collapseToSubgraph(ids)
+      if (instance) selection.set([instance])
+    },
+    expand() {
+      const ids = selectedNodeIds().filter((id) => isSubgraphType(workflow.nodes[id]?.type ?? ''))
+      if (ids.length === 0) return
+      const created: string[] = []
+      workflow.transaction('command.expand', () => {
+        for (const id of ids) created.push(...workflow.expandSubgraph(id))
+      })
+      if (created.length) selection.set(created)
+    },
+    async autoLayout() {
+      const ids = selectedNodeIds()
+      const moves = await layoutGraph(workflow.nodes, workflow.edges, {
+        nodeIds: ids.length > 1 ? ids : undefined,
+      })
+      if (moves.length) workflow.moveNodes(moves)
+    },
     selectAll() {
       selection.set(Object.keys(workflow.nodes))
     },
@@ -141,6 +169,9 @@ export function useShortcuts(actions: ShortcutActions): void {
     else if (mod && !event.shiftKey && key.toLowerCase() === 'z') actions.undo()
     else if (mod && (key.toLowerCase() === 'y' || (event.shiftKey && key.toLowerCase() === 'z')))
       actions.redo()
+    else if (mod && event.shiftKey && key.toLowerCase() === 'c') actions.collapse()
+    else if (mod && event.shiftKey && key.toLowerCase() === 'e') actions.expand()
+    else if (mod && event.shiftKey && key.toLowerCase() === 'l') void actions.autoLayout()
     else if (mod && key.toLowerCase() === 'c') actions.copy()
     else if (mod && key.toLowerCase() === 'v') void actions.paste()
     else if (mod && key.toLowerCase() === 'd') actions.duplicate()

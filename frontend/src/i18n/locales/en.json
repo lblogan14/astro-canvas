@@ -211,7 +211,11 @@
     "duplicate": "duplicate",
     "rename_workflow": "rename workflow",
     "describe": "edit description",
-    "restore": "restore version"
+    "restore": "restore version",
+    "collapse": "collapse to subgraph",
+    "expand": "expand subgraph",
+    "promote": "promote parameter",
+    "insert_blueprint": "insert blueprint"
   },
   "widgets": {
     "flux": "flux",
@@ -489,5 +493,16 @@
         "exported": "Exported {n} apertures"
       }
     }
+  },
+  "subgraph": {
+    "enter": "Open subgraph",
+    "expand": "Expand in place",
+    "breadcrumb": "Subgraph path",
+    "collapse": "Collapse to subgraph",
+    "save_blueprint": "Save as blueprint",
+    "blueprint_saved": "Saved “{name}” as a blueprint",
+    "insert": "Insert blueprint",
+    "promote": "Promote to the subgraph",
+    "default_name": "Subgraph"
   }
 }

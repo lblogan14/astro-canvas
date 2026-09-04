@@ -169,7 +169,7 @@ describe('aperture helpers', () => {
     // The annulus keeps its inner/outer ratio.
     const grown = resizeTo(ANNULUS, { x: 32, y: 12 })
     expect(grown.pixel[3]).toBeCloseTo(22)
-    expect(grown.pixel[2] / grown.pixel[3]!).toBeCloseTo(8 / 11)
+    expect(grown.pixel[2]! / grown.pixel[3]!).toBeCloseTo(8 / 11)
     expect(resizeTo(BOX, { x: 25, y: 23 }).pixel).toEqual([20, 20, 10, 6, 0])
     expect(outerRadius(resizeTo(TRIANGLE, { x: 7, y: 20 }))).toBeCloseTo(20 - 16 / 3)
     // Resizing never collapses a shape to nothing.
@@ -492,7 +492,7 @@ describe('ApertureEditor', () => {
     expect(wrapper.attributes('data-apertures')).toBe('2')
     await wrapper.find('[data-testid="aperture-apply"]').trigger('click')
     const workflow = useWorkflowStore()
-    const written = workflow.nodes['extract']?.params['regions'] as Record<string, unknown>[]
+    const written = workflow.nodes['extract']?.params?.['regions'] as Record<string, unknown>[]
     expect(written).toHaveLength(2)
     expect(written[1]).toMatchObject({ label: 'clump', role: 'background' })
   })
@@ -501,20 +501,20 @@ describe('ApertureEditor', () => {
     const { wrapper, workflow } = await setup({ regions: toParam([CIRCLE]) })
     await wrapper.find('[data-testid="aperture-row-background"]').setValue(true)
     expect(wrapper.find('[data-testid="aperture-apply"]').attributes('disabled')).toBeDefined()
-    expect(workflow.nodes['extract']?.params['regions'] as unknown[]).toHaveLength(1)
+    expect(workflow.nodes['extract']?.params?.['regions'] as unknown[]).toHaveLength(1)
   })
 
   it('imports a ds9 file and exports one', async () => {
     const { wrapper } = await setup()
-    const clicked = vi.fn()
+    const clicked = vi.fn<() => void>()
     const created = document.createElement('a')
     created.click = clicked
     const create = vi.spyOn(document, 'createElement')
     create.mockImplementation((tag: string) =>
       tag === 'a' ? created : Object.getPrototypeOf(document).createElement.call(document, tag),
     )
-    URL.createObjectURL = vi.fn(() => 'blob:x')
-    URL.revokeObjectURL = vi.fn()
+    URL.createObjectURL = vi.fn<() => string>(() => 'blob:x')
+    URL.revokeObjectURL = vi.fn<() => void>()
 
     const input = wrapper.find('[data-testid="aperture-file"]')
     const file = new File([toDs9([CIRCLE, ANNULUS])], 'a.reg', { type: 'text/plain' })

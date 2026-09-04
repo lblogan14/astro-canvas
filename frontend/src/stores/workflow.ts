@@ -11,9 +11,25 @@ import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 
 import { api } from '@/api/client'
-import type { EdgeDoc, GroupDoc, NodeDoc, NodeErrors, NodeSpec, WorkflowDoc } from '@/api/types'
+import type {
+  EdgeDoc,
+  GroupDoc,
+  NodeDoc,
+  NodeErrors,
+  NodeSpec,
+  SubgraphDoc,
+  WorkflowDoc,
+} from '@/api/types'
 import { type ClipboardPayload, copySelection, preparePaste } from '@/canvas/clipboard'
 import { type ConnectionQuery, type ConnectionVerdict, checkConnection } from '@/canvas/compat'
+import {
+  collapseSelection,
+  expandInstance,
+  isSubgraphType,
+  subgraphIdOf,
+  subgraphSpecs,
+  subgraphType,
+} from '@/canvas/subgraph'
 import { clone } from '@/lib/deepEqual'
 import { newId } from '@/lib/ids'
 import { useExecutionStore } from './execution'
@@ -34,6 +50,15 @@ export interface DocCore {
   nodes: Record<string, NodeDoc>
   edges: Record<string, EdgeDoc>
   groups: Record<string, CanvasGroup>
+  subgraphs: Record<string, SubgraphDoc>
+}
+
+/** One step of the open subgraph path: the instance node and the body it points at. */
+export interface Breadcrumb {
+  /** Instance node id in its parent container (empty for the document root). */
+  nodeId: string
+  subgraphId: string
+  label: string
 }
 
 export interface Command {
@@ -106,7 +131,27 @@ function core(doc: WorkflowDoc): DocCore {
     nodes: { ...doc.nodes },
     edges: { ...doc.edges },
     groups: { ...(doc.groups as Record<string, CanvasGroup> | undefined) },
+    subgraphs: { ...doc.subgraphs },
   }
+}
+
+/**
+ * Resolve a path of instance node ids to the subgraph ids they open. Stops at the first step
+ * that is not a subgraph instance, so a stale path degrades to the deepest valid prefix.
+ */
+export function resolvePath(doc: DocCore, path: readonly string[]): Breadcrumb[] {
+  const out: Breadcrumb[] = []
+  let nodes: Record<string, NodeDoc> = doc.nodes
+  for (const nodeId of path) {
+    const node = nodes[nodeId]
+    if (!node || !isSubgraphType(node.type)) break
+    const subgraphId = subgraphIdOf(node.type)
+    const sg = doc.subgraphs[subgraphId]
+    if (!sg) break
+    out.push({ nodeId, subgraphId, label: node.title || sg.name || subgraphId })
+    nodes = (sg.nodes ?? {}) as Record<string, NodeDoc>
+  }
+  return out
 }
 
 function nodeBounds(node: NodeDoc): { x: number; y: number; w: number; h: number } {
@@ -160,11 +205,39 @@ export const useWorkflowStore = defineStore('workflow', () => {
   let saveTimer: ReturnType<typeof setTimeout> | null = null
   let saving: Promise<boolean> | null = null
 
-  const nodes = computed<Record<string, NodeDoc>>(() => doc.value?.nodes ?? {})
-  const edges = computed<Record<string, EdgeDoc>>(() => doc.value?.edges ?? {})
-  const groups = computed<Record<string, CanvasGroup>>(
-    () => (doc.value?.groups ?? {}) as Record<string, CanvasGroup>,
+  /** Instance node ids of the open subgraph, outermost first ([] = the document root). */
+  const path = ref<string[]>([])
+
+  const subgraphs = computed<Record<string, SubgraphDoc>>(() => doc.value?.subgraphs ?? {})
+  const breadcrumbs = computed<Breadcrumb[]>(() =>
+    doc.value ? resolvePath(core(doc.value), path.value) : [],
   )
+  const openSubgraphId = computed<string | null>(
+    () => breadcrumbs.value[breadcrumbs.value.length - 1]?.subgraphId ?? null,
+  )
+  const openSubgraph = computed<SubgraphDoc | null>(() =>
+    openSubgraphId.value ? (subgraphs.value[openSubgraphId.value] ?? null) : null,
+  )
+  const nodes = computed<Record<string, NodeDoc>>(() =>
+    openSubgraph.value
+      ? ((openSubgraph.value.nodes ?? {}) as Record<string, NodeDoc>)
+      : (doc.value?.nodes ?? {}),
+  )
+  const edges = computed<Record<string, EdgeDoc>>(() =>
+    openSubgraph.value
+      ? ((openSubgraph.value.edges ?? {}) as Record<string, EdgeDoc>)
+      : (doc.value?.edges ?? {}),
+  )
+  // Groups live on the root canvas only; inside a subgraph the group layer is empty.
+  const groups = computed<Record<string, CanvasGroup>>(() =>
+    openSubgraph.value ? {} : ((doc.value?.groups ?? {}) as Record<string, CanvasGroup>),
+  )
+  /** Registry specs plus one synthetic spec per subgraph (`subgraph:<id>`). */
+  const specs = computed<Record<string, NodeSpec>>(() => {
+    const registry = useNodesSchemaStore().byId
+    const extra = subgraphSpecs(subgraphs.value, registry)
+    return Object.keys(extra).length ? { ...registry, ...extra } : registry
+  })
   const id = computed(() => doc.value?.id ?? null)
   const name = computed(() => doc.value?.name ?? '')
   const isOpen = computed(() => doc.value !== null)
@@ -182,6 +255,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     copy.nodes ??= {}
     copy.edges ??= {}
     copy.groups ??= {}
+    copy.subgraphs ??= {}
     copy.meta ??= {}
     copy.id ??= newId('wf')
     return copy
@@ -191,6 +265,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   function load(input: WorkflowDoc): void {
     cancelScheduledSave()
     doc.value = normalize(input)
+    path.value = []
     undoStack.value = []
     redoStack.value = []
     changeSeq.value = 0
@@ -202,6 +277,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   function close(): void {
     cancelScheduledSave()
     doc.value = null
+    path.value = []
     undoStack.value = []
     redoStack.value = []
     changeSeq.value = 0
@@ -232,6 +308,33 @@ export const useWorkflowStore = defineStore('workflow', () => {
     current.nodes = next.nodes
     current.edges = next.edges
     current.groups = next.groups
+    current.subgraphs = next.subgraphs
+  }
+
+  /**
+   * The maps a mutation should touch. Inside a subgraph the draft's `nodes`/`edges` are swapped
+   * for the open body's; `sync` writes them back as a fresh `SubgraphDoc` entry.
+   */
+  function scoped(draft: DocCore): { view: DocCore; sync: () => void } {
+    const crumbs = resolvePath(draft, path.value)
+    const sgId = crumbs[crumbs.length - 1]?.subgraphId
+    const sg = sgId ? draft.subgraphs[sgId] : undefined
+    if (!sgId || !sg) return { view: draft, sync: () => {} }
+    const view: DocCore = {
+      ...draft,
+      nodes: { ...((sg.nodes ?? {}) as Record<string, NodeDoc>) },
+      edges: { ...((sg.edges ?? {}) as Record<string, EdgeDoc>) },
+      groups: {},
+    }
+    return {
+      view,
+      sync: () => {
+        draft.subgraphs = {
+          ...draft.subgraphs,
+          [sgId]: { ...sg, nodes: view.nodes, edges: view.edges },
+        }
+      },
+    }
   }
 
   function markChanged(): void {
@@ -248,7 +351,9 @@ export const useWorkflowStore = defineStore('workflow', () => {
     if (!current) throw new Error('no workflow is open')
     const before = core(current)
     const draft = core(current)
-    const result = mutate(draft)
+    const { view, sync } = scoped(draft)
+    const result = mutate(view)
+    sync()
     applyCore(draft)
     if (transactionDepth > 0) {
       transactionBefore ??= before
@@ -332,11 +437,12 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   function hasId(candidate: string): boolean {
     const d = doc.value
+    if (!d) return false
     return (
-      !!d &&
-      (candidate in (d.nodes ?? {}) ||
-        candidate in (d.edges ?? {}) ||
-        candidate in (d.groups ?? {}))
+      candidate in nodes.value ||
+      candidate in edges.value ||
+      candidate in (d.groups ?? {}) ||
+      candidate in (d.subgraphs ?? {})
     )
   }
 
@@ -495,7 +601,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
   function validateConnection(query: ConnectionQuery, ignoreEdge?: string): ConnectionVerdict {
     const schema = useNodesSchemaStore()
     return checkConnection(
-      { nodes: nodes.value, edges: edges.value, specs: schema.byId, types: schema.typeById },
+      { nodes: nodes.value, edges: edges.value, specs: specs.value, types: schema.typeById },
       query,
       ignoreEdge,
     )
@@ -507,7 +613,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const edgeId = commit('command.connect', (draft) => {
       // Dropping onto a linkable param converts it to an input port on the fly.
       const target = draft.nodes[query.target]
-      const schema = useNodesSchemaStore().byId[target?.type ?? '']
+      const schema = specs.value[target?.type ?? '']
       const isParam = schema?.params.some((p) => p.name === query.targetPort) ?? false
       if (target && isParam && !(target.linked ?? []).includes(query.targetPort)) {
         draft.nodes[query.target] = {
@@ -618,6 +724,144 @@ export const useWorkflowStore = defineStore('workflow', () => {
       if ((group.nodes ?? []).includes(nodeId)) return gid
     }
     return null
+  }
+
+  // --- subgraphs ------------------------------------------------------------------------------
+
+  /** Open the body of a subgraph instance in the current container (breadcrumb navigation). */
+  function enterSubgraph(nodeId: string): boolean {
+    const node = nodes.value[nodeId]
+    if (!node || !isSubgraphType(node.type)) return false
+    if (!subgraphs.value[subgraphIdOf(node.type)]) return false
+    path.value = [...path.value, nodeId]
+    return true
+  }
+
+  /** Go back up; `depth` is how many crumbs to keep (0 = the document root). */
+  function exitSubgraph(depth = path.value.length - 1): void {
+    path.value = path.value.slice(0, Math.max(0, depth))
+  }
+
+  /**
+   * Collapse `ids` into a new subgraph and replace them with one instance node. Edges crossing
+   * the boundary become named ports; everything happens in one undo entry.
+   */
+  function collapseToSubgraph(ids: readonly string[], name?: string): string | null {
+    const members = ids.filter((nodeId) => nodes.value[nodeId] !== undefined)
+    if (members.length === 0) return null
+    const instanceId = freshId('sg')
+    const subgraphId = freshId('sub')
+    const collapsed = collapseSelection(nodes.value, edges.value, members, instanceId, {
+      name: name ?? 'Subgraph',
+    })
+    if (!collapsed) return null
+    return commit('command.collapse', (draft) => {
+      const set = new Set(members)
+      for (const nodeId of members) delete draft.nodes[nodeId]
+      for (const eid of Object.keys(draft.edges)) {
+        const edge = draft.edges[eid] as EdgeDoc
+        if (set.has(edge.from[0]) || set.has(edge.to[0])) delete draft.edges[eid]
+      }
+      Object.assign(draft.edges, collapsed.edges)
+      draft.nodes[instanceId] = { ...collapsed.instance, type: subgraphType(subgraphId) }
+      // Members that were grouped leave their group behind.
+      for (const [gid, group] of Object.entries(draft.groups)) {
+        const rest = (group.nodes ?? []).filter((n) => !set.has(n))
+        if (rest.length === 0) delete draft.groups[gid]
+        else if (rest.length !== (group.nodes ?? []).length)
+          draft.groups[gid] = { ...group, nodes: rest }
+      }
+      draft.subgraphs = { ...draft.subgraphs, [subgraphId]: collapsed.subgraph }
+      return instanceId
+    })
+  }
+
+  /** Inline a subgraph instance back into the current container, restoring inner positions. */
+  function expandSubgraph(nodeId: string): string[] {
+    const node = nodes.value[nodeId]
+    if (!node || !isSubgraphType(node.type)) return []
+    const sg = subgraphs.value[subgraphIdOf(node.type)]
+    if (!sg) return []
+    const expanded = expandInstance(nodes.value, edges.value, nodeId, sg, hasId)
+    if (!expanded) return []
+    commit('command.expand', (draft) => {
+      delete draft.nodes[nodeId]
+      for (const [eid, edge] of Object.entries(draft.edges)) {
+        if (edge.from[0] === nodeId || edge.to[0] === nodeId) delete draft.edges[eid]
+      }
+      Object.assign(draft.nodes, expanded.nodes)
+      Object.assign(draft.edges, expanded.edges)
+    })
+    return Object.values(expanded.idMap)
+  }
+
+  /** Rename a subgraph body (the label shown on every instance and in the breadcrumb). */
+  function renameSubgraph(subgraphId: string, title: string): void {
+    const next = title.trim()
+    if (!next) return
+    commit('command.rename', (draft) => {
+      const sg = draft.subgraphs[subgraphId]
+      if (sg) draft.subgraphs = { ...draft.subgraphs, [subgraphId]: { ...sg, name: next } }
+    })
+  }
+
+  /** Lift an inner node's param so instances of `subgraphId` can set it. */
+  function promoteSubgraphParam(subgraphId: string, node: string, param: string): void {
+    commit('command.promote', (draft) => {
+      const sg = draft.subgraphs[subgraphId]
+      if (!sg) return
+      const promoted = sg.promoted ?? []
+      const already = promoted.some((p) => p.node === node && p.param === param)
+      draft.subgraphs = {
+        ...draft.subgraphs,
+        [subgraphId]: {
+          ...sg,
+          promoted: already
+            ? promoted.filter((p) => !(p.node === node && p.param === param))
+            : [...promoted, { node, param, label: null, group: null, order: promoted.length }],
+        },
+      }
+    })
+  }
+
+  /** A standalone document holding one subgraph plus an instance: a reusable blueprint. */
+  function blueprintOf(subgraphId: string, title?: string): WorkflowDoc | null {
+    const sg = subgraphs.value[subgraphId]
+    if (!sg) return null
+    const blueprint = emptyDoc(title ?? sg.name ?? 'Blueprint')
+    blueprint.subgraphs = { [subgraphId]: clone(sg) }
+    blueprint.nodes = {
+      main: { ...nodeFromSpec(specs.value[subgraphType(subgraphId)] as NodeSpec, [0, 0]) },
+    }
+    blueprint.meta = { blueprint: { subgraph: subgraphId } }
+    return blueprint
+  }
+
+  /** Insert a blueprint document's subgraph into this document as one instance node. */
+  function insertBlueprint(source: WorkflowDoc, pos: Pos): string | null {
+    const entries = Object.entries(source.subgraphs ?? {})
+    const first = entries[0]
+    if (!first) return null
+    const [sourceId, sg] = first
+    const subgraphId = hasId(sourceId) ? freshId('sub') : sourceId
+    const instanceId = freshId('sg')
+    return commit('command.insert_blueprint', (draft) => {
+      draft.subgraphs = { ...draft.subgraphs, [subgraphId]: clone(sg) }
+      draft.nodes[instanceId] = {
+        type: subgraphType(subgraphId),
+        version: null,
+        title: sg.name || null,
+        pos,
+        size: null,
+        params: {},
+        linked: [],
+        ui: {},
+        cost: null,
+        disabled: false,
+        notes: '',
+      }
+      return instanceId
+    })
   }
 
   // --- clipboard ------------------------------------------------------------------------------
@@ -747,6 +991,11 @@ export const useWorkflowStore = defineStore('workflow', () => {
     nodes,
     edges,
     groups,
+    subgraphs,
+    specs,
+    path,
+    breadcrumbs,
+    openSubgraphId,
     id,
     name,
     isOpen,
@@ -795,6 +1044,14 @@ export const useWorkflowStore = defineStore('workflow', () => {
     moveGroup,
     fitGroup,
     groupOf,
+    enterSubgraph,
+    exitSubgraph,
+    collapseToSubgraph,
+    expandSubgraph,
+    renameSubgraph,
+    promoteSubgraphParam,
+    blueprintOf,
+    insertBlueprint,
     copy,
     paste,
     duplicate,

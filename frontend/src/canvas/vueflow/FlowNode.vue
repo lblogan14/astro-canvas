@@ -5,14 +5,14 @@ import { useI18n } from 'vue-i18n'
 import { Handle, type NodeProps, Position } from '@vue-flow/core'
 import { NodeResizer, type OnResizeStart } from '@vue-flow/node-resizer'
 import { NodeToolbar } from '@vue-flow/node-toolbar'
-import { Ban, Copy, Play, Trash2 } from '@lucide/vue'
+import { Ban, Copy, Grid2x2X, LogIn, Play, Trash2 } from '@lucide/vue'
 
 import { CANVAS_LOD_KEY } from '@/canvas/CanvasAdapter'
+import { isSubgraphType } from '@/canvas/subgraph'
 import NodeShell, { type ShellPort } from '@/canvas/NodeShell.vue'
 import { portStyle } from '@/canvas/ports'
 import { PreviewHost } from '@/previews'
 import { useExecutionStore } from '@/stores/execution'
-import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { useSelectionStore } from '@/stores/selection'
 import { useSessionStore } from '@/stores/session'
 import { useUiStore } from '@/stores/ui'
@@ -25,7 +25,6 @@ defineOptions({ inheritAttrs: false })
 
 const { t } = useI18n()
 const workflow = useWorkflowStore()
-const schema = useNodesSchemaStore()
 const execution = useExecutionStore()
 const session = useSessionStore()
 const selection = useSelectionStore()
@@ -33,7 +32,7 @@ const ui = useUiStore()
 const lod = inject(CANVAS_LOD_KEY, ref(false))
 
 const node = computed(() => workflow.nodes[props.id])
-const spec = computed(() => (node.value ? schema.byId[node.value.type] : undefined))
+const spec = computed(() => (node.value ? workflow.specs[node.value.type] : undefined))
 const exec = computed(() => execution.node(props.id))
 const issues = computed(() => execution.issuesFor(props.id))
 const singleSelected = computed(() => props.selected && selection.nodeIds.length === 1)
@@ -82,6 +81,18 @@ function toggleCollapse(): void {
 function openEditor(): void {
   ui.openEditor({ nodeId: props.id })
 }
+
+const isSubgraph = computed(() => isSubgraphType(node.value?.type ?? ''))
+
+/** Double-clicking a subgraph instance opens its body (breadcrumb navigation). */
+function onDoubleClick(): void {
+  if (isSubgraph.value) workflow.enterSubgraph(props.id)
+}
+
+function expandHere(): void {
+  const created = workflow.expandSubgraph(props.id)
+  if (created.length) selection.set(created)
+}
 </script>
 
 <template>
@@ -113,6 +124,26 @@ function openEditor(): void {
           <Ban class="size-3.5" />
         </button>
         <button
+          v-if="isSubgraph"
+          type="button"
+          class="ac-toolbar-btn"
+          :title="t('subgraph.enter')"
+          data-testid="subgraph-enter"
+          @click="workflow.enterSubgraph(id)"
+        >
+          <LogIn class="size-3.5" />
+        </button>
+        <button
+          v-if="isSubgraph"
+          type="button"
+          class="ac-toolbar-btn"
+          :title="t('subgraph.expand')"
+          data-testid="subgraph-expand"
+          @click="expandHere"
+        >
+          <Grid2x2X class="size-3.5" />
+        </button>
+        <button
           type="button"
           class="ac-toolbar-btn"
           :title="t('node.duplicate')"
@@ -134,6 +165,8 @@ function openEditor(): void {
       :node-id="id"
       :node="node"
       :spec="spec"
+      :data-subgraph="isSubgraph ? true : undefined"
+      @dblclick="onDoubleClick"
       :exec="exec"
       :issues="issues"
       :selected="selected"

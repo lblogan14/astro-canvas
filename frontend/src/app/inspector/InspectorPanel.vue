@@ -7,14 +7,12 @@ import type { NodeDoc } from '@/api/types'
 import { groupIdOf, isGroupNodeId } from '@/canvas/vueflow/toFlow'
 import { AutoForm } from '@/nodes'
 import { useExecutionStore } from '@/stores/execution'
-import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { useSelectionStore } from '@/stores/selection'
 import { useUiStore } from '@/stores/ui'
 import { useWorkflowStore } from '@/stores/workflow'
 
 const { t } = useI18n()
 const workflow = useWorkflowStore()
-const schema = useNodesSchemaStore()
 const selection = useSelectionStore()
 const execution = useExecutionStore()
 const ui = useUiStore()
@@ -28,7 +26,7 @@ const groupId = computed(() =>
 )
 const node = computed(() => (nodeId.value ? workflow.nodes[nodeId.value] : undefined))
 const group = computed(() => (groupId.value ? workflow.groups[groupId.value] : undefined))
-const spec = computed(() => (node.value ? schema.byId[node.value.type] : undefined))
+const spec = computed(() => (node.value ? workflow.specs[node.value.type] : undefined))
 const issues = computed(() => (nodeId.value ? execution.issuesFor(nodeId.value) : []))
 const exec = computed(() => (nodeId.value ? execution.node(nodeId.value) : null))
 

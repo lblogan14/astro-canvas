@@ -163,7 +163,7 @@ onConnectEnd((event) => {
   const target = (event?.target ?? null) as Element | null
   if (target?.classList.contains('vue-flow__pane') && start.handleType === 'source') {
     const source = workflow.nodes[start.nodeId]
-    const spec = source ? schema.byId[source.type] : undefined
+    const spec = source ? workflow.specs[source.type] : undefined
     const sourceType = spec?.outputs.find((p) => p.name === start.handleId)?.type
     const point =
       event instanceof MouseEvent
