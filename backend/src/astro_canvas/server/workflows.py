@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from astro_canvas.engine.events import NodeIssue, NodeStatus
 from astro_canvas.engine.graph import WorkflowDoc
 from astro_canvas.engine.layouts import LayoutIssue, layout_issues
+from astro_canvas.server.deps import get_runtime
 from astro_canvas.server.runtime import (
     EngineRuntime,
     UnknownWorkflowError,
@@ -16,11 +17,6 @@ from astro_canvas.server.runtime import (
 )
 
 router = APIRouter(tags=["workflows"])
-
-
-def get_runtime(request: Request) -> EngineRuntime:
-    runtime: EngineRuntime = request.app.state.runtime
-    return runtime
 
 
 class WorkflowSaved(BaseModel):

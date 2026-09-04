@@ -4403,7 +4403,7 @@
         },
         "summary": "List Trust",
         "tags": [
-          "manager"
+          "trust"
         ]
       },
       "post": {
@@ -4443,7 +4443,7 @@
         },
         "summary": "Set Trust",
         "tags": [
-          "manager"
+          "trust"
         ]
       }
     },
@@ -4479,7 +4479,7 @@
         },
         "summary": "Forget Trust",
         "tags": [
-          "manager"
+          "trust"
         ]
       }
     },
@@ -5723,7 +5723,7 @@
         },
         "summary": "Review Workflow",
         "tags": [
-          "manager"
+          "trust"
         ]
       }
     },

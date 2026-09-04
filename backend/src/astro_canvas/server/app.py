@@ -19,6 +19,7 @@ from astro_canvas.server.bundles import router as bundles_router
 from astro_canvas.server.exports import router as exports_router
 from astro_canvas.server.guard import check_exposure
 from astro_canvas.server.health import router as health_router
+from astro_canvas.server.health import system_router
 from astro_canvas.server.manager import router as manager_router
 from astro_canvas.server.nodes import router as nodes_router
 from astro_canvas.server.outputs import router as outputs_router
@@ -26,6 +27,7 @@ from astro_canvas.server.runs import router as runs_router
 from astro_canvas.server.runtime import EngineRuntime
 from astro_canvas.server.static import mount_static
 from astro_canvas.server.templates import router as templates_router
+from astro_canvas.server.trust import router as trust_router
 from astro_canvas.server.workflows import router as workflows_router
 from astro_canvas.server.workspace import router as workspace_router
 from astro_canvas.server.ws import router as ws_router
@@ -87,12 +89,14 @@ def create_app(
     app.state.manager = manager
     app.state.token = token
     app.include_router(health_router, prefix="/api")
+    app.include_router(system_router, prefix="/api")
     app.include_router(nodes_router, prefix="/api")
     app.include_router(workflows_router, prefix="/api")
     app.include_router(batch_router, prefix="/api")
     app.include_router(exports_router, prefix="/api")
     app.include_router(templates_router, prefix="/api")
     app.include_router(bundles_router, prefix="/api")
+    app.include_router(trust_router, prefix="/api")
     if manager is not None:
         app.include_router(manager_router, prefix="/api")
     app.include_router(runs_router, prefix="/api")
@@ -109,7 +113,7 @@ def create_app(
 def build_manager(
     settings: Settings, runtime: EngineRuntime, discovery: DiscoveryResult
 ) -> PackManager | None:
-    """Wire the pack manager to the runtime: trust gate, save hook and recompile-on-decision.
+    """Wire the pack manager to the runtime: shared trust store and recompile-on-decision.
 
     A manager that cannot be built (an unreadable database, say) is logged and skipped: the app
     is still a canvas without it.
@@ -117,7 +121,7 @@ def build_manager(
     try:
         store = SettingsStore(runtime.workspace.sessions, settings)
         apply_security_level(store.get().security)
-        manager = PackManager(
+        return PackManager(
             discovery.registry,
             runtime.workspace.sessions,
             store,
@@ -126,10 +130,8 @@ def build_manager(
             on_change=lambda _packs: runtime.recompile_all(),
             on_recompile=runtime.recompile_all,
             registry_client=RegistryClient(store.get().registry_url, settings.config_dir),
+            trust=runtime.trust,
         )
     except Exception as exc:  # noqa: BLE001 - the manager is optional, never fatal
         log.warning("pack manager unavailable", error=str(exc))
         return None
-    runtime.gate = manager.trust.quarantined
-    runtime.before_save = manager.on_workflow_saved
-    return manager

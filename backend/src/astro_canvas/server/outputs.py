@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 
 from astro_canvas.sdk import PortType, decimate
 from astro_canvas.sdk.blob import encode_npz, split_binary, to_manifest_data
-from astro_canvas.server.workflows import get_runtime
+from astro_canvas.server.deps import get_runtime
 
 router = APIRouter(tags=["outputs"])
 

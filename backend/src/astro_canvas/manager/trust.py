@@ -151,6 +151,18 @@ class TrustStore:
                 added.append(snippet.hash)
         return added
 
+    def on_workflow_saved(self, doc: WorkflowDoc) -> None:
+        """Trust hook for every save (``EngineRuntime.before_save``).
+
+        Code the user wrote here is trusted on the spot; an imported document stays quarantined
+        until every one of its snippets has a decision, and then loses the flag for good.
+        """
+        if doc.meta.get("quarantine"):
+            if not self.quarantined(doc):
+                doc.meta = {k: v for k, v in doc.meta.items() if k != "quarantine"}
+            return
+        self.trust_local(doc)
+
     def quarantined(self, doc: WorkflowDoc) -> dict[str, str]:
         """``{node id: reason}`` for the code nodes of ``doc`` that may not run yet."""
         snippets = code_snippets(doc, include_source=False)

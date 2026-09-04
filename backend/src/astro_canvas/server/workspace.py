@@ -23,6 +23,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
+from astro_canvas.server.deps import get_runtime
 from astro_canvas.server.runtime import EngineRuntime
 from astro_canvas.server.sniff import KIND_NODES, Kind, sniff_kind
 from astro_canvas.store.files import Entry, FileInfo, list_dir
@@ -92,11 +93,6 @@ class SniffResult(BaseModel):
     kind: Kind
     node: str | None = None
     detail: str = ""
-
-
-def get_runtime(request: Request) -> EngineRuntime:
-    runtime: EngineRuntime = request.app.state.runtime
-    return runtime
 
 
 def _workspace(request: Request) -> Workspace:

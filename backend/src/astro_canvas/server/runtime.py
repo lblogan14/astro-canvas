@@ -27,6 +27,7 @@ from astro_canvas.engine.events import EventBus
 from astro_canvas.engine.executors import ProcessExecutor, ThreadExecutor
 from astro_canvas.engine.graph import WorkflowDoc
 from astro_canvas.engine.scheduler import RunInfo, Scheduler, SchedulerConfig
+from astro_canvas.manager.trust import TrustStore
 from astro_canvas.sdk import NodeRegistry, PortType
 from astro_canvas.server.watcher import WorkspaceWatcher
 from astro_canvas.settings import Settings
@@ -110,10 +111,10 @@ class EngineRuntime:
         )
         self.recent = RecentWorkspaces(settings.config_dir)
         self.schedulers: dict[str, Scheduler] = {}
-        self.gate: Callable[[WorkflowDoc], Mapping[str, str]] | None = None
-        """Trust gate installed by the pack manager; blocks untrusted code nodes (design 11)."""
-        self.before_save: Callable[[WorkflowDoc], None] | None = None
-        """Called on every save; the pack manager uses it to trust locally authored snippets."""
+        self.gate: Callable[[WorkflowDoc], Mapping[str, str]] | None = self._trust_gate
+        """Trust gate: keeps untrusted code nodes out of the executable graph (design 11)."""
+        self.before_save: Callable[[WorkflowDoc], None] | None = self._trust_save
+        """Called on every save; trusts locally authored snippets and lifts a cleared quarantine."""
         self.watcher: WorkspaceWatcher | None = None
         self._open_workspace(Path(settings.workspace))
         self.batches = BatchRunner(
@@ -145,11 +146,19 @@ class EngineRuntime:
             max_age=timedelta(days=settings.cache_max_age_days),
         )
         self.runs = RunStore(self.workspace.sessions)
+        self.trust = TrustStore(self.workspace.sessions)
         self.recent.touch(self.workspace.root)
         copied = seed_samples(self.workspace, self.registry.sample_dirs)
         if copied:
             log.info("sample data copied", files=len(copied), into=str(self.workspace.samples_dir))
         self.gc()
+
+    def _trust_gate(self, doc: WorkflowDoc) -> Mapping[str, str]:
+        """``{node: reason}`` for the code nodes of ``doc`` with no trust decision yet."""
+        return self.trust.quarantined(doc)
+
+    def _trust_save(self, doc: WorkflowDoc) -> None:
+        return self.trust.on_workflow_saved(doc)
 
     async def switch_workspace(self, root: Path, *, create: bool = False) -> Path:
         """Close every open workflow and re-open the runtime on another folder."""
@@ -167,6 +176,7 @@ class EngineRuntime:
         self.schedulers.clear()
         self.workspace.close()
         self._open_workspace(target)
+        self.recent.select(target)
         self.batches.cache = self.cache
         self.batches.workspace_root = self.workspace.root
         self.batches.scratch_root = self.workspace.scratch_dir

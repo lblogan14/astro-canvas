@@ -20,9 +20,9 @@ from pydantic import BaseModel, Field
 from astro_canvas.engine.scheduler import Scheduler
 from astro_canvas.sdk import PortType
 from astro_canvas.sdk.blob import encode_npz, split_binary, to_manifest_data
+from astro_canvas.server.deps import get_runtime
 from astro_canvas.server.outputs import ARROW_PART
 from astro_canvas.server.runtime import UnknownWorkflowError
-from astro_canvas.server.workflows import get_runtime
 from astro_canvas.store.workspace import PathOutsideWorkspaceError
 
 log = structlog.get_logger("astro_canvas.exports")
