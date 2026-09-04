@@ -116,6 +116,37 @@ class NodeOutputSummary(_Event):
     )
 
 
+class BatchStarted(_Event):
+    type: Literal["batch.started"] = "batch.started"
+    batch_id: str
+    n_rows: int = 0
+    max_workers: int = 1
+    columns: list[str] = Field(default_factory=list)
+
+
+class BatchRowEvent(_Event):
+    """One row of a batch changed state (design 8.4)."""
+
+    type: Literal["batch.row"] = "batch.row"
+    batch_id: str
+    row: int
+    state: Literal["pending", "queued", "running", "done", "error", "cancelled"]
+    error: str | None = None
+    elapsed_ms: float | None = None
+    outputs: dict[str, Any] = Field(default_factory=dict)
+
+
+class BatchFinished(_Event):
+    type: Literal["batch.finished"] = "batch.finished"
+    batch_id: str
+    n_rows: int = 0
+    done: int = 0
+    failed: int = 0
+    cancelled: int = 0
+    status: RunStatus = "done"
+    elapsed_ms: float = 0.0
+
+
 class GraphValidation(_Event):
     type: Literal["graph.validation"] = "graph.validation"
     node_errors: dict[str, list[NodeIssue]] = Field(default_factory=dict)
@@ -140,6 +171,9 @@ Event = Annotated[
         NodeLog,
         NodeErrorEvent,
         NodeOutputSummary,
+        BatchStarted,
+        BatchRowEvent,
+        BatchFinished,
         GraphValidation,
         WorkspaceChanged,
         PacksChanged,

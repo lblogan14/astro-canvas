@@ -14,6 +14,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, ValidationError
 
 from astro_canvas._version import __version__
+from astro_canvas.engine.batch import BatchSpec, spec_from_layout
 from astro_canvas.engine.events import (
     GraphValidation,
     NodeOutputSummary,
@@ -53,6 +54,17 @@ class PreviewRequest(BaseModel):
 class OutputRequest(BaseModel):
     node_id: str
     port: str
+
+
+class BatchCommand(BaseModel):
+    """Start a batch over the subscribed workflow (``layouts.batch`` unless ``spec`` is given)."""
+
+    rows: list[dict[str, Any]] = []
+    spec: BatchSpec | None = None
+
+
+class BatchCancelCommand(BaseModel):
+    batch_id: str
 
 
 class ComputeRequest(BaseModel):
@@ -121,6 +133,10 @@ class WsSession:
                 await self.output(OutputRequest.model_validate(message))
             elif kind == "preview.compute":
                 await self.compute(ComputeRequest.model_validate(message))
+            elif kind == "batch.run":
+                await self.batch(BatchCommand.model_validate(message))
+            elif kind == "batch.cancel":
+                await self.batch_cancel(BatchCancelCommand.model_validate(message))
             elif kind == "ping":
                 await self.send({"type": "pong", "ts": time.time()})
             else:
@@ -193,6 +209,41 @@ class WsSession:
         scheduler = self._scheduler()
         cancelled = scheduler.cancel(run_id=command.run_id, node_id=command.node_id)
         await self.send({"type": "cancel.result", "cancelled": cancelled, "ts": time.time()})
+
+    async def batch(self, command: BatchCommand) -> None:
+        """Start a batch; ``batch.started``/``batch.row``/``batch.finished`` follow on the bus."""
+        self._scheduler()  # the workflow must be subscribed
+        assert self.workflow_id is not None
+        doc = self.runtime.get(self.workflow_id)
+        spec = command.spec or spec_from_layout(doc.layouts.get("batch") or {})
+        if not command.rows or not spec.collect:
+            await self.error("a batch needs rows and at least one collected output")
+            return
+        try:
+            run = self.runtime.batches.start(doc, command.rows, spec)
+        except ValueError as exc:
+            await self.error(str(exc))
+            return
+        await self.send(
+            {
+                "type": "batch.accepted",
+                "batch_id": run.batch_id,
+                "workflow_id": self.workflow_id,
+                "n_rows": run.n_rows,
+                "ts": time.time(),
+            }
+        )
+
+    async def batch_cancel(self, command: BatchCancelCommand) -> None:
+        cancelled = self.runtime.batches.cancel(command.batch_id)
+        await self.send(
+            {
+                "type": "batch.cancelled",
+                "batch_id": command.batch_id,
+                "cancelled": cancelled,
+                "ts": time.time(),
+            }
+        )
 
     async def preview(self, request: PreviewRequest) -> None:
         scheduler = self._scheduler()

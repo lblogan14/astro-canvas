@@ -307,6 +307,66 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/workflows/{workflow_id}/batch': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Start Batch
+     * @description Run the stored document once per row; returns immediately with the batch record.
+     */
+    post: operations['start_batch_api_workflows__workflow_id__batch_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workflows/{workflow_id}/batch/{batch_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get Batch
+     * @description The batch's per-row states and the results assembled so far.
+     */
+    get: operations['get_batch_api_workflows__workflow_id__batch__batch_id__get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/workflows/{workflow_id}/batch/{batch_id}/cancel': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Cancel Batch
+     * @description Stop queued rows and cancel the ones in flight (expensive nodes have their worker killed).
+     */
+    post: operations['cancel_batch_api_workflows__workflow_id__batch__batch_id__cancel_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/workflows/{workflow_id}/run': {
     parameters: {
       query?: never
@@ -579,6 +639,115 @@ export interface paths {
 export type webhooks = Record<string, never>
 export interface components {
   schemas: {
+    /**
+     * BatchBinding
+     * @description One table column feeding one node param (``layouts.batch.columns`` entry).
+     */
+    BatchBinding: {
+      /** Column */
+      column: string
+      /** Node */
+      node: string
+      /** Param */
+      param: string
+    }
+    /**
+     * BatchCollect
+     * @description One node output gathered into the results table.
+     */
+    BatchCollect: {
+      /** Node */
+      node: string
+      /** Port */
+      port: string
+      /**
+       * Prefix
+       * @description Column prefix; defaults to none for a single collect and '<node>.' when several outputs are gathered.
+       */
+      prefix?: string | null
+    }
+    /**
+     * BatchInfo
+     * @description A batch's state; ``results`` is filled in as rows finish.
+     */
+    BatchInfo: {
+      /** Batch Id */
+      batch_id: string
+      /** Counts */
+      counts: {
+        [key: string]: number
+      }
+      /** Finished */
+      finished?: number | null
+      /** N Rows */
+      n_rows: number
+      results: components['schemas']['BatchResults']
+      /** Rows */
+      rows: components['schemas']['BatchRowInfo'][]
+      /** Started */
+      started: number
+      /** Status */
+      status: string
+      /** Workflow Id */
+      workflow_id: string
+    }
+    /**
+     * BatchRequest
+     * @description Rows plus the spec; omitting ``spec`` uses the document's ``layouts.batch``.
+     */
+    BatchRequest: {
+      /** Rows */
+      rows?: {
+        [key: string]: unknown
+      }[]
+      spec?: components['schemas']['BatchSpec'] | null
+    }
+    /**
+     * BatchResults
+     * @description The results grid: one row per input row, JSON-safe so it can travel over REST.
+     */
+    BatchResults: {
+      /** Columns */
+      columns?: string[]
+      /** Rows */
+      rows?: {
+        [key: string]: unknown
+      }[]
+    }
+    /** BatchRowInfo */
+    BatchRowInfo: {
+      /** Elapsed Ms */
+      elapsed_ms?: number | null
+      /** Error */
+      error?: string | null
+      /** Index */
+      index: number
+      /**
+       * State
+       * @enum {string}
+       */
+      state: 'pending' | 'queued' | 'running' | 'done' | 'error' | 'cancelled'
+    }
+    /**
+     * BatchSpec
+     * @description What to vary and what to keep from a batch run.
+     */
+    BatchSpec: {
+      /** Bindings */
+      bindings?: components['schemas']['BatchBinding'][]
+      /** Collect */
+      collect?: components['schemas']['BatchCollect'][]
+      /**
+       * Continue On Error
+       * @default true
+       */
+      continue_on_error: boolean
+      /**
+       * Max Workers
+       * @description Rows in flight; default cpu-1 with expensive nodes, else 8.
+       */
+      max_workers?: number | null
+    }
     /** Body_upload_file_api_workspace_upload_post */
     Body_upload_file_api_workspace_upload_post: {
       /**
@@ -1125,7 +1294,12 @@ export interface components {
       /** Summary Renderer */
       summary_renderer?: string | null
     }
-    /** PromotedDoc */
+    /**
+     * PromotedDoc
+     * @description A param lifted out of a node so a layout (or a subgraph instance) can set it.
+     *
+     *     ``ref`` (``"<node>.<param>"``) is how layouts and subgraph instances address it.
+     */
     PromotedDoc: {
       /** Group */
       group?: string | null
@@ -1208,7 +1382,14 @@ export interface components {
       /** Path */
       path: string
     }
-    /** SubgraphDoc */
+    /**
+     * SubgraphDoc
+     * @description A reusable body. Instances are nodes typed ``subgraph:<id>``.
+     *
+     *     ``inputs``/``outputs`` name the boundary ports; ``promoted`` lists the inner params an
+     *     instance may override through its own ``params`` (keyed by ``"<inner node>.<param>"``) or
+     *     link to an input port through its own ``linked``.
+     */
     SubgraphDoc: {
       /** Edges */
       edges?: {
@@ -1227,6 +1408,8 @@ export interface components {
       }
       /** Outputs */
       outputs?: components['schemas']['SubgraphPort'][]
+      /** Promoted */
+      promoted?: components['schemas']['PromotedDoc'][]
     } & {
       [key: string]: unknown
     }
@@ -2004,6 +2187,105 @@ export interface operations {
           [name: string]: unknown
         }
         content?: never
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  start_batch_api_workflows__workflow_id__batch_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BatchRequest']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['BatchInfo']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_batch_api_workflows__workflow_id__batch__batch_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+        batch_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['BatchInfo']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  cancel_batch_api_workflows__workflow_id__batch__batch_id__cancel_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        workflow_id: string
+        batch_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['BatchInfo']
+        }
       }
       /** @description Validation Error */
       422: {

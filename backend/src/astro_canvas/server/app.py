@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from astro_canvas._version import __version__
 from astro_canvas.sdk import DiscoveryResult, discover
 from astro_canvas.server.auth import TokenAuthMiddleware, ensure_token
+from astro_canvas.server.batch import router as batch_router
 from astro_canvas.server.health import router as health_router
 from astro_canvas.server.nodes import router as nodes_router
 from astro_canvas.server.outputs import router as outputs_router
@@ -70,6 +71,7 @@ def create_app(
     app.include_router(health_router, prefix="/api")
     app.include_router(nodes_router, prefix="/api")
     app.include_router(workflows_router, prefix="/api")
+    app.include_router(batch_router, prefix="/api")
     app.include_router(templates_router, prefix="/api")
     app.include_router(runs_router, prefix="/api")
     app.include_router(outputs_router, prefix="/api")

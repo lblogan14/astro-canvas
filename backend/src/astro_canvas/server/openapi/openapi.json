@@ -1,6 +1,259 @@
 {
   "components": {
     "schemas": {
+      "BatchBinding": {
+        "description": "One table column feeding one node param (``layouts.batch.columns`` entry).",
+        "properties": {
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "node": {
+            "title": "Node",
+            "type": "string"
+          },
+          "param": {
+            "title": "Param",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node",
+          "param",
+          "column"
+        ],
+        "title": "BatchBinding",
+        "type": "object"
+      },
+      "BatchCollect": {
+        "description": "One node output gathered into the results table.",
+        "properties": {
+          "node": {
+            "title": "Node",
+            "type": "string"
+          },
+          "port": {
+            "title": "Port",
+            "type": "string"
+          },
+          "prefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Column prefix; defaults to none for a single collect and '<node>.' when several outputs are gathered.",
+            "title": "Prefix"
+          }
+        },
+        "required": [
+          "node",
+          "port"
+        ],
+        "title": "BatchCollect",
+        "type": "object"
+      },
+      "BatchInfo": {
+        "description": "A batch's state; ``results`` is filled in as rows finish.",
+        "properties": {
+          "batch_id": {
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "finished": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished"
+          },
+          "n_rows": {
+            "title": "N Rows",
+            "type": "integer"
+          },
+          "results": {
+            "$ref": "#/components/schemas/BatchResults"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/BatchRowInfo"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "started": {
+            "title": "Started",
+            "type": "number"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "workflow_id": {
+            "title": "Workflow Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "batch_id",
+          "workflow_id",
+          "status",
+          "n_rows",
+          "counts",
+          "started",
+          "rows",
+          "results"
+        ],
+        "title": "BatchInfo",
+        "type": "object"
+      },
+      "BatchRequest": {
+        "description": "Rows plus the spec; omitting ``spec`` uses the document's ``layouts.batch``.",
+        "properties": {
+          "rows": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "spec": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BatchSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "BatchRequest",
+        "type": "object"
+      },
+      "BatchResults": {
+        "description": "The results grid: one row per input row, JSON-safe so it can travel over REST.",
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "rows": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "title": "BatchResults",
+        "type": "object"
+      },
+      "BatchRowInfo": {
+        "properties": {
+          "elapsed_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Elapsed Ms"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "queued",
+              "running",
+              "done",
+              "error",
+              "cancelled"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "state"
+        ],
+        "title": "BatchRowInfo",
+        "type": "object"
+      },
+      "BatchSpec": {
+        "description": "What to vary and what to keep from a batch run.",
+        "properties": {
+          "bindings": {
+            "items": {
+              "$ref": "#/components/schemas/BatchBinding"
+            },
+            "title": "Bindings",
+            "type": "array"
+          },
+          "collect": {
+            "items": {
+              "$ref": "#/components/schemas/BatchCollect"
+            },
+            "title": "Collect",
+            "type": "array"
+          },
+          "continue_on_error": {
+            "default": true,
+            "title": "Continue On Error",
+            "type": "boolean"
+          },
+          "max_workers": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rows in flight; default cpu-1 with expensive nodes, else 8.",
+            "title": "Max Workers"
+          }
+        },
+        "title": "BatchSpec",
+        "type": "object"
+      },
       "Body_upload_file_api_workspace_upload_post": {
         "properties": {
           "chunk_count": {
@@ -1110,6 +1363,7 @@
       },
       "PromotedDoc": {
         "additionalProperties": true,
+        "description": "A param lifted out of a node so a layout (or a subgraph instance) can set it.\n\n``ref`` (``\"<node>.<param>\"``) is how layouts and subgraph instances address it.",
         "properties": {
           "group": {
             "anyOf": [
@@ -1316,6 +1570,7 @@
       },
       "SubgraphDoc": {
         "additionalProperties": true,
+        "description": "A reusable body. Instances are nodes typed ``subgraph:<id>``.\n\n``inputs``/``outputs`` name the boundary ports; ``promoted`` lists the inner params an\ninstance may override through its own ``params`` (keyed by ``\"<inner node>.<param>\"``) or\nlink to an input port through its own ``linked``.",
         "properties": {
           "edges": {
             "additionalProperties": {
@@ -1348,6 +1603,13 @@
               "$ref": "#/components/schemas/SubgraphPort"
             },
             "title": "Outputs",
+            "type": "array"
+          },
+          "promoted": {
+            "items": {
+              "$ref": "#/components/schemas/PromotedDoc"
+            },
+            "title": "Promoted",
             "type": "array"
           }
         },
@@ -2684,6 +2946,163 @@
         "summary": "Put Workflow",
         "tags": [
           "workflows"
+        ]
+      }
+    },
+    "/api/workflows/{workflow_id}/batch": {
+      "post": {
+        "description": "Run the stored document once per row; returns immediately with the batch record.",
+        "operationId": "start_batch_api_workflows__workflow_id__batch_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Batch",
+        "tags": [
+          "batch"
+        ]
+      }
+    },
+    "/api/workflows/{workflow_id}/batch/{batch_id}": {
+      "get": {
+        "description": "The batch's per-row states and the results assembled so far.",
+        "operationId": "get_batch_api_workflows__workflow_id__batch__batch_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "batch_id",
+            "required": true,
+            "schema": {
+              "title": "Batch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Batch",
+        "tags": [
+          "batch"
+        ]
+      }
+    },
+    "/api/workflows/{workflow_id}/batch/{batch_id}/cancel": {
+      "post": {
+        "description": "Stop queued rows and cancel the ones in flight (expensive nodes have their worker killed).",
+        "operationId": "cancel_batch_api_workflows__workflow_id__batch__batch_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "batch_id",
+            "required": true,
+            "schema": {
+              "title": "Batch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Batch",
+        "tags": [
+          "batch"
         ]
       }
     },
