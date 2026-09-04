@@ -53,27 +53,30 @@ onMounted(() => {
   if (batch.columns.length === 0) batch.loadLayout()
 })
 
+/** Import a table and say whether the specgui preset recognised it. */
+function importText(text: string): void {
+  const result = batch.importText(text)
+  ui.notify(
+    result.preset
+      ? t('batch.imported_specgui', { rows: result.rows })
+      : t('batch.imported', { rows: result.rows }),
+  )
+}
+
 function importFile(event: Event): void {
-  const file = (event.target as HTMLInputElement).files?.[0]
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
   if (!file) return
   const reader = new FileReader()
-  reader.onload = () => {
-    const result = batch.importText(String(reader.result ?? ''))
-    ui.notify(
-      result.preset
-        ? t('batch.imported_specgui', { rows: result.rows })
-        : t('batch.imported', { rows: result.rows }),
-    )
-  }
+  reader.onload = () => importText(String(reader.result ?? ''))
   reader.readAsText(file)
-  ;(event.target as HTMLInputElement).value = ''
+  input.value = ''
 }
 
 function applyPaste(): void {
-  const result = batch.importText(pasteText.value)
+  importText(pasteText.value)
   pasteOpen.value = false
   pasteText.value = ''
-  ui.notify(t('batch.imported', { rows: result.rows }))
 }
 
 function download(kind: 'csv' | 'ecsv'): void {

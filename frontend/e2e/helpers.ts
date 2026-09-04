@@ -11,6 +11,8 @@ export interface WorkflowDocLike {
   nodes: Record<string, Record<string, unknown>>
   edges: Record<string, { from: [string, string]; to: [string, string] }>
   groups?: Record<string, unknown>
+  subgraphs?: Record<string, Record<string, unknown>>
+  layouts?: Record<string, unknown>
   meta?: Record<string, unknown>
 }
 
