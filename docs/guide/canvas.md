@@ -31,6 +31,8 @@ has four areas:
   message, hint and traceback), *Bypassed*.
 - **Groups** (`Ctrl+G`) wrap the selection in a titled, coloured frame; moving the frame moves
   its members. `Ctrl+Shift+G` ungroups.
+- **Subgraphs** (`Ctrl+Shift+C`) replace the selection with a single node that contains it; see
+  below.
 
 Every edit is saved automatically one second after you stop typing. The engine recompiles the
 document, auto-runs cheap nodes and streams status over the WebSocket; expensive nodes show
@@ -45,6 +47,8 @@ document, auto-runs cheap nodes and streams status over the WebSocket; expensive
 | `Ctrl+C` / `Ctrl+V` / `Ctrl+D` | Copy / paste (internal edges kept, offset by 40 px) / duplicate |
 | `Delete`, `Backspace` | Delete the selected nodes, edges or groups |
 | `Ctrl+G` / `Ctrl+Shift+G` | Group / ungroup |
+| `Ctrl+Shift+C` / `Ctrl+Shift+E` | Collapse the selection into a subgraph / expand a subgraph in place |
+| `Ctrl+Shift+L` | Auto-layout the graph (or the selection) left to right |
 | `Ctrl+A` | Select every node |
 | `Tab` | Quick-add palette |
 | `Space` + drag | Pan |
@@ -54,3 +58,31 @@ document, auto-runs cheap nodes and streams status over the WebSocket; expensive
 
 The theme follows the operating system by default; the toggle in the header cycles
 system → light → dark and remembers the choice.
+
+## Subgraphs
+
+A group is a visual frame; a **subgraph** is a real container. Select some nodes and press
+`Ctrl+Shift+C` (or use the node menu) and they are replaced by one node:
+
+- every edge that crossed the boundary becomes a **named port** on the new node, typed from the
+  inner port it maps to, so connections and validation behave exactly as before. Two outer
+  consumers of the same inner output share one port;
+- **double-click** the node (or its ⤵ toolbar button) to work inside the body. A breadcrumb at
+  the top left shows the path; click the workflow name to come back out. Subgraphs nest;
+- `Ctrl+Shift+E` **expands** an instance again: the inner nodes return to the positions they had,
+  offset from where the instance sat, and the boundary edges reconnect;
+- an inner parameter can be **promoted** so instances set it directly. It appears on the instance
+  as `<inner node>.<param>` and can be linked into an input port like any other parameter.
+
+Collapsing changes nothing the engine sees: the compiler inlines a subgraph into
+`<instance>/<inner id>` nodes, and because cache keys are content-based the collapsed graph
+re-uses the outputs the expanded one computed.
+
+Everything above is one undo step, and a body plus one instance can be saved as a **blueprint** —
+a small workflow document holding just the subgraph — to reuse it in another workflow.
+
+## Auto-layout
+
+`Ctrl+Shift+L` runs elk's layered algorithm over the whole graph, or over the selection when more
+than one node is selected. The result is anchored at the selection's current top-left corner and
+lands as a single undoable move, so `Ctrl+Z` puts everything back.
