@@ -12,6 +12,7 @@ import { useI18n } from 'vue-i18n'
 import { Ban, Download, ExternalLink, Play, Plus, Save, Trash2, Upload } from '@lucide/vue'
 
 import { Button } from '@/components/ui/button'
+import { formatCompact } from '@/widgets'
 import { toCsv, toEcsv } from '@/modes/batchTable'
 import { bindableRefs, useBatchStore } from '@/stores/batch'
 import { useUiStore } from '@/stores/ui'
@@ -110,6 +111,12 @@ function toggleCollect(ref: string): void {
 function cellValue(index: number, column: string): string {
   const value = batch.rows[index]?.[column]
   return value === null || value === undefined ? '' : String(value)
+}
+
+/** Result cells: numbers are formatted like every other readout, everything else is text. */
+function resultCell(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  return typeof value === 'number' ? formatCompact(value) : String(value)
 }
 
 function onCell(index: number, column: string, event: Event): void {
@@ -246,13 +253,13 @@ function onCell(index: number, column: string, event: Event): void {
         </div>
       </section>
 
-      <section class="min-h-0">
+      <section>
         <h2 class="mb-1 text-xs font-medium text-muted-foreground">
           {{ t('batch.rows_title', { n: batch.rowCount }) }}
         </h2>
-        <div class="overflow-auto rounded-md border">
+        <div class="max-h-[45vh] overflow-auto rounded-md border">
           <table class="w-full border-collapse text-xs" data-testid="batch-table">
-            <thead class="bg-muted/50">
+            <thead class="sticky top-0 z-10 bg-muted">
               <tr>
                 <th class="w-8 p-1"></th>
                 <th class="w-24 p-1 text-left font-medium">{{ t('batch.status') }}</th>
@@ -341,13 +348,13 @@ function onCell(index: number, column: string, event: Event): void {
         </div>
       </section>
 
-      <section v-if="batch.results" class="min-h-0">
+      <section v-if="batch.results">
         <h2 class="mb-1 text-xs font-medium text-muted-foreground">
           {{ t('batch.results_title') }}
         </h2>
-        <div class="overflow-auto rounded-md border">
+        <div class="max-h-[45vh] overflow-auto rounded-md border">
           <table class="w-full border-collapse text-xs" data-testid="batch-results">
-            <thead class="bg-muted/50">
+            <thead class="sticky top-0 z-10 bg-muted">
               <tr>
                 <th v-for="column in resultColumns" :key="column" class="p-1 text-left font-medium">
                   {{ column }}
@@ -361,8 +368,8 @@ function onCell(index: number, column: string, event: Event): void {
                 class="border-t"
                 :data-testid="`batch-result-${index}`"
               >
-                <td v-for="column in resultColumns" :key="column" class="p-1">
-                  {{ row[column] === null || row[column] === undefined ? '' : row[column] }}
+                <td v-for="column in resultColumns" :key="column" class="p-1 whitespace-nowrap">
+                  {{ resultCell(row[column]) }}
                 </td>
               </tr>
             </tbody>
