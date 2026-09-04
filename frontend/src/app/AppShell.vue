@@ -1,22 +1,39 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { RouterView } from 'vue-router'
+import { onMounted, watch } from 'vue'
+import { RouterView, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Monitor, Moon, Sun } from '@lucide/vue'
+import { LogOut, Monitor, Moon, ShieldCheck, Sun, UserRound } from '@lucide/vue'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useAuthStore } from '@/stores/auth'
 import { useSessionStore } from '@/stores/session'
 import { useUiStore } from '@/stores/ui'
 
 const { t } = useI18n()
 const ui = useUiStore()
 const session = useSessionStore()
+const auth = useAuthStore()
+const router = useRouter()
 
 onMounted(() => {
   ui.setTheme(ui.theme)
-  void ui.connect()
+  if (!auth.requiresLogin) void ui.connect()
 })
+
+// On a users server the WebSocket handshake needs the session cookie, so connecting waits
+// until somebody is actually logged in (and reconnects after a later sign-in).
+watch(
+  () => auth.requiresLogin,
+  (blocked, was) => {
+    if (!blocked && was) void ui.connect()
+  },
+)
+
+async function signOut(): Promise<void> {
+  await auth.logout()
+  await router.push({ name: 'login' })
+}
 </script>
 
 <template>
@@ -27,6 +44,29 @@ onMounted(() => {
         <span class="hidden text-xs text-muted-foreground sm:inline">{{ t('app.tagline') }}</span>
       </div>
       <div class="flex items-center gap-2">
+        <Badge
+          v-if="auth.user"
+          data-testid="account"
+          :data-admin="auth.user.is_superuser ? 'true' : 'false'"
+          variant="outline"
+          class="hidden sm:inline-flex"
+          :title="auth.user.email"
+        >
+          <ShieldCheck v-if="auth.user.is_superuser" class="size-3" aria-hidden="true" />
+          <UserRound v-else class="size-3" aria-hidden="true" />
+          {{ auth.label }}
+        </Badge>
+        <Button
+          v-if="auth.user"
+          variant="ghost"
+          size="xs"
+          data-testid="sign-out"
+          :title="t('auth.sign_out')"
+          @click="signOut()"
+        >
+          <LogOut />
+          <span class="hidden sm:inline">{{ t('auth.sign_out') }}</span>
+        </Button>
         <Badge
           data-testid="ws-status"
           :data-status="session.wsStatus"

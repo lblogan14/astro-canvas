@@ -10,6 +10,7 @@ import AppMode from '@/modes/AppMode.vue'
 import BatchMode from '@/modes/BatchMode.vue'
 import DashboardMode from '@/modes/DashboardMode.vue'
 import WizardMode from '@/modes/WizardMode.vue'
+import { useAuthStore } from '@/stores/auth'
 import { useNodesSchemaStore } from '@/stores/nodesSchema'
 import { useSelectionStore } from '@/stores/selection'
 import { useSessionStore } from '@/stores/session'
@@ -44,6 +45,7 @@ const workflow = useWorkflowStore()
 const workflows = useWorkflowsStore()
 const selection = useSelectionStore()
 const ui = useUiStore()
+const auth = useAuthStore()
 
 useShortcuts(useShortcutActions())
 
@@ -74,6 +76,9 @@ function syncRouteFromMode(): void {
 }
 
 async function openFromRoute(): Promise<void> {
+  // Nothing is readable before the login on a `--auth users` server, and the router is about
+  // to replace this route with /login anyway (design 12).
+  if (auth.requiresLogin) return
   const id = routeId.value
   if (id) {
     if (workflow.id === id) return

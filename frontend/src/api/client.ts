@@ -1,4 +1,5 @@
 import type {
+  AuthInfo,
   BatchInfo,
   BatchRequest,
   BundleImportResult,
@@ -27,6 +28,7 @@ import type {
   TrustRecord,
   TrustReview,
   UploadResult,
+  User,
   WorkflowDoc,
   WorkflowSaved,
   WorkflowSettings,
@@ -125,6 +127,25 @@ const enc = encodeURIComponent
 /** Thin typed wrapper over the REST API. Paths are relative so the Vite proxy and the wheel both work. */
 export const api = {
   getHealth: () => request<HealthResponse>('/api/health'),
+
+  // Phase 12: on a `--auth users` server the SPA has to log in first. A single-user server
+  // has no `/api/auth`, which is exactly what a 404 here means.
+  getAuthInfo: () => request<AuthInfo>('/api/auth/info'),
+  getMe: () => request<User>('/api/users/me'),
+  login: (email: string, password: string) =>
+    request<void>('/api/auth/login', {
+      method: 'POST',
+      body: new URLSearchParams({ username: email, password }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    }),
+  logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
+  register: (email: string, password: string, displayName = '') =>
+    request<User>(
+      '/api/auth/register',
+      json('POST', { email, password, display_name: displayName }),
+    ),
+  oauthStart: (provider: string) =>
+    request<{ authorization_url: string }>(`/api/auth/${enc(provider)}/authorize`),
   getSystem: () => request<SystemInfo>('/api/system'),
   getNodes: (category?: string) =>
     request<NodeSpec[]>(
