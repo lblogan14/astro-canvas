@@ -13,6 +13,7 @@ import structlog
 import typer
 import uvicorn
 
+from astro_canvas.cli.firstrun import splash_url, write_splash
 from astro_canvas.logging import configure_logging
 from astro_canvas.server.guard import ExposureError
 from astro_canvas.settings import AuthMode, Settings, get_settings
@@ -63,8 +64,16 @@ def entry_url(settings: Settings, token: str | None) -> str:
     return f"{base}/?token={token}" if token else base
 
 
-def run_server(settings: Settings, *, open_browser: bool) -> None:
-    """Start uvicorn with the app built from ``settings`` (blocking)."""
+def run_server(settings: Settings, *, open_browser: bool, splash: bool = False) -> None:
+    """Start uvicorn with the app built from ``settings`` (blocking).
+
+    Args:
+        settings: What to serve.
+        open_browser: Open the app once ``/api/health`` answers.
+        splash: Open a local progress page *now* instead of waiting. The launcher passes this
+            on a first run, where importing the packs and migrating the workspace takes long
+            enough that an empty browser looks like a failure.
+    """
     from astro_canvas.server.app import create_app  # noqa: PLC0415 - keeps --help fast
 
     log.info(
@@ -79,7 +88,10 @@ def run_server(settings: Settings, *, open_browser: bool) -> None:
         typer.echo(f"Open {url}")
     elif settings.user_auth:
         typer.echo(f"Astro Canvas is serving {url} with user accounts")
-    if open_browser:
+    if splash:
+        page = write_splash(Path(settings.config_dir), url)
+        webbrowser.open(splash_url(page))
+    elif open_browser:
         threading.Thread(target=open_when_ready, args=(url,), daemon=True).start()
     uvicorn.run(
         app,
@@ -138,11 +150,19 @@ def open_app_in_browser(
     port: Annotated[int | None, typer.Option(help="Port to look for and to serve on.")] = None,
     workspace: Annotated[Path | None, typer.Option(help="Workspace folder to open.")] = None,
     host: Annotated[str | None, typer.Option(help="Bind address (default 127.0.0.1).")] = None,
+    first_run: Annotated[
+        bool,
+        typer.Option(
+            "--first-run",
+            help="Show a progress page immediately instead of waiting for the server.",
+        ),
+    ] = False,
 ) -> None:
     """Open Astro Canvas: reuse the server that is already running, or start one.
 
-    This is what the desktop shortcut runs. Clicking it twice must not start a second server on
-    a port that is already taken, so it probes ``/api/health`` first and only then serves.
+    This is what the desktop shortcut and the click-to-run launcher run. Clicking twice must not
+    start a second server on a port that is already taken, so it probes ``/api/health`` first and
+    only then serves.
     """
     settings = get_settings(host=host, port=port, workspace=workspace)
     configure_logging(settings.log_level)
@@ -154,7 +174,11 @@ def open_app_in_browser(
         typer.echo(f"Astro Canvas {version} is already running; opening {base}")
         webbrowser.open(url)
         return
-    run_server(settings, open_browser=True)
+    try:
+        run_server(settings, open_browser=True, splash=first_run)
+    except ExposureError as exc:  # pragma: no cover - `open` binds loopback by default
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=2) from None
 
 
 def _saved_token(settings: Settings) -> str | None:

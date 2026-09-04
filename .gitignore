@@ -49,3 +49,6 @@ frontend/playwright-report/
 
 # claude
 CLAUDE.md
+
+# Windows PowerShell writes a module cache here when APPDATA is redirected (launcher tests).
+/Microsoft/

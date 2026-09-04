@@ -80,6 +80,11 @@ tasks:
     cmds:
       - bash deploy/tests/compose.sh
 
+  test:launcher:
+    desc: Smoke the one-line installers against a stub uv (no network)
+    cmds:
+      - bash launcher/tests/install-smoke.sh
+
   fmt:
     desc: Format and auto-fix backend and frontend
     cmds:

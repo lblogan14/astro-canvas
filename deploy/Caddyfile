@@ -1,13 +1,11 @@
 # TLS and the reverse proxy in front of Astro Canvas.
 #
-# `CANVAS_TLS=internal` (the default, and what CI uses) makes Caddy issue a certificate from its
-# own local CA - a real self-signed HTTPS endpoint with no ACME round trip. Set
-# `CANVAS_TLS=you@example.org` with a public `CANVAS_DOMAIN` and Caddy gets a Let's Encrypt
+# `CANVAS_TLS=internal` (the default, and what the compose test uses) makes Caddy issue a
+# certificate from its own local CA - real HTTPS with no ACME round trip. Set `CANVAS_TLS` to an
+# email address with a public `CANVAS_DOMAIN` and the same directive fetches a Let's Encrypt
 # certificate instead; nothing else changes.
-
 {
 	admin off
-	email {$CANVAS_TLS}
 }
 
 {$CANVAS_DOMAIN} {
@@ -15,8 +13,13 @@
 
 	encode zstd gzip
 
-	# The WebSocket carries node events and binary output frames, so it must not be buffered
-	# and needs a long idle timeout: a subscribed client is quiet between runs.
+	# Cubes and FITS files travel through here; 8 GiB is a generous ceiling, not a target.
+	request_body {
+		max_size 8GB
+	}
+
+	# The WebSocket carries node events and binary output frames, so it must not be buffered,
+	# and a subscribed client is quiet between runs - hence no read timeout on it.
 	@websocket {
 		header Connection *Upgrade*
 		header Upgrade websocket
@@ -28,16 +31,10 @@
 	}
 
 	handle {
-		reverse_proxy app:8765 {
-			# The app reads these to know it is behind TLS; ``public_url`` is the authority for
-			# the cookie's Secure flag, this is for redirects and logs.
-			header_up X-Forwarded-Proto {scheme}
-			header_up X-Forwarded-Host {host}
-			# Cubes and FITS files travel through here; 8 GiB is a generous ceiling, not a target.
-			request_body {
-				max_size 8GB
-			}
-		}
+		# Caddy passes X-Forwarded-{For,Proto,Host} upstream by itself; the app reads them
+		# through uvicorn's `--proxy-headers`. `ASTRO_CANVAS_PUBLIC_URL` is what actually
+		# decides the session cookie's Secure flag.
+		reverse_proxy app:8765
 	}
 
 	header {

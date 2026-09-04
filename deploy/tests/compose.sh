@@ -142,16 +142,22 @@ step "the accounts live in Postgres, not in a workspace file"
 compose exec -T db psql -U canvas -d canvas -tAc 'select count(*) from users' | grep -qE '^[2-9]' \
   || fail "the users table is not in Postgres"
 
+step "the single-page app is served, not just the API"
+api "$BASE/" | grep -q '<div id="app">' || fail "the SPA is not bundled in the image"
+
 step "the packs loaded and uv is reachable inside the image"
-compose exec -T app astro-canvas doctor | tee /dev/stderr | grep -q 'all checks passed' \
+doctor="$(compose exec -T app astro-canvas doctor || true)"
+echo "$doctor" | sed 's/^/    /'
+echo "$doctor" | grep -q 'all checks passed' \
   || fail "astro-canvas doctor is not green in the image"
 
 step "the app refuses a public bind without accounts"
-if compose exec -T -e ASTRO_CANVAS_AUTH=token app astro-canvas serve 2>&1 | grep -q 'auth users'; then
-  echo "    refused, as it should"
-else
-  fail "the guard did not refuse --host 0.0.0.0 with --auth token"
-fi
+# `serve` exits 2 here, and `pipefail` would hide the grep result behind it, so the output is
+# captured before it is searched.
+guard="$(compose exec -T -e ASTRO_CANVAS_AUTH=token app astro-canvas serve 2>&1 || true)"
+echo "$guard" | grep -q 'auth users' \
+  || fail "the guard did not refuse --host 0.0.0.0 with --auth token: $guard"
+echo "    refused, as it should"
 
 echo
 echo "OK: HTTPS, two isolated users, admin-only manager, Postgres accounts."

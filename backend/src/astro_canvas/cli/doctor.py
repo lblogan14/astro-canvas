@@ -82,9 +82,11 @@ def qt_check() -> Check:
 
 def static_check() -> Check:
     """A wheel built without the SPA serves an API and a blank page; say so plainly."""
-    index = Path(__file__).resolve().parents[1] / "static" / "index.html"
+    static = Path(__file__).resolve().parents[1] / "static"
+    index = static / "index.html"
     if index.is_file():
-        return Check("bundled interface", "ok", f"{index.stat().st_size / 1024:.0f} kB index.html")
+        files = sum(1 for p in static.rglob("*") if p.is_file())
+        return Check("bundled interface", "ok", f"{files} files, index.html {index.stat().st_size} B")
     return Check(
         "bundled interface",
         "warn",

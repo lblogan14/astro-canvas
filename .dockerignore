@@ -1,0 +1,38 @@
+# The Docker build context is the repository root (deploy/compose.yaml sets `context: ..`).
+# Without this the context is ~1 GB of node_modules, virtualenvs and the read-only rbcodes
+# checkout, none of which the image needs: the SPA and the wheels are built inside it.
+
+.git
+.github
+.venv
+**/.venv
+**/.venv310
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+
+# Build output: the image builds its own.
+frontend/dist
+backend/dist
+backend/sdk/dist
+backend/src/astro_canvas/static/*
+!backend/src/astro_canvas/static/.gitkeep
+frontend/coverage
+frontend/test-results
+frontend/playwright-report
+frontend/.playwright-mcp
+.playwright-mcp
+backend/coverage.json
+
+# The read-only upstream checkout for the compatibility spike, and the local design folder.
+rbcodes
+docs/designs
+
+# Editor and OS noise.
+.idea
+.vscode
+.DS_Store
+Thumbs.db
