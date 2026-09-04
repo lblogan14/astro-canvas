@@ -25,7 +25,8 @@ The machine-readable REST contract is `backend/src/astro_canvas/server/openapi/o
   "subgraphs": {
     "measure": { "name": "Measure line", "nodes": {…}, "edges": {…},
                  "inputs":  [{"name": "spec", "node": "inner1", "port": "spec"}],
-                 "outputs": [{"name": "ew", "node": "inner9", "port": "out"}] }
+                 "outputs": [{"name": "ew", "node": "inner9", "port": "out"}],
+                 "promoted": [{"node": "inner5", "param": "vmin", "label": "EW vmin"}] }
   },
   "promoted": [ {"node": "n2", "param": "z", "label": "Redshift", "group": "Setup", "order": 1} ],
   "views": [ {"id": "v1", "node": "n6", "port": "measurement", "kind": "ew-summary"} ],
@@ -42,7 +43,8 @@ Rules the compiler applies (`astro_canvas.engine.graph.compile`):
 | Unknown top-level or node fields | preserved (round-trip safe); `layouts`, `promoted`, `views`, `groups` are passed through untouched |
 | `linked` | the named params become input ports typed by the param's `link_type` (`astro.Float`, `astro.Json`, …); the upstream scalar value is unwrapped into the param |
 | `disabled` | the node is removed; its first output whose type matches a connected input is passed through, otherwise consumers get `upstream_disabled` |
-| `subgraph:<id>` | inlined as `<instance>/<inner id>` nodes; edges to instance `inputs`/`outputs` names are rewired to the inner ports |
+| `subgraph:<id>` | inlined as `<instance>/<inner id>` nodes; edges to instance `inputs`/`outputs` names are rewired to the inner ports (through nested instances too, up to 8 levels). A **disabled** instance is not inlined and behaves like any disabled node without a passthrough |
+| `subgraphs[].promoted` | the inner params an instance may set. The instance addresses one by its ref `"<inner node>.<param>"`: a value in the instance's `params` overrides the inner param, and a ref in the instance's `linked` exposes it as an input port on the instance (and links it on the inner node). Refs nest, so an outer subgraph promotes `"inner.plus.y"` |
 | `cost` | overrides the node type's cost class (`cheap`, `expensive`, `auto`) |
 | `pos`, `size`, `title`, `ui`, `notes` | UI only; they never affect cache keys |
 
