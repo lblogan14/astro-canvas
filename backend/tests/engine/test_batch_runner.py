@@ -13,6 +13,7 @@ from astro_canvas.engine.batch import (
     BatchRunner,
     BatchSpec,
     bind_row,
+    coerce_cell,
     spec_from_layout,
 )
 from astro_canvas.engine.scheduler import SchedulerConfig
@@ -73,6 +74,25 @@ def test_bind_row_writes_params_and_unlinks_bound_ports() -> None:
     assert variant.nodes["add"].params["x"] == 4.0
     assert variant.nodes["add"].linked == []
     assert doc.nodes["add"].linked == ["x"]  # the source document is untouched
+
+
+def test_text_cells_widen_to_the_param_type(harness: Harness) -> None:
+    registry = harness.registry
+    assert coerce_cell(registry, "core.math.constant", "value", "1.5") == 1.5
+    assert coerce_cell(registry, "core.math.expr", "expression", "x + 1") == "x + 1"
+    assert coerce_cell(registry, "core.math.constant", "value", 2.0) == 2.0
+    # Unknown nodes, unknown params and unconvertible text pass straight through.
+    assert coerce_cell(registry, "nope.node", "value", "1.5") == "1.5"
+    assert coerce_cell(registry, "core.math.constant", "ghost", "1.5") == "1.5"
+    assert coerce_cell(registry, "core.math.constant", "value", "many") == "many"
+
+
+async def test_a_csv_row_of_strings_runs(harness: Harness) -> None:
+    doc = pipeline()
+    spec = spec_from_layout(doc.layouts["batch"])
+    run = await runner(harness).execute(doc, [{"x0": "2", "add.y": "3.5"}], spec)
+    assert run.status == "done"
+    assert run.results().rows[0]["value"] == 5.5
 
 
 async def test_every_row_runs_with_its_own_params_and_results(harness: Harness) -> None:

@@ -24,6 +24,7 @@ type AnyFn = (...args: unknown[]) => unknown
 const startBatch = vi.fn<AnyFn>()
 const getBatch = vi.fn<AnyFn>()
 const cancelBatch = vi.fn<AnyFn>()
+const fetchWorkspaceText = vi.fn<AnyFn>()
 
 vi.mock('@/api/client', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/api/client')>()
@@ -34,9 +35,12 @@ vi.mock('@/api/client', async (importOriginal) => {
       startBatch: (...args: unknown[]) => startBatch(...args),
       getBatch: (...args: unknown[]) => getBatch(...args),
       cancelBatch: (...args: unknown[]) => cancelBatch(...args),
+      fetchWorkspaceText: (...args: unknown[]) => fetchWorkspaceText(...args),
     },
   }
 })
+
+const TABLE_CSV = ['value,note', '1,a', '2,b', ''].join('\n')
 
 const SPECGUI_CSV = [
   'filename,redshift,transition,transition_name,slice_vmin,slice_vmax,ew_vmin,ew_vmax,linelist,method',
@@ -142,6 +146,7 @@ describe('batch store', () => {
     startBatch.mockReset()
     getBatch.mockReset()
     cancelBatch.mockReset()
+    fetchWorkspaceText.mockReset()
   })
 
   it('imports a specgui table and reports the preset', () => {
@@ -236,6 +241,30 @@ describe('batch store', () => {
     expect(batch.openInCanvas(0)).toBe(true)
     expect(workflow.nodes['c']?.params?.['value']).toBe(42)
     expect(batch.openInCanvas(9)).toBe(false)
+  })
+
+  it('loads the row table a layout points at', async () => {
+    const { batch, workflow } = setup()
+    workflow.doc!.layouts = {
+      batch: {
+        columns: [{ promoted: 'c.value', column: 'value' }],
+        collect: ['sum.out'],
+        rows: 'samples/rows.csv',
+      },
+    }
+    fetchWorkspaceText.mockResolvedValue(TABLE_CSV)
+    expect(batch.loadLayout()).toBe(true)
+    expect(await batch.loadRows('samples/rows.csv')).toBe(2)
+    expect(batch.columns).toEqual(['value', 'note'])
+    expect(batch.rows).toEqual([
+      { value: 1, note: 'a' },
+      { value: 2, note: 'b' },
+    ])
+    expect(batch.mapping['value']).toBe('c.value')
+
+    fetchWorkspaceText.mockRejectedValue(new Error('gone'))
+    expect(await batch.loadRows('nope.csv')).toBe(0)
+    expect(batch.error).toBe('gone')
   })
 
   it('round-trips the layout through the document', () => {

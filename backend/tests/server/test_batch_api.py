@@ -103,11 +103,14 @@ def test_cancelling_a_batch_stops_the_remaining_rows(
         wait_status(api, "batch-doc")
         started = api.post(
             "/api/workflows/batch-doc/batch",
-            json={"rows": [{"slow.x": float(i)} for i in range(6)], "spec": {
-                "bindings": [{"node": "slow", "param": "x", "column": "slow.x"}],
-                "collect": [{"node": "slow", "port": "out"}],
-                "max_workers": 2,
-            }},
+            json={
+                "rows": [{"slow.x": float(i)} for i in range(6)],
+                "spec": {
+                    "bindings": [{"node": "slow", "param": "x", "column": "slow.x"}],
+                    "collect": [{"node": "slow", "port": "out"}],
+                    "max_workers": 2,
+                },
+            },
         )
         batch_id = started.json()["batch_id"]
         deadline = time.monotonic() + 10

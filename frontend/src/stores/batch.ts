@@ -137,7 +137,8 @@ export const useBatchStore = defineStore('batch', () => {
   /** Seed the table from the open document's `layouts.batch` (columns, collect and mapping). */
   function loadLayout(): boolean {
     const layout = useWorkflowStore().doc?.layouts?.['batch'] as
-      { columns?: unknown[]; collect?: unknown[]; max_workers?: number | null } | undefined
+      | { columns?: unknown[]; collect?: unknown[]; max_workers?: number | null; rows?: string }
+      | undefined
     if (!layout) return false
     const nextColumns: string[] = []
     const nextMapping: Record<string, string> = {}
@@ -160,7 +161,25 @@ export const useBatchStore = defineStore('batch', () => {
     maxWorkers.value = layout.max_workers ?? null
     if (rows.value.length === 0) addRow()
     reset()
+    // A template may point at a bundled row table; it fills the grid once it arrives.
+    if (layout.rows) void loadRows(layout.rows)
     return true
+  }
+
+  /** Replace the rows with a workspace file's table, keeping the layout's column mapping. */
+  async function loadRows(path: string): Promise<number> {
+    try {
+      const table = parseDelimited(await api.fetchWorkspaceText(path))
+      if (table.rows.length === 0) return 0
+      const known = new Set(columns.value)
+      columns.value = [...columns.value, ...table.columns.filter((c) => !known.has(c))]
+      rows.value = table.rows
+      reset()
+      return table.rows.length
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : String(err)
+      return 0
+    }
   }
 
   /** Write the current columns/collect back into the document's `layouts.batch`. */
@@ -336,6 +355,7 @@ export const useBatchStore = defineStore('batch', () => {
     setMapping,
     importText,
     loadLayout,
+    loadRows,
     saveLayout,
     openInCanvas,
     reset,

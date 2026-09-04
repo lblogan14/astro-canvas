@@ -83,6 +83,35 @@
     "e10": { "from": ["ew", "out"], "to": ["save", "measurement"] },
     "e11": { "from": ["continuum", "normalized"], "to": ["doublet", "spec"] }
   },
+  "promoted": [
+    { "node": "load", "param": "path", "label": "Spectrum", "group": "Load", "order": 1 },
+    { "node": "redshift", "param": "z", "label": "Absorber z", "group": "Load", "order": 2 },
+    { "node": "transition", "param": "wrest", "label": "Transition", "group": "Line", "order": 3 },
+    { "node": "transition", "param": "linelist", "label": "Line list", "group": "Line", "order": 4 },
+    { "node": "transition", "param": "method", "label": "Match", "group": "Line", "order": 5 },
+    { "node": "slice", "param": "vmin", "label": "Slice vmin", "group": "Slice", "order": 6 },
+    { "node": "slice", "param": "vmax", "label": "Slice vmax", "group": "Slice", "order": 7 },
+    { "node": "ew", "param": "vmin", "label": "EW vmin", "group": "Measure", "order": 8 },
+    { "node": "ew", "param": "vmax", "label": "EW vmax", "group": "Measure", "order": 9 }
+  ],
+  "layouts": {
+    "batch": {
+      "columns": [
+        { "promoted": "load.path", "column": "filename" },
+        { "promoted": "redshift.z", "column": "redshift" },
+        { "promoted": "transition.wrest", "column": "transition" },
+        { "promoted": "slice.vmin", "column": "slice_vmin" },
+        { "promoted": "slice.vmax", "column": "slice_vmax" },
+        { "promoted": "ew.vmin", "column": "ew_vmin" },
+        { "promoted": "ew.vmax", "column": "ew_vmax" },
+        { "promoted": "transition.linelist", "column": "linelist" },
+        { "promoted": "transition.method", "column": "method" }
+      ],
+      "collect": ["ew.out"],
+      "continue_on_error": true,
+      "rows": "samples/rbcodes/absorption_batch.csv"
+    }
+  },
   "views": [
     { "id": "spectrum", "node": "slice", "port": "out", "kind": "spectrum" },
     { "id": "continuum", "node": "continuum", "port": "normalized", "kind": "spectrum" },

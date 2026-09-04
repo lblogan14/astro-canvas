@@ -193,6 +193,13 @@ export const api = {
     const token = getToken()
     return `/api/workspace/file?path=${enc(path)}${token ? `&token=${enc(token)}` : ''}`
   },
+  /** Text content of a workspace file (batch row tables, small ASCII data). */
+  fetchWorkspaceText: async (path: string) => {
+    const response = await fetch(api.workspaceFileUrl(path), { headers: authHeaders() })
+    if (!response.ok) throw new ApiError(response.status, `GET workspace/file ${response.status}`)
+    return response.text()
+  },
+
   /** Full output of a node as an Arrow IPC stream (tables) or other formats. */
   outputUrl: (workflowId: string, nodeId: string, port: string, fmt: 'arrow' | 'json' | 'npz') =>
     `/api/outputs/${enc(nodeId)}/${enc(port)}?workflow_id=${enc(workflowId)}&fmt=${fmt}`,

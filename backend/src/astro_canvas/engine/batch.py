@@ -25,7 +25,7 @@ from typing import Any, Literal
 
 import numpy as np
 import structlog
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError
 
 from astro_canvas.engine.cache import OutputCache
 from astro_canvas.engine.events import (
@@ -38,7 +38,7 @@ from astro_canvas.engine.events import (
 from astro_canvas.engine.executors import ProcessExecutor, ThreadExecutor
 from astro_canvas.engine.graph import WorkflowDoc, as_graph, compile
 from astro_canvas.engine.scheduler import Scheduler, SchedulerConfig
-from astro_canvas.sdk import NodeRegistry, PortType
+from astro_canvas.sdk import NodeRegistry, PortType, UnknownNodeError
 from astro_canvas.store.runs import MemoryStats
 
 log = structlog.get_logger("astro_canvas.batch")
@@ -263,7 +263,25 @@ class BatchCancelled(RuntimeError):
 # --- runner ------------------------------------------------------------------------------------
 
 
-def bind_row(doc: WorkflowDoc, spec: BatchSpec, row: Mapping[str, Any]) -> WorkflowDoc:
+def coerce_cell(registry: NodeRegistry, node_type: str, param: str, value: Any) -> Any:
+    """Widen a table cell to the param's declared type.
+
+    Cells arriving from a CSV or a pasted table are strings; a param annotated ``float`` must
+    receive ``1.3855``, not ``"1.3855"``. A value the param model rejects is passed through
+    untouched so the compiler reports it as ``bad_param`` on that node.
+    """
+    if not isinstance(value, str):
+        return value
+    try:
+        field = registry.get(node_type).params_model.model_fields[param]
+        return TypeAdapter(field.annotation).validate_python(value)
+    except (LookupError, UnknownNodeError, ValidationError, TypeError):
+        return value
+
+
+def bind_row(
+    doc: WorkflowDoc, spec: BatchSpec, row: Mapping[str, Any], registry: NodeRegistry | None = None
+) -> WorkflowDoc:
     """A copy of ``doc`` with this row's columns written into the bound node params."""
     variant = doc.model_copy(deep=True)
     for binding in spec.bindings:
@@ -272,7 +290,10 @@ def bind_row(doc: WorkflowDoc, spec: BatchSpec, row: Mapping[str, Any]) -> Workf
         node = variant.nodes.get(binding.node)
         if node is None:
             continue
-        node.params[binding.param] = row[binding.column]
+        value = row[binding.column]
+        node.params[binding.param] = (
+            value if registry is None else coerce_cell(registry, node.type, binding.param, value)
+        )
         if binding.param in node.linked:
             node.linked = [name for name in node.linked if name != binding.param]
     return variant
@@ -469,7 +490,7 @@ class BatchRunner:
         record.state = "running"
         self._emit_row(run, record)
         started = time.perf_counter()
-        scheduler = self._scheduler(bind_row(doc, run.spec, row), stats)
+        scheduler = self._scheduler(bind_row(doc, run.spec, row, self.registry), stats)
         run._schedulers[record.index] = scheduler
         try:
             targets = [c.node for c in run.spec.collect if c.node in scheduler.graph.nodes]
