@@ -116,8 +116,15 @@ Sample documents live in `backend/tests/fixtures/workflows/` (`math_chain.json`,
   `N_e`, `logN`, `logN_e`, `vel_centroid`, `vel_disp`, `SNR`, …) plus `status`, `error_message`
   and `calculation_timestamp`. A collected column that clashes with an input column is qualified
   with its node id.
+* **Quarantine** (phase 11): a node whose code has not been trusted compiles to a `quarantined`
+  issue, which keeps it and everything downstream out of the executable graph. See
+  [bundle.md](bundle.md) for the gate and `meta.quarantine`.
+* **Dynamic ports** (phase 11): a node whose `NodeSpec` carries `dynamic_ports` declares its
+  ports in two of its own params, and `effective_ports(spec, params)` is what the compiler wires
+  and the canvas draws. See [bundle.md](bundle.md).
 * **Persistence**: `workflows`, `workflow_versions` (snapshot per changed save), `runs`,
-  `node_runs`, `outputs`, `node_stats` in `<workspace>/.astro-canvas/app.db` (Alembic-managed).
+  `node_runs`, `outputs`, `node_stats` in `<workspace>/.astro-canvas/app.db` (Alembic-managed);
+  phase 11 adds `packs`, `snapshots`, `settings` and `trust` to the same database.
 
 ## REST API (`/api`, bearer token)
 

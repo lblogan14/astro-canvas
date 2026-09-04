@@ -8,7 +8,7 @@ headless nodes so undergrads and researchers can run the same tools in a browser
 
 ## Status
 
-**Pre-alpha, phase 10 of 13 (app modes).** The repository builds, lints, tests, and runs a FastAPI + Vue app
+**Pre-alpha, phase 11 of 13 (pack manager, bundles and trust).** The repository builds, lints, tests, and runs a FastAPI + Vue app
 on Windows, macOS, and Linux. Packs register nodes and port types through `astro_canvas.sdk`; the server lists their
 schemas, stores `workflow.json` documents, and executes them reactively (content-hash cache, cost gating, thread/process
 executors, cancellation) with events over `/ws`. The browser canvas (Vue Flow) lets you browse nodes, place and connect
@@ -21,10 +21,19 @@ Phase 10 turns a workflow into a GUI: star a parameter, pin a preview, and the s
 spectrum highlights the matching rows of a table fed by it. The layout lives in the URL (`/w/<id>/wizard`),
 the four rbcodes templates ship default layouts, and the templates gallery opens each one straight into its
 own interface.
+Phase 11 makes packs and workflows travel. **Node packs** install into the shared uv environment through a
+manager that shows the resolution diff before it touches anything, blocks a pack whose pins conflict with the
+app, snapshots the environment before every install and can roll back to any snapshot exactly. Workflows
+export as reproducible **`.acw` bundles** (document, lock, input hashes, results, figures, provenance) and
+import back with missing packs and missing inputs reported rather than guessed at. A **Python code node**
+runs a snippet with ports you declare, and code that arrives inside a bundle stays **quarantined** until you
+have read it.
 See [docs/guide/canvas.md](docs/guide/canvas.md), [docs/guide/data.md](docs/guide/data.md),
 [docs/guide/absorption.md](docs/guide/absorption.md), [docs/guide/redshift.md](docs/guide/redshift.md),
 [docs/guide/multispec.md](docs/guide/multispec.md), [docs/guide/ifu.md](docs/guide/ifu.md),
-[docs/guide/batch.md](docs/guide/batch.md), [docs/guide/modes.md](docs/guide/modes.md) and the roadmap below.
+[docs/guide/batch.md](docs/guide/batch.md), [docs/guide/modes.md](docs/guide/modes.md),
+[docs/guide/packs.md](docs/guide/packs.md), [docs/guide/bundles.md](docs/guide/bundles.md),
+[docs/guide/code-nodes.md](docs/guide/code-nodes.md) and the roadmap below.
 
 | Phase | Outcome |
 |---|---|
@@ -37,7 +46,8 @@ See [docs/guide/canvas.md](docs/guide/canvas.md), [docs/guide/data.md](docs/guid
 | 08 | rbcodes pack IV: IFU cubes (`rb_ifuview` collapses, aperture editor, moment maps, ds9 regions, memory-mapped cubes) |
 | 09 | Batch runner (a workflow over a table of rows, specgui batch import) and subgraphs (collapse, breadcrumb navigation, blueprints) with elk auto-layout |
 | 10 | App modes: promoted parameters and pinned views rendered as App, Wizard and Dashboard layouts (linked selection), templates gallery |
-| 11–13 | Pack manager and bundles, distribution, hardening and `v0.1.0` |
+| 11 | Pack manager (uv resolution plans, snapshots and rollback), git-backed registry, `.acw` bundles, Python code node behind a trust gate |
+| 12–13 | Distribution (launchers, Docker), hardening and `v0.1.0` |
 
 ## Quick start (developers)
 
@@ -93,6 +103,12 @@ workspace members) · `launcher/`, `deploy/` (phase 12) · `registry/` (pack ind
 - [docs/guide/batch.md](docs/guide/batch.md): running a workflow over a table of rows, and the specgui batch import.
 - [docs/guide/modes.md](docs/guide/modes.md): promoting parameters, pinning views, and the App, Wizard and
   Dashboard layouts (with linked selection) plus the templates gallery.
+- [docs/guide/packs.md](docs/guide/packs.md): installing, enabling, updating and rolling back node packs.
+- [docs/guide/bundles.md](docs/guide/bundles.md): sharing a workflow as a `.acw`, and the trust gate.
+- [docs/guide/code-nodes.md](docs/guide/code-nodes.md): the Python code node, its ports and its restrictions.
+- [docs/formats/bundle.md](docs/formats/bundle.md): the `.acw` layout, import safety rules and the
+  `/api/manager` and `/api/bundles` contracts.
+- [docs/packs/publishing.md](docs/packs/publishing.md): shipping a pack and listing it in the registry.
 - [backend/sdk/README.md](backend/sdk/README.md): writing nodes with the SDK.
 - [docs/dev/rbcodes-compat.md](docs/dev/rbcodes-compat.md): rbcodes on Python 3.12, test results, and the
   proposed upstream patch ([docs/dev/rbcodes-upstream.patch](docs/dev/rbcodes-upstream.patch)).
