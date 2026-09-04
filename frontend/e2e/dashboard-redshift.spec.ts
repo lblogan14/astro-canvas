@@ -125,26 +125,31 @@ test.describe('dashboard mode over the redshift template', () => {
     }
   })
 
-  test('the templates gallery opens each template into its default layout', async ({
-    page,
-    request,
-  }) => {
-    await page.goto(`/templates?token=${E2E_TOKEN}`)
-    await expect(page.getByTestId('templates-gallery')).toBeVisible()
-    const cards = page.locator('[data-testid^="gallery-card-"]')
-    await expect(cards).toHaveCount(4)
-    await expect(
-      page.getByTestId('gallery-card-rbcodes.absorption-line-measurement'),
-    ).toHaveAttribute('data-layout', 'wizard')
-    await expect(page.getByTestId('gallery-card-rbcodes.redshift-finder')).toHaveAttribute(
-      'data-layout',
-      'dashboard',
-    )
+  const GALLERY: [string, string][] = [
+    ['rbcodes.absorption-line-measurement', 'wizard'],
+    ['rbcodes.redshift-finder', 'dashboard'],
+    ['rbcodes.multi-spectrum-viewer', 'dashboard'],
+    ['rbcodes.ifu-cube-explorer', 'dashboard'],
+  ]
 
-    await page.getByTestId('gallery-open-rbcodes.redshift-finder').click()
-    await expect(page.getByTestId('dashboard-mode')).toBeVisible({ timeout: 30000 })
-    await expect(page).toHaveURL(/\/w\/[^/]+\/dashboard$/)
+  for (const [template, mode] of GALLERY) {
+    test(`the gallery opens ${template} into its ${mode} layout`, async ({ page, request }) => {
+      await page.goto(`/templates?token=${E2E_TOKEN}`)
+      await expect(page.getByTestId('templates-gallery')).toBeVisible()
+      await expect(page.locator('[data-testid^="gallery-card-"]')).toHaveCount(GALLERY.length)
+      await expect(page.getByTestId(`gallery-card-${template}`)).toHaveAttribute(
+        'data-layout',
+        mode,
+      )
 
-    await deleteWorkflow(request, page.url().split('/w/')[1]?.split('/')[0] ?? 'none')
-  })
+      await page.getByTestId(`gallery-open-${template}`).click()
+      await expect(page.getByTestId(`${mode}-mode`)).toBeVisible({ timeout: 30000 })
+      await expect(page).toHaveURL(new RegExp(`/w/[^/]+/${mode}$`))
+      // "Show graph" is always one click away, whatever the layout.
+      await page.getByTestId(`${mode}-show-graph`).click()
+      await expect(page.getByTestId('canvas')).toBeVisible()
+
+      await deleteWorkflow(request, page.url().split('/w/')[1]?.split('/')[0] ?? 'none')
+    })
+  }
 })
