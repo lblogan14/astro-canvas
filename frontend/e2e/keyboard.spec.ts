@@ -89,8 +89,8 @@ test.describe('keyboard and motion', () => {
       }
 
       // The last step offers the export instead of Next. Press it the moment it is reachable,
-      // exactly as a user does: making the export wait for the outputs it is about to write is
-      // `useMode.settle`'s job, and this is the test that caught it not doing so.
+      // exactly as a user does: waiting for the values the export writes is the server's job
+      // (`Scheduler.settle`), and this is the test that caught two client-side attempts at it.
       await expect(page.getByTestId('wizard-next')).toHaveCount(0)
       await tabTo(page, 'wizard-export')
       await page.keyboard.press('Enter')
