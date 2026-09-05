@@ -308,6 +308,45 @@ class Scheduler:
     def current_run(self) -> RunInfo | None:
         return self._current
 
+    def settling(self, node_ids: Iterable[str] | None = None) -> bool:
+        """Whether the given nodes still have a state change coming without anyone asking.
+
+        True while a run is in flight, while an auto-run debounce is armed, while one of the
+        nodes is queued or running, and -- with auto-run on -- while one of them is dirty. A
+        ``stale`` node is *not* settling: it is cost-gated and waiting for an explicit run, so
+        nothing is going to move it and waiting would only burn the timeout.
+        """
+        if self._current is not None:
+            return True
+        if self._debounce is not None and not self._debounce.done():
+            return True
+        ids = self.records.keys() if node_ids is None else node_ids
+        for nid in ids:
+            rec = self.records.get(nid)
+            if rec is None:
+                continue
+            if rec.state in ("queued", "running"):
+                return True
+            if rec.state == "dirty" and self.auto_run and not rec.stale:
+                return True
+        return False
+
+    async def settle(self, node_ids: Iterable[str] | None = None, timeout_s: float = 60.0) -> bool:
+        """Wait until :meth:`settling` is false; ``False`` if the timeout ran out first.
+
+        Anything that reads outputs straight after an edit needs this. A client cannot do it for
+        itself: its own node states arrive over the event socket *after* the server has changed
+        them, so a client that has just saved still sees the previous run's ``done`` and would
+        read an output whose cache key no longer exists.
+        """
+        ids = None if node_ids is None else list(node_ids)
+        deadline = time.monotonic() + timeout_s
+        while self.settling(ids):
+            if time.monotonic() >= deadline:
+                return False
+            await asyncio.sleep(0.02)
+        return True
+
     # --- runs --------------------------------------------------------------------------------
 
     def _plan(self, targets: Sequence[str] | None) -> list[str]:

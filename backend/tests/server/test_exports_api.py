@@ -90,6 +90,28 @@ def test_missing_outputs_and_bad_refs_are_skipped_not_fatal(api: TestClient) -> 
     assert [f["ref"] for f in body["files"]] == ["sum.out"]
 
 
+def test_an_export_on_the_heels_of_an_edit_waits_for_the_new_value(
+    api: TestClient, settings: Settings
+) -> None:
+    """The nightly's macOS failure: exporting into the middle of a recompute.
+
+    The edit arms the auto-run debounce, so for the next fraction of a second the node's cached
+    output is the *old* key's and the new one does not exist yet. Without a wait the export
+    answers `no_output` for a value that is milliseconds away, which is what a wizard's Save step
+    does to it -- and a client cannot wait for this itself, because its own node states arrive
+    after the server has already changed them.
+    """
+    doc = ran(api)
+    doc["nodes"]["c"]["params"]["value"] = 5.0
+    assert api.put(f"/api/workflows/{doc['id']}", json=doc).status_code == 200
+
+    body = api.post(f"/api/workflows/{doc['id']}/exports", json={"refs": ["sum.out"]}).json()
+    assert body["skipped"] == []
+    written = Path(settings.workspace) / body["files"][0]["path"]
+    payload = json.loads(written.read_text(encoding="utf-8"))
+    assert payload == {"type_id": "astro.Float", "data": {"value": 31.0}}  # 5**2 + 5 + 1
+
+
 def test_paths_outside_the_workspace_are_refused(api: TestClient) -> None:
     doc = ran(api)
     denied = api.post(f"/api/workflows/{doc['id']}/exports", json={"refs": [], "dir": "../escape"})

@@ -6790,7 +6790,7 @@
     },
     "/api/workflows/{workflow_id}/exports": {
       "post": {
-        "description": "Write the named outputs into the workspace and return their paths.",
+        "description": "Write the named outputs into the workspace and return their paths.\n\nA recompute already under way is waited out first (up to a minute), so an export that follows\nan edit writes the new values instead of reporting them as missing. Refs that nothing is going\nto produce -- a cost-gated node, an unknown one -- come back in ``skipped``.",
         "operationId": "create_export_api_workflows__workflow_id__exports_post",
         "parameters": [
           {

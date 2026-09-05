@@ -131,6 +131,11 @@ export function useMode() {
    * `"ew.out has no cached output"`. So wait for the nodes themselves. `dirty` only counts while
    * auto-run is on, because a dirty node nobody is going to run would otherwise hold the export
    * until the timeout; those refs are reported as skipped instead, which is the honest answer.
+   *
+   * The server waits for the same thing on its own (`Scheduler.settle`), and that is the wait
+   * that has to be right: these states arrive over the event socket *after* the server has
+   * changed them, so this one only keeps the request from going out while the graph is visibly
+   * still moving.
    */
   async function settle(refs: string[] = [], timeoutMs = 60000): Promise<void> {
     const ids = [...new Set(refs.map((ref) => ref.slice(0, ref.lastIndexOf('.'))))]
