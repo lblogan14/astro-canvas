@@ -24,8 +24,8 @@ bundle, which is how pack templates ship (`.acw` files that are plain documents,
 
 ```jsonc
 // lock.json
-{ "app_version": "0.1.0a0", "python": "3.12.7", "platform": "win32-AMD64",
-  "packs": {"astro-canvas-core": "0.1.0a0", "astro-canvas-rbcodes": "0.1.0a0"},
+{ "app_version": "0.1.0", "python": "3.12.7", "platform": "win32-AMD64",
+  "packs": {"astro-canvas-core": "0.1.0", "astro-canvas-rbcodes": "0.1.0"},
   "requirements": ["numpy==2.5.2", "..."],       // uv pip freeze at export time
   "created": "2026-09-04T05:39:18+00:00" }
 

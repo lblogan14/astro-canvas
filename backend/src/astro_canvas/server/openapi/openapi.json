@@ -631,7 +631,7 @@
         "description": "Exactly what ran, so an import can say whether this machine can reproduce it.",
         "properties": {
           "app_version": {
-            "default": "0.1.0a0",
+            "default": "0.1.0",
             "title": "App Version",
             "type": "string"
           },
@@ -4047,7 +4047,7 @@
   },
   "info": {
     "title": "Astro Canvas",
-    "version": "0.1.0a0"
+    "version": "0.1.0"
   },
   "openapi": "3.1.0",
   "paths": {

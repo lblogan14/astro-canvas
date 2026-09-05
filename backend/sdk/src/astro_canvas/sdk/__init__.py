@@ -84,7 +84,7 @@ from astro_canvas.sdk.spec import (
     PortTypeSpec,
 )
 
-__version__ = "0.1.0a0"
+__version__ = "0.1.0"
 
 __all__ = [
     "ANY_TYPE",

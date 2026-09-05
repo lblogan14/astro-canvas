@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from astro_canvas.sdk import PackRegistry
 
-__version__ = "0.1.0a0"
+__version__ = "0.1.0"
 
 
 def register(registry: PackRegistry) -> None:

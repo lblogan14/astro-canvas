@@ -58,28 +58,40 @@ const BACKEND_DIR = fileURLToPath(new URL('../../backend', import.meta.url))
 const STATIC_INDEX = path.join(BACKEND_DIR, 'src', 'astro_canvas', 'static', 'index.html')
 const ROOT = path.join(os.tmpdir(), 'astro-canvas-e2e')
 const KEEP = process.env.ASTRO_CANVAS_E2E_KEEP_WORKSPACE === '1'
-const USE_WHEEL = process.env.ASTRO_CANVAS_E2E_WHEEL === '1'
+/** True when the suite runs against the built wheels rather than the source checkout. */
+export const USE_WHEEL = process.env.ASTRO_CANVAS_E2E_WHEEL === '1'
 /** Stream the backend's own log to stdout; the last 400 chunks are kept for failures either way. */
 const VERBOSE = process.env.ASTRO_CANVAS_E2E_VERBOSE === '1'
 const START_TIMEOUT_MS = 180_000
 
+const DIST = path.join(BACKEND_DIR, 'dist')
+
 /**
  * `uv run astro-canvas serve ...` -- from the checkout, or from the built wheels.
  *
- * The wheel form is the same `uv run --isolated --no-project --with ...` shape `task build:smoke`
- * uses, so the run really is against the distribution and not against `src/`.
+ * The wheel form asks for the distributions *by name and version* with `UV_FIND_LINKS` pointing
+ * at `backend/dist`, rather than handing uv four paths. That matters for more than tidiness: the
+ * pack manager resolves an install by running `uv pip install --dry-run` with the app's own
+ * distributions pinned, so unless uv can find `astro-canvas==<version>` the way a user's uv
+ * would, every plan comes back "unsatisfiable" and the Manager specs measure nothing. The
+ * `users` extra is included because the `users` project needs a login-capable server.
  */
 function serveCommand(): { command: string; args: string[] } {
   if (!USE_WHEEL) return { command: 'uv', args: ['run', 'astro-canvas'] }
-  const dist = path.join(BACKEND_DIR, 'dist')
-  const wheels = fs
-    .readdirSync(dist)
-    .filter((name) => name.endsWith('.whl'))
-    .sort()
+  const wheels = fs.readdirSync(DIST).filter((name) => name.endsWith('.whl'))
   if (wheels.length === 0)
-    throw new Error(`ASTRO_CANVAS_E2E_WHEEL=1 but ${dist} holds no wheels - run \`task build\``)
+    throw new Error(`ASTRO_CANVAS_E2E_WHEEL=1 but ${DIST} holds no wheels - run \`task build\``)
   const args = ['run', '--isolated', '--no-project']
-  for (const wheel of wheels) args.push('--with', path.join(dist, wheel))
+  for (const [name, extras] of [
+    ['astro_canvas', '[users]'],
+    ['astro_canvas_core', ''],
+    ['astro_canvas_rbcodes', ''],
+  ] as const) {
+    const wheel = wheels.find((file) => file.startsWith(`${name}-`))
+    if (wheel === undefined) throw new Error(`no ${name} wheel in ${DIST} - run \`task build\``)
+    const version = wheel.slice(name.length + 1).split('-')[0]
+    args.push('--with', `${name.replaceAll('_', '-')}${extras}==${version}`)
+  }
   args.push('astro-canvas')
   return { command: 'uv', args }
 }
@@ -150,6 +162,9 @@ async function startBackend(
       ASTRO_CANVAS_WATCH_WORKSPACE: auth === 'users' ? 'false' : 'true',
       MPLBACKEND: 'Agg',
       QT_QPA_PLATFORM: 'offscreen',
+      // Where `--with astro-canvas==<version>` resolves from, and where the pack manager's own
+      // `uv pip install --dry-run` finds the app's distributions.
+      ...(USE_WHEEL ? { UV_FIND_LINKS: DIST } : {}),
     },
   })
   const keep = (chunk: Buffer): void => {

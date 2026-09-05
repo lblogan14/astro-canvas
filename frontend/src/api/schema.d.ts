@@ -1518,7 +1518,7 @@ export interface components {
     BundleLock: {
       /**
        * App Version
-       * @default 0.1.0a0
+       * @default 0.1.0
        */
       app_version: string
       /** Created */

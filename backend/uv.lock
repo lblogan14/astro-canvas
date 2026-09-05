@@ -264,7 +264,7 @@ packs = [
 
 [[package]]
 name = "astro-canvas-core"
-version = "0.1.0a0"
+version = "0.1.0"
 source = { editable = "../packs/core" }
 dependencies = [
     { name = "astro-canvas-sdk" },
@@ -290,7 +290,7 @@ requires-dist = [
 
 [[package]]
 name = "astro-canvas-rbcodes"
-version = "0.1.0a0"
+version = "0.1.0"
 source = { editable = "../packs/rbcodes" }
 dependencies = [
     { name = "astro-canvas-core" },

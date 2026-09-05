@@ -63,14 +63,14 @@ describe('ui store', () => {
   })
 
   it('goes online with the backend version when /api/health answers', async () => {
-    getHealth.mockResolvedValueOnce({ status: 'ok', version: '0.1.0a0' })
+    getHealth.mockResolvedValueOnce({ status: 'ok', version: '0.1.0' })
     const ui = useUiStore()
     const pending = ui.connect()
     expect(ui.backendStatus).toBe('connecting')
     await pending
     expect(ui.backendStatus).toBe('online')
     expect(ui.isOnline).toBe(true)
-    expect(ui.backendVersion).toBe('0.1.0a0')
+    expect(ui.backendVersion).toBe('0.1.0')
     expect(ui.backendError).toBeNull()
     expect(getHealth).toHaveBeenCalledTimes(1)
   })

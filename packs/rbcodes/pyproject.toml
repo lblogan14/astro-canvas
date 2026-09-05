@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "astro-canvas-rbcodes"
-version = "0.1.0a0"
+version = "0.1.0"
 description = "Astro Canvas node pack wrapping rbcodes: absorption lines, redshift finding, multi-spectrum viewer, IFU cubes"
 readme = "README.md"
 license = "MIT"

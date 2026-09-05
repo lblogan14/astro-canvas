@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "astro-canvas-core"
-version = "0.1.0a0"
+version = "0.1.0"
 description = "Astro Canvas core node pack: IO, math, plotting, astroquery, code node"
 readme = "README.md"
 license = "MIT"

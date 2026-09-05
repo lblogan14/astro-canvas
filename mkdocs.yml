@@ -18,6 +18,7 @@ exclude_docs: |
 
 not_in_nav: |
   dev/
+  release-notes/
 
 theme:
   name: material
