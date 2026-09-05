@@ -75,6 +75,16 @@ def test_key_changes_with_params_version_type_and_upstream() -> None:
     assert sub_key(base, "s0") != sub_key(base, "s1")
 
 
+def test_key_ignores_the_dot_zero_json_drops() -> None:
+    """`JSON.stringify(3.0) === '3'`, so the SPA's round trip must not bust a key."""
+    typed = cache_key("core.math.expr", "1.0.0", {"fwhm": 3.0, "steps": [1.0, 2.5]}, {})
+    round_tripped = cache_key("core.math.expr", "1.0.0", {"fwhm": 3, "steps": [1, 2.5]}, {})
+    assert typed == round_tripped
+    assert typed != cache_key("core.math.expr", "1.0.0", {"fwhm": 3.5, "steps": [1.0, 2.5]}, {})
+    # Booleans stay booleans (they are ints in Python, not floats).
+    assert canonical_json({"a": True, "b": 1.0}) == '{"a":true,"b":1}'
+
+
 def _keys(doc: WorkflowDoc, harness: Harness) -> dict[str, str]:
     scheduler = harness.scheduler(doc)
     return {nid: rec.key for nid, rec in scheduler.records.items()}
@@ -94,6 +104,14 @@ async def test_ui_only_edits_keep_keys_and_param_edits_propagate(harness: Harnes
         after["c"] != before["c"] and after["sq"] != before["sq"] and after["sum"] != before["sum"]
     )
     assert after["note"] == before["note"]
+
+
+async def test_a_whole_float_surviving_a_json_round_trip_keeps_keys(harness: Harness) -> None:
+    """The browser sends `2` back for a `2.0` parameter; nothing may go dirty over that."""
+    doc = load_doc("math_chain")
+    before = _keys(doc, harness)
+    doc.nodes["c"].params["value"] = 2
+    assert _keys(doc, harness) == before
 
 
 async def test_scheduler_marks_only_changed_nodes_dirty(harness: Harness) -> None:
