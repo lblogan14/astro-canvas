@@ -115,12 +115,12 @@ tasks:
       - pnpm -C {{.FE}} exec prettier --write src/api/schema.d.ts
 
   docs:
-    desc: Serve the documentation site locally on http://127.0.0.1:8000
+    desc: Serve the documentation site locally (http://127.0.0.1:8000)
     cmds:
       - uv run --isolated --no-project --with 'mkdocs-material>=9.5,<10' --with 'mkdocs<2' mkdocs serve
 
   docs:build:
-    desc: Build the documentation site into site/ (strict: a bad link fails the build)
+    desc: Build the docs into site/ with --strict, so a broken link fails the build
     cmds:
       - uv run --isolated --no-project --with 'mkdocs-material>=9.5,<10' --with 'mkdocs<2' mkdocs build --strict
 
