@@ -3,10 +3,10 @@
  * showing the canvas — the steps gate on their own nodes, going back preserves what was typed,
  * and the results step exports the outputs into the workspace.
  */
-import { type APIRequestContext, type Page, expect, test } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
+import { E2E_TOKEN, expect, test } from './fixtures'
 
 import { deleteWorkflow } from './helpers'
-import { E2E_TOKEN } from '../playwright.config'
 
 const TEMPLATE_ID = 'rbcodes.absorption-line-measurement'
 

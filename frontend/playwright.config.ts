@@ -1,57 +1,47 @@
-import os from 'node:os'
-import path from 'node:path'
 import process from 'node:process'
-import { fileURLToPath } from 'node:url'
 
 import { defineConfig, devices } from '@playwright/test'
 
+import type { E2EWorkerOptions } from './e2e/fixtures'
+
 const CI = !!process.env.CI
-const BACKEND_PORT = 8765
-const FRONTEND_PORT = 5173
-const workspace = path.join(os.tmpdir(), 'astro-canvas-e2e-workspace')
 
 /**
- * The `--auth users` server is a *second* pair of servers on their own ports (design 12).
- * Sharing the main backend is not an option: every other spec authenticates with one bearer
- * token, and a login-protected server would break all of them.
- */
-const USERS_BACKEND_PORT = 8766
-const USERS_FRONTEND_PORT = 5174
-const usersData = path.join(os.tmpdir(), 'astro-canvas-e2e-users')
-
-/** Fixed bearer token for the e2e backend (see `e2e/helpers.ts`). */
-export const E2E_TOKEN = process.env.ASTRO_CANVAS_TOKEN ?? 'e2e-token'
-
-/** Promoted to superuser by `ASTRO_CANVAS_ADMIN_EMAILS` on the users-mode backend. */
-export const ADMIN_EMAIL = 'pi@lab.example'
-
-/**
- * E2E runs against the real backend: Playwright starts `astro-canvas serve` (via uv) and the
- * Vite dev server (which proxies /api and /ws). Locally, already-running servers are reused; a
- * reused backend must have been started with `ASTRO_CANVAS_TOKEN=e2e-token`.
+ * E2E runs against the **bundled SPA**: `astro_canvas/static/` served by the app itself, which is
+ * what a user installs (`task build:spa` populates it, `task test:e2e` runs that first). There is
+ * no `webServer` here and no Vite dev server -- every worker starts its own backend from
+ * `e2e/fixtures.ts`, on its own port with its own workspace, so the suite is parallel-safe.
+ *
+ * `perf` is a project of its own because a frame-rate gate needs the machine to itself; it is not
+ * part of the default run (`task test:e2e:perf`).
+ *
  * See https://playwright.dev/docs/test-configuration.
  */
-export default defineConfig({
+export default defineConfig<object, E2EWorkerOptions>({
   testDir: './e2e',
-  timeout: 60 * 1000,
+  timeout: 90 * 1000,
   expect: { timeout: 10000 },
   fullyParallel: true,
   forbidOnly: CI,
   retries: CI ? 2 : 0,
-  workers: CI ? 1 : undefined,
+  // One backend per worker costs ~350 MB, so the count is capped rather than left to the CPU.
+  workers: Number(process.env.PLAYWRIGHT_WORKERS) || (CI ? 2 : 4),
   reporter: CI ? [['github'], ['html', { open: 'never' }]] : [['list']],
   use: {
-    baseURL: `http://127.0.0.1:${FRONTEND_PORT}`,
     trace: 'on-first-retry',
     headless: true,
-    extraHTTPHeaders: { Authorization: `Bearer ${E2E_TOKEN}` },
   },
   projects: [
     {
       name: 'chromium',
       // A roomy canvas: the shell keeps a library, an inspector and a toolbar around it.
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1600, height: 1000 } },
-      testIgnore: /users-auth\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1600, height: 1000 },
+        serverAuth: 'token',
+        portBase: 8800,
+      },
+      testIgnore: [/users-auth\.spec\.ts/, /perf-500\.spec\.ts/],
     },
     {
       name: 'users',
@@ -59,60 +49,18 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1600, height: 1000 },
-        baseURL: `http://127.0.0.1:${USERS_FRONTEND_PORT}`,
-        // A lab server has no bearer token: the session is a cookie the login sets.
-        extraHTTPHeaders: {},
-      },
-    },
-  ],
-  webServer: [
-    {
-      command: `uv run astro-canvas serve --host 127.0.0.1 --port ${BACKEND_PORT}`,
-      cwd: fileURLToPath(new URL('../backend', import.meta.url)),
-      url: `http://127.0.0.1:${BACKEND_PORT}/api/health`,
-      reuseExistingServer: !CI,
-      timeout: 120 * 1000,
-      env: {
-        ...process.env,
-        ASTRO_CANVAS_WORKSPACE: workspace,
-        ASTRO_CANVAS_TOKEN: E2E_TOKEN,
-        ASTRO_CANVAS_PROCESS_POOL: 'false',
-        MPLBACKEND: 'Agg',
-        QT_QPA_PLATFORM: 'offscreen',
+        serverAuth: 'users',
+        portBase: 8850,
       },
     },
     {
-      command: `pnpm dev --port ${FRONTEND_PORT}`,
-      url: `http://127.0.0.1:${FRONTEND_PORT}`,
-      reuseExistingServer: !CI,
-      timeout: 120 * 1000,
-    },
-    {
-      command:
-        `uv run astro-canvas serve --host 127.0.0.1 --port ${USERS_BACKEND_PORT} ` +
-        `--auth users --workspace ${JSON.stringify(usersData)}`,
-      cwd: fileURLToPath(new URL('../backend', import.meta.url)),
-      url: `http://127.0.0.1:${USERS_BACKEND_PORT}/api/health`,
-      reuseExistingServer: !CI,
-      timeout: 120 * 1000,
-      env: {
-        ...process.env,
-        ASTRO_CANVAS_TOKEN: '',
-        ASTRO_CANVAS_ADMIN_EMAILS: ADMIN_EMAIL,
-        ASTRO_CANVAS_PROCESS_POOL: 'false',
-        ASTRO_CANVAS_WATCH_WORKSPACE: 'false',
-        MPLBACKEND: 'Agg',
-        QT_QPA_PLATFORM: 'offscreen',
-      },
-    },
-    {
-      command: `pnpm dev --port ${USERS_FRONTEND_PORT}`,
-      url: `http://127.0.0.1:${USERS_FRONTEND_PORT}`,
-      reuseExistingServer: !CI,
-      timeout: 120 * 1000,
-      env: {
-        ...process.env,
-        ASTRO_CANVAS_DEV_BACKEND: `http://127.0.0.1:${USERS_BACKEND_PORT}`,
+      name: 'perf',
+      testMatch: /perf-500\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1600, height: 1000 },
+        serverAuth: 'token',
+        portBase: 8890,
       },
     },
   ],

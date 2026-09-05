@@ -2,7 +2,8 @@
  * Phase 04 acceptance: workspace files → loader nodes → inline previews → full-size viewer.
  * The backend copies the bundled sample data into `<workspace>/samples/rbcodes` on start.
  */
-import { expect, test, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 import { createWorkflow, deleteWorkflow, openWorkflow, uniqueId } from './helpers'
 

@@ -4,7 +4,8 @@
  * Apply writes `accepted` so Set Redshift follows the chosen candidate. The expensive PCA node
  * runs in the process pool on demand and reports progress.
  */
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 import { deleteWorkflow, getWorkflow, openWorkflow } from './helpers'
 

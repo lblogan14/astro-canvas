@@ -1,16 +1,15 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from '@playwright/test'
-
-import { ADMIN_EMAIL } from '../playwright.config'
+import { ADMIN_EMAIL, expect, test } from './fixtures'
 
 /**
  * The `--auth users` tier (design §12), against a second backend started with login accounts.
  *
- * Runs in its own Playwright project so the token-authenticated suite is untouched. Each test
- * uses a fresh address, because this backend keeps its identity database between runs and a
- * shared account would make the tests order-dependent. The admin address is the exception: it
- * is the one `ASTRO_CANVAS_ADMIN_EMAILS` promotes, so a repeat registration is expected to be
- * refused and the sign-in is what matters.
+ * Runs in its own Playwright project so the token-authenticated suite is untouched: its worker
+ * fixture starts a `--auth users` backend, and every other spec authenticates with one bearer
+ * token. Each test uses a fresh address, because the identity database is shared by the tests
+ * inside a worker and a shared account would make them order-dependent. The admin address is
+ * the exception: it is the one `ASTRO_CANVAS_ADMIN_EMAILS` promotes, so a repeat registration is
+ * expected to be refused and the sign-in is what matters.
  */
 
 const PASSWORD = 'a good long phrase'
@@ -92,7 +91,13 @@ test('an admin sees the pack manager', async ({ page }) => {
   await page.getByTestId('share-menu').click()
   await page.getByTestId('share-manager').click()
   await expect(page.getByTestId('manager-page')).toBeVisible()
-  await expect(page.getByTestId('pack-core')).toBeVisible()
+  await expect(page.getByTestId('pack-core')).toBeVisible({ timeout: 20000 })
+  // The canvas's "open or create the first workflow" round trip must not steal the route back
+  // (it did: `router.replace` arrived after the user had already left for the Manager). Proving
+  // that nothing happens needs a wait; there is no event for a navigation that must not occur.
+  // eslint-disable-next-line playwright/no-wait-for-timeout
+  await page.waitForTimeout(2000)
+  await expect(page).toHaveURL(/\/manager$/)
 })
 
 test('each account gets its own workspace, and cannot change it', async ({ page }) => {

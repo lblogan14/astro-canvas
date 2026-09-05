@@ -3,7 +3,8 @@
  * same outputs, the body opens behind a breadcrumb, expanding restores the positions, and
  * Ctrl+Shift+L tidies the canvas.
  */
-import { type Page, expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 import { createWorkflow, deleteWorkflow, getWorkflow, mathChain, openWorkflow } from './helpers'
 

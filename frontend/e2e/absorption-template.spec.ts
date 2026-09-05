@@ -3,7 +3,8 @@
  * editor previews a fit as masks are added, and Apply re-runs the graph so W changes.
  * The backend copies the bundled sample data into `<workspace>/samples/rbcodes` on start.
  */
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 import { deleteWorkflow, openWorkflow } from './helpers'
 

@@ -7,9 +7,7 @@
  * pack whose pins conflict with the app is blocked with the resolver's reason and no confirm
  * button, disabling a pack takes its nodes out of the library, and a snapshot can be taken.
  */
-import { expect, test } from '@playwright/test'
-
-import { E2E_TOKEN } from '../playwright.config'
+import { E2E_TOKEN, expect, test } from './fixtures'
 
 async function openManager(page: import('@playwright/test').Page) {
   await page.goto(`/manager?token=${E2E_TOKEN}`)
