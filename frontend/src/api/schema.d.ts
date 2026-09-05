@@ -1697,6 +1697,12 @@ export interface components {
        * @description ``'<node>.<port>'`` outputs to write.
        */
       refs?: string[]
+      /**
+       * Run
+       * @description Run the refs' nodes first, so cost-gated ones are computed rather than reported missing. What a GUI's *Export results* means; a script that wants only what is already cached leaves it off.
+       * @default false
+       */
+      run: boolean
     }
     /** ExportResult */
     ExportResult: {
@@ -2711,7 +2717,7 @@ export interface components {
        * Reason
        * @enum {string}
        */
-      reason: 'no_output' | 'bad_ref' | 'not_written'
+      reason: 'no_output' | 'failed' | 'bad_ref' | 'not_written'
       /** Ref */
       ref: string
     }

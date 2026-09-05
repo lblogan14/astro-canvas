@@ -331,6 +331,22 @@ class Scheduler:
                 return True
         return False
 
+    async def run_and_settle(
+        self, node_ids: Sequence[str], timeout_s: float = 60.0
+    ) -> tuple[str, bool]:
+        """Run ``node_ids`` explicitly and wait for the graph to settle; returns the run id.
+
+        For a caller that wants the *values* rather than whatever is cached: an explicit run
+        computes cost-gated nodes, which auto-run leaves ``stale`` on purpose, and nodes that are
+        already done are cache hits. The `sleep(0)` hands the loop to the task `start_run` just
+        created, so that it has registered itself as the current run before :meth:`settling` is
+        asked -- a gated node is not "pending" by itself, so without the yield the wait could
+        finish before the run it is waiting for had begun.
+        """
+        run_id = self.start_run(node_ids)
+        await asyncio.sleep(0)
+        return run_id, await self.settle(node_ids, timeout_s=timeout_s)
+
     async def settle(self, node_ids: Iterable[str] | None = None, timeout_s: float = 60.0) -> bool:
         """Wait until :meth:`settling` is false; ``False`` if the timeout ran out first.
 

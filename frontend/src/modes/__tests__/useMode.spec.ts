@@ -62,6 +62,8 @@ describe('useMode export', () => {
     expect(exportOutputs).toHaveBeenCalledWith('sample-math-chain', {
       refs: ['sum.out'],
       overwrite: true,
+      // A GUI export asks for the values, so the server runs what is not computed yet.
+      run: true,
     })
   })
 
