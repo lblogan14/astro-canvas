@@ -17,11 +17,12 @@ import { record } from './perf'
  */
 /**
  * A shared CI runner has four vCPUs and neighbours, and the browser itself becomes the bottleneck:
- * the same interaction that holds 0.93 of the ceiling on a development machine measured 0.76-0.89
- * there. The gate is therefore looser under `CI` -- still enough to catch the canvas suddenly
- * costing twice as much -- and the recorded number is what a regression is read from.
+ * the same interaction that holds 0.92-0.94 of the ceiling on a development machine measured
+ * 0.74, 0.76 and 0.89 across three nightlies there. The gate is therefore much looser under `CI`
+ * -- at twice the cost the fraction would be around 0.5, so it still catches the regression it is
+ * for -- and the recorded number is what a drift is read from.
  */
-const CEILING_FRACTION = process.env.CI ? 0.7 : 0.9
+const CEILING_FRACTION = process.env.CI ? 0.6 : 0.9
 const ABSOLUTE_FLOOR_FPS = process.env.CI ? 25 : 40
 const DESIGN_TARGET_FPS = 55
 
