@@ -86,7 +86,8 @@ def static_check() -> Check:
     index = static / "index.html"
     if index.is_file():
         files = sum(1 for p in static.rglob("*") if p.is_file())
-        return Check("bundled interface", "ok", f"{files} files, index.html {index.stat().st_size} B")
+        detail = f"{files} files, index.html {index.stat().st_size} B"
+        return Check("bundled interface", "ok", detail)
     return Check(
         "bundled interface",
         "warn",

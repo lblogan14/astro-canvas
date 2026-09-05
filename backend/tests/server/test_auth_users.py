@@ -31,6 +31,8 @@ def settings(tmp_path: Path) -> Settings:
         shared_dir=tmp_path / "data" / "shared",
         config_dir=tmp_path / "cfg",
         auth="users",
+        # Its own SQLite file per test, even when the environment points at a shared Postgres.
+        database_url="",
         host="0.0.0.0",
         process_pool=False,
         watch_workspace=False,
@@ -154,6 +156,7 @@ def test_registration_can_be_turned_off(tmp_path: Path, discovery: DiscoveryResu
         workspace=tmp_path / "d",
         config_dir=tmp_path / "c",
         auth="users",
+        database_url="",
         registration=False,
         process_pool=False,
         watch_workspace=False,
@@ -164,7 +167,9 @@ def test_registration_can_be_turned_off(tmp_path: Path, discovery: DiscoveryResu
 
 
 def test_the_signing_secret_survives_a_restart(tmp_path: Path) -> None:
-    settings = Settings(workspace=tmp_path / "d", config_dir=tmp_path / "c", auth="users")
+    settings = Settings(
+        workspace=tmp_path / "d", config_dir=tmp_path / "c", auth="users", database_url=""
+    )
     first = ensure_secret(settings)
     assert (tmp_path / "c" / "secret").read_text(encoding="utf-8") == first
     assert ensure_secret(settings) == first
