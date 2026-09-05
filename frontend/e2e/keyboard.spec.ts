@@ -60,13 +60,18 @@ test.describe('keyboard and motion', () => {
       await expect(page.getByTestId('wizard-mode')).toBeVisible()
       await expect(page.getByTestId('wizard-step-0')).toBeVisible()
 
-      // Steps 1 to 5: wait for the step's own node, then Tab to Next and press it.
-      for (let index = 0; index < 5; index += 1) {
+      /** A step is ready when its own node has finished. */
+      const settled = async (index: number): Promise<void> => {
         await expect(page.getByTestId(`wizard-step-${index}`)).toHaveAttribute(
           'data-state',
           'done',
           { timeout: 90000 },
         )
+      }
+
+      // Steps 1 to 5: wait for the step's own node, then Tab to Next and press it.
+      for (let index = 0; index < 5; index += 1) {
+        await settled(index)
         if (index === 1) {
           // The redshift step: reach the field and retype it without touching the mouse.
           const field = page.getByTestId('wizard-body-1').locator('input').first()
@@ -74,13 +79,19 @@ test.describe('keyboard and motion', () => {
           await page.keyboard.press('Control+A')
           await page.keyboard.type('1.3855')
           await page.keyboard.press('Enter')
+          // Committing the field is an edit, so the step goes dirty and everything downstream
+          // with it. Advancing without waiting left the export asking for a measurement that was
+          // still being recomputed ("ew.out has no cached output" -- on the slowest runner only).
+          await settled(index)
         }
         await tabTo(page, 'wizard-next')
         await page.keyboard.press('Enter')
         await expect(page.getByTestId(`wizard-body-${index + 1}`)).toBeVisible()
       }
 
-      // The last step offers the export instead of Next.
+      // The last step offers the export instead of Next, and exports what the previous step
+      // measured -- so that node has to have finished.
+      await settled(4)
       await expect(page.getByTestId('wizard-next')).toHaveCount(0)
       await tabTo(page, 'wizard-export')
       await page.keyboard.press('Enter')
