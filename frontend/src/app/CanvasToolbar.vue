@@ -190,6 +190,7 @@ const LAYOUTS: readonly AppMode[] = ['canvas', 'app', 'wizard', 'dashboard', 'ba
       variant="ghost"
       size="icon-sm"
       :title="t('toolbar.fit_view')"
+      data-testid="fit-view"
       @click="canvas?.fitView()"
     >
       <Maximize />

@@ -1,0 +1,121 @@
+name: Nightly
+
+# The full e2e suite on three operating systems, against the built wheels rather than the
+# checkout, plus the frame-rate gate on a runner of its own. `ci.yml` keeps a single-OS
+# source-checkout run so a pull request stays quick; this is the one that has to be green
+# before a release (phase 13, scope items 1 and 2).
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      perf:
+        description: 'Also run the 500-node frame-rate gate'
+        type: boolean
+        default: true
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MPLBACKEND: Agg
+  QT_QPA_PLATFORM: offscreen
+  FORCE_COLOR: '1'
+
+jobs:
+  e2e:
+    name: e2e against the wheel (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+          python-version: '3.12'
+      - name: Install
+        run: |
+          pnpm -C frontend install --frozen-lockfile
+          uv sync --directory backend --all-extras --locked
+          pnpm -C frontend exec playwright install --with-deps chromium
+      - name: Build the four wheels with the SPA inside
+        run: |
+          pnpm -C frontend build
+          uv run --directory backend python ../scripts/copy_static.py
+          uv build backend/sdk --out-dir backend/dist
+          uv build backend
+          uv build packs/core --out-dir backend/dist
+          uv build packs/rbcodes --out-dir backend/dist
+          uv run --directory backend python ../scripts/check_wheel.py
+      - name: Playwright against the wheels
+        # Every worker runs `uv run --isolated --with <each wheel> astro-canvas serve`, so the
+        # distribution is what answers the browser -- not `src/`.
+        run: pnpm -C frontend test:e2e
+        env:
+          CI: 'true'
+          ASTRO_CANVAS_E2E_WHEEL: '1'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.os }}
+          path: frontend/playwright-report
+          retention-days: 14
+
+  perf:
+    name: frame rate and latency gates
+    if: github.event_name == 'schedule' || inputs.perf
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+          python-version: '3.12'
+      - name: Install
+        run: |
+          pnpm -C frontend install --frozen-lockfile
+          uv sync --directory backend --all-extras --locked
+          pnpm -C frontend exec playwright install --with-deps chromium
+      - name: Build the SPA into the app package
+        run: |
+          pnpm -C frontend build
+          uv run --directory backend python ../scripts/copy_static.py
+      - name: 500 nodes at 55 fps, cheap re-run under 300 ms
+        run: pnpm -C frontend test:e2e:perf
+        env:
+          CI: 'true'
+      - name: Engine benchmarks (compile, cache keys, 1e6-point spectrum)
+        run: uv run --directory backend pytest -m perf -q --no-cov
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-report
+          path: |
+            frontend/playwright-report
+            backend/perf-report.json
+          retention-days: 14

@@ -77,10 +77,15 @@ tasks:
       - pnpm -C {{.FE}} test:e2e
 
   test:e2e:perf:
-    desc: The 500-node frame-rate gate, alone on the machine
+    desc: Browser performance gates (frame rate, edit latency), alone on the machine
     deps: [build:spa]
     cmds:
       - pnpm -C {{.FE}} test:e2e:perf
+
+  test:perf:
+    desc: Server performance gates (engine at 500 nodes, 1e6-point spectrum, cube, batch soak)
+    cmds:
+      - uv run --directory {{.BE}} pytest -m perf -q --no-cov
 
   test:e2e:wheel:
     desc: E2E against the built wheels in an isolated environment (needs `task build`)

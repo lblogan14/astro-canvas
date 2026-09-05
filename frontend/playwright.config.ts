@@ -19,6 +19,8 @@ const CI = !!process.env.CI
  */
 export default defineConfig<object, E2EWorkerOptions>({
   testDir: './e2e',
+  // Truncates `perf-report.json`, so it holds this run's measurements and not the last one's.
+  globalSetup: './e2e/perf.ts',
   timeout: 90 * 1000,
   expect: { timeout: 10000 },
   fullyParallel: true,
@@ -41,7 +43,7 @@ export default defineConfig<object, E2EWorkerOptions>({
         serverAuth: 'token',
         portBase: 8800,
       },
-      testIgnore: [/users-auth\.spec\.ts/, /perf-500\.spec\.ts/],
+      testIgnore: [/users-auth\.spec\.ts/, /perf-.*\.spec\.ts/],
     },
     {
       name: 'users',
@@ -55,7 +57,7 @@ export default defineConfig<object, E2EWorkerOptions>({
     },
     {
       name: 'perf',
-      testMatch: /perf-500\.spec\.ts/,
+      testMatch: /perf-.*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1600, height: 1000 },
