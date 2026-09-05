@@ -46,7 +46,7 @@ describe('workflow store: autosave', () => {
     vi.useRealTimers()
   })
 
-  it('debounces edits into one PUT after 1 s and adopts server meta without a command', async () => {
+  it('folds a burst of edits into one PUT and adopts server meta without a command', async () => {
     putWorkflow.mockImplementation(async (doc) =>
       saved(doc, { sum: [{ code: 'bad_param', message: 'x' }] }),
     )
@@ -54,11 +54,12 @@ describe('workflow store: autosave', () => {
     wf.load(mathChain())
     wf.setParam('c', 'value', 3)
     expect(wf.saveState).toBe('pending')
-    vi.advanceTimersByTime(600)
+    // Each edit re-arms the 250 ms window, so continuous typing still saves once.
+    vi.advanceTimersByTime(200)
     wf.setParam('c', 'value', 4)
-    vi.advanceTimersByTime(600)
+    vi.advanceTimersByTime(200)
     expect(putWorkflow).not.toHaveBeenCalled()
-    vi.advanceTimersByTime(400)
+    vi.advanceTimersByTime(100)
     await vi.runOnlyPendingTimersAsync()
     expect(putWorkflow).toHaveBeenCalledTimes(1)
     const sent = putWorkflow.mock.calls[0]![0]

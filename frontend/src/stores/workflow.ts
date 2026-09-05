@@ -217,7 +217,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
   /** Increments on every change; compared against the sequence a save started from. */
   const changeSeq = ref(0)
   const savedSeq = ref(0)
-  const autosaveDelayMs = ref(1000)
+  /**
+   * How long a burst of edits is collected before the document is PUT. The server debounces for
+   * another 250 ms before it auto-runs, so this is half of what a user waits between a keystroke
+   * and a new value on the canvas: a second here made an interactive edit feel like a second and
+   * a half. 250 ms still folds continuous typing (and a slider drag) into one save.
+   */
+  const autosaveDelayMs = ref(250)
   const coalesceWindowMs = ref(800)
   const autosaveEnabled = ref(true)
   /** Commands within one `transaction()` fold into a single undo entry. */
