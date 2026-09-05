@@ -123,50 +123,20 @@ export function useMode() {
   })
 
   /**
-   * Wait until the nodes named in `refs` have something to export.
-   *
-   * Sleeping for a fixed moment and then watching `isRunning` is a race: the auto-run debounce is
-   * armed by the server 250 ms after the save lands, so on a slow machine nothing was running yet
-   * when the wait expired, and the export asked for an output that was still being recomputed --
-   * `"ew.out has no cached output"`. So wait for the nodes themselves. `dirty` only counts while
-   * auto-run is on, because a dirty node nobody is going to run would otherwise hold the export
-   * until the timeout; those refs are reported as skipped instead, which is the honest answer.
-   *
-   * The server waits for the same thing on its own (`Scheduler.settle`), and that is the wait
-   * that has to be right: these states arrive over the event socket *after* the server has
-   * changed them, so this one only keeps the request from going out while the graph is visibly
-   * still moving.
-   */
-  async function settle(refs: string[] = [], timeoutMs = 60000): Promise<void> {
-    const ids = [...new Set(refs.map((ref) => ref.slice(0, ref.lastIndexOf('.'))))]
-    const pending = (): boolean =>
-      execution.isRunning ||
-      ids.some((id) => {
-        const state = execution.node(id).state
-        return state === 'queued' || state === 'running' || (state === 'dirty' && execution.autoRun)
-      })
-
-    const deadline = Date.now() + timeoutMs
-    // Nothing pending in the first moment after a save means the debounce has not armed yet, not
-    // that the graph is settled -- so the first reading only counts once it could have.
-    const armed = Date.now() + 600
-    while (Date.now() < deadline) {
-      if (!pending() && Date.now() >= armed) return
-      await new Promise((resolve) => setTimeout(resolve, 100))
-    }
-  }
-
-  /**
    * Write the export refs into the workspace; returns the folder or `null` on failure.
    *
-   * Exporting flushes pending edits first, and an edit means a re-run: exporting into the
-   * middle of it would write whatever was still cached, so the run is waited out.
+   * Exporting flushes the pending edits first, and a flush means a re-run, so the export has to
+   * wait for the values it is about to write. That wait is the **server's**: it is the only place
+   * that knows, because these node states arrive over the event socket after the server has
+   * already changed them. Two attempts at waiting here both failed on the nightly's slowest
+   * runner -- a fixed sleep the auto-run debounce outran, then a poll on node states that were
+   * simply the previous run's -- and the second one also delayed the export by its own timeout.
+   * So this posts and lets `Scheduler.settle` hold the request.
    */
   async function exportResults(): Promise<string | null> {
     const id = workflow.id
     if (!id || exportRefs.value.length === 0) return null
     await workflow.saveNow()
-    await settle(exportRefs.value)
     try {
       const result = await api.exportOutputs(id, { refs: exportRefs.value, overwrite: true })
       const written = result.files?.length ?? 0
@@ -195,7 +165,6 @@ export function useMode() {
     autoRun,
     run,
     cancel,
-    settle,
     exportRefs,
     exportResults,
   }
