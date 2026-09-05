@@ -656,6 +656,10 @@ Replace the document; the engine recompiles it and auto-runs cheap dirty nodes.
 
 Write the named outputs into the workspace and return their paths.
 
+A recompute already under way is waited out first (up to a minute), so an export that follows
+an edit writes the new values instead of reporting them as missing. Refs that nothing is going
+to produce -- a cost-gated node, an unknown one -- come back in ``skipped``.
+
 | Parameter | In | Type | Notes |
 |---|---|---|---|
 | `workflow_id` | path (required) | `string` |  |

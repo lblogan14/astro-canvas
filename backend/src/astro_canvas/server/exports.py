@@ -157,7 +157,12 @@ def export_outputs(
 
 @router.post("/workflows/{workflow_id}/exports", response_model=ExportResult)
 async def create_export(request: Request, workflow_id: str, body: ExportRequest) -> ExportResult:
-    """Write the named outputs into the workspace and return their paths."""
+    """Write the named outputs into the workspace and return their paths.
+
+    A recompute already under way is waited out first (up to a minute), so an export that follows
+    an edit writes the new values instead of reporting them as missing. Refs that nothing is going
+    to produce -- a cost-gated node, an unknown one -- come back in ``skipped``.
+    """
     runtime = get_runtime(request)
     try:
         scheduler = runtime.scheduler(workflow_id)
@@ -169,6 +174,12 @@ async def create_export(request: Request, workflow_id: str, body: ExportRequest)
         folder = runtime.workspace.safe_path(relative)
     except PathOutsideWorkspaceError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    # An export arriving on the heels of an edit would otherwise read the graph mid-recompute and
+    # answer "no cached output" for a value that is seconds away. The client cannot wait for this
+    # itself: its node states arrive after the server has changed them.
+    settled = await scheduler.settle([ref.rpartition(".")[0] for ref in body.refs])
+    if not settled:
+        log.warning("exporting before the graph settled", workflow=workflow_id)
     files, skipped, written = export_outputs(scheduler, body.refs, folder, overwrite=body.overwrite)
     rel_dir = runtime.workspace.relative(folder)
     if written:

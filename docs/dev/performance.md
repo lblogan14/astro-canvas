@@ -37,11 +37,13 @@ therefore measured on a twenty-node document first, and what the test asserts is
 graph reaches 90 % of *that*, plus an absolute floor of 40 fps.
 
 Even that turned out to be a statement about the machine: on a shared CI runner (four vCPUs, a
-neighbour on the other four) the same interaction measured 0.76-0.89 of its own ceiling, because
-the browser rather than the canvas is the bottleneck there. The two gates are therefore relaxed
-under `CI` — ≥ 0.7 of the ceiling and ≥ 25 fps, still enough to catch the canvas suddenly costing
-twice as much — and the number in `perf-report.json` is what a drift is read from. Run the perf
-project on a machine you control if you want the tight figures.
+neighbour on the other four) the same interaction measured 0.74, 0.76 and 0.89 of its own ceiling
+across three nightlies — 43.8 fps against a 59.6 fps ceiling on the last one — because the
+browser rather than the canvas is the bottleneck there. The two gates are therefore much looser
+under `CI`, ≥ 0.6 of the ceiling and ≥ 25 fps: at twice the cost the fraction would be around 0.5
+and the frame rate around 28, so they still catch the regression they are for, and the number in
+`perf-report.json` is what a drift is read from. Run the perf project on a machine you control if
+you want the tight figures.
 
 At 500 nodes the canvas drops about one frame in sixteen; the remaining cost is Vue Flow's
 transform and the visible nodes' re-render, not the 500 in the document (nodes below zoom 0.4

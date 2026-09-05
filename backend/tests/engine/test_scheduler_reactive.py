@@ -226,3 +226,56 @@ async def test_note_without_ports_runs_and_summaries_flow(harness: Harness) -> N
     assert len(summary.summary["wave"]) <= 4000
     statuses = harness.events("node.status", "s")
     assert statuses[-1].elapsed_ms is not None and statuses[-1].cost_class == "cheap"
+
+
+async def test_settle_waits_out_a_recompute_a_client_cannot_see_yet(harness: Harness) -> None:
+    """What `Scheduler.settle` is for: reading an output right after an edit."""
+    doc = load_doc("math_chain")
+    scheduler = harness.scheduler(doc)
+    await wait_for(lambda: all(r.state == "done" for r in scheduler.records.values()))
+
+    doc.nodes["c"].params["value"] = 5.0
+    scheduler.update(doc)
+    # The debounce is armed, so the new value is coming whether or not any node has moved yet.
+    assert scheduler.settling(["sum"]) is True
+    assert await scheduler.settle(["sum"], timeout_s=5.0) is True
+    assert scheduler.records["sum"].state == "done"
+    assert scheduler.output("sum", "out").value == 31.0  # 5**2 + 5 + 1  # type: ignore[union-attr]
+    assert scheduler.settling() is False
+
+
+async def test_settle_does_not_wait_for_what_nothing_is_going_to_run(harness: Harness) -> None:
+    """A cost-gated node and a dirty node with auto-run off are both settled, not pending."""
+    doc = make_doc(
+        {
+            "c": {"type": "core.math.constant", "params": {"value": 2.0}},
+            "slow": {"type": "test.sleep", "params": {"seconds": 0.01}, "linked": ["x"]},
+        },
+        {"e1": {"from": ["c", "out"], "to": ["slow", "x"]}},
+    )
+    scheduler = harness.scheduler(doc)
+    await wait_for(lambda: scheduler.records["c"].state == "done" and not scheduler.current_run)
+    assert (scheduler.records["slow"].state, scheduler.records["slow"].stale) == ("dirty", True)
+    assert scheduler.settling(["slow"]) is False
+    assert await scheduler.settle(["slow"], timeout_s=0.5) is True
+
+    scheduler.set_auto_run(False)
+    doc.nodes["c"].params["value"] = 3.0
+    scheduler.update(doc)
+    assert scheduler.records["c"].state == "dirty"
+    assert scheduler.settling(["c"]) is False
+    # An unknown node is not something to wait for either.
+    assert scheduler.settling(["ghost"]) is False
+
+
+async def test_settle_gives_up_instead_of_waiting_forever(harness: Harness) -> None:
+    doc = make_doc(
+        {"slow": {"type": "test.sleep", "params": {"seconds": 0.4}}},
+        {},
+    )
+    scheduler = harness.scheduler(doc)
+    run = asyncio.create_task(scheduler.run(None))
+    await wait_for(lambda: scheduler.current_run is not None)
+    assert await scheduler.settle(["slow"], timeout_s=0.05) is False
+    await run
+    assert await scheduler.settle(["slow"], timeout_s=1.0) is True
