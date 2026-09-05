@@ -149,6 +149,12 @@ jobs:
     name: installer (${{ matrix.name }})
     needs: [wheels, launchers]
     runs-on: ${{ matrix.os }}
+    # The `secrets` context is not available in an `if:` expression -- a workflow that tries fails
+    # to parse, in zero seconds, with "workflow file issue" and no line number. So the signing
+    # credentials are lifted into the job's environment, which `if:` *can* read, and an
+    # unconfigured certificate skips the signing step instead of breaking the build.
+    env:
+      SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -177,9 +183,7 @@ jobs:
       # Signing is env-gated: without a certificate the artefacts are unsigned and the docs say
       # so plainly rather than the build pretending otherwise.
       - name: Sign the Windows installer
-        # A step-level `if` can read `secrets`, so an unconfigured certificate simply skips
-        # this rather than failing the build.
-        if: matrix.os == 'windows-latest' && secrets.SIGNPATH_API_TOKEN != ''
+        if: matrix.os == 'windows-latest' && env.SIGNPATH_API_TOKEN != ''
         uses: signpath/github-action-submit-signing-request@v1
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}

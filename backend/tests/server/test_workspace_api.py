@@ -287,7 +287,13 @@ async def test_watcher_publishes_broadcast_changes(tmp_path: Path) -> None:
         if event is not None:
             break
     assert isinstance(event, WorkspaceChanged), "no workspace.changed event within 10 s"
-    assert "new.fits" in event.paths and not any(".astro-canvas" in p for p in event.paths)
+    # macOS watches through FSEvents, which is *directory*-granular: the reported path can be the
+    # containing folder rather than the file, so the root arrives as ".". Either is a correct
+    # answer to "something changed under here" -- the SPA refreshes that folder's listing — and
+    # naming the file is not part of the contract. What is: no path inside `.astro-canvas`, whose
+    # own writes must never wake a client.
+    assert "new.fits" in event.paths or "." in event.paths, event.paths
+    assert not any(".astro-canvas" in path for path in event.paths), event.paths
     await watcher.stop()
     assert not watcher.running
     watcher.start()  # restartable
