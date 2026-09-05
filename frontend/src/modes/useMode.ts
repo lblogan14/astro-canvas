@@ -122,11 +122,31 @@ export function useMode() {
     return refs
   })
 
-  /** Auto-run starts 250 ms after a save; give it a moment, then wait for the run to end. */
-  async function settle(timeoutMs = 30000): Promise<void> {
+  /**
+   * Wait until the nodes named in `refs` have something to export.
+   *
+   * Sleeping for a fixed moment and then watching `isRunning` is a race: the auto-run debounce is
+   * armed by the server 250 ms after the save lands, so on a slow machine nothing was running yet
+   * when the wait expired, and the export asked for an output that was still being recomputed --
+   * `"ew.out has no cached output"`. So wait for the nodes themselves. `dirty` only counts while
+   * auto-run is on, because a dirty node nobody is going to run would otherwise hold the export
+   * until the timeout; those refs are reported as skipped instead, which is the honest answer.
+   */
+  async function settle(refs: string[] = [], timeoutMs = 60000): Promise<void> {
+    const ids = [...new Set(refs.map((ref) => ref.slice(0, ref.lastIndexOf('.'))))]
+    const pending = (): boolean =>
+      execution.isRunning ||
+      ids.some((id) => {
+        const state = execution.node(id).state
+        return state === 'queued' || state === 'running' || (state === 'dirty' && execution.autoRun)
+      })
+
     const deadline = Date.now() + timeoutMs
-    await new Promise((resolve) => setTimeout(resolve, 400))
-    while (execution.isRunning && Date.now() < deadline) {
+    // Nothing pending in the first moment after a save means the debounce has not armed yet, not
+    // that the graph is settled -- so the first reading only counts once it could have.
+    const armed = Date.now() + 600
+    while (Date.now() < deadline) {
+      if (!pending() && Date.now() >= armed) return
       await new Promise((resolve) => setTimeout(resolve, 100))
     }
   }
@@ -141,7 +161,7 @@ export function useMode() {
     const id = workflow.id
     if (!id || exportRefs.value.length === 0) return null
     await workflow.saveNow()
-    await settle()
+    await settle(exportRefs.value)
     try {
       const result = await api.exportOutputs(id, { refs: exportRefs.value, overwrite: true })
       const written = result.files?.length ?? 0

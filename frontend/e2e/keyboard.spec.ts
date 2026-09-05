@@ -79,9 +79,8 @@ test.describe('keyboard and motion', () => {
           await page.keyboard.press('Control+A')
           await page.keyboard.type('1.3855')
           await page.keyboard.press('Enter')
-          // Committing the field is an edit, so the step goes dirty and everything downstream
-          // with it. Advancing without waiting left the export asking for a measurement that was
-          // still being recomputed ("ew.out has no cached output" -- on the slowest runner only).
+          // Committing the field is an edit: wait for the step to come back before advancing,
+          // so a failure here is about the step and not about the edit still being in flight.
           await settled(index)
         }
         await tabTo(page, 'wizard-next')
@@ -89,9 +88,9 @@ test.describe('keyboard and motion', () => {
         await expect(page.getByTestId(`wizard-body-${index + 1}`)).toBeVisible()
       }
 
-      // The last step offers the export instead of Next, and exports what the previous step
-      // measured -- so that node has to have finished.
-      await settled(4)
+      // The last step offers the export instead of Next. Press it the moment it is reachable,
+      // exactly as a user does: making the export wait for the outputs it is about to write is
+      // `useMode.settle`'s job, and this is the test that caught it not doing so.
       await expect(page.getByTestId('wizard-next')).toHaveCount(0)
       await tabTo(page, 'wizard-export')
       await page.keyboard.press('Enter')
