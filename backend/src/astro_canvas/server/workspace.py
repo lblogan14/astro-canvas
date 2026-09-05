@@ -55,6 +55,12 @@ class WorkspaceInfo(BaseModel):
     can_select: bool = Field(
         default=True, description="False when the server pins each user to their own workspace."
     )
+    available: bool = Field(
+        default=True,
+        description="False when the workspace folder is gone (unplugged drive, unmounted "
+        "share, deleted while the app was open). Everything else in this response still "
+        "describes it, so the UI can name what it lost.",
+    )
 
 
 class SelectRequest(BaseModel):
@@ -152,6 +158,7 @@ def _info(request: Request, runtime: EngineRuntime) -> WorkspaceInfo:
         recent=[] if pinned else runtime.recent.list(),
         shared_dir=SHARED_DIR if workspace.shared is not None else None,
         can_select=not pinned,
+        available=root.is_dir(),
     )
 
 
@@ -195,6 +202,13 @@ async def workspace_tree(
     workspace = _workspace(request)
     directory = _resolve(workspace, path)
     if not directory.is_dir():
+        if not workspace.root.is_dir():
+            # The whole workspace has gone, not just this folder: say which one, because the
+            # answer is to plug the drive back in or switch workspaces, not to retry.
+            raise HTTPException(
+                status_code=410,
+                detail=f"the workspace folder is gone: {workspace.root}",
+            )
         raise HTTPException(status_code=404, detail=f"no such folder: {path}")
     root, prefix = workspace.mount_for(directory)
     entries = [

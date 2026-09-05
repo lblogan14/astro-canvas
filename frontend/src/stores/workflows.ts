@@ -1,7 +1,7 @@
 import { ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 
-import { api } from '@/api/client'
+import { api, errorMessage } from '@/api/client'
 import type { TemplateInfo, WorkflowDoc, WorkflowSummary, WorkflowVersionInfo } from '@/api/types'
 import { clone } from '@/lib/deepEqual'
 import { newId } from '@/lib/ids'
@@ -21,7 +21,7 @@ export const useWorkflowsStore = defineStore('workflows', () => {
     try {
       items.value = await api.listWorkflows()
     } catch (err) {
-      error.value = err instanceof Error ? err.message : String(err)
+      error.value = errorMessage(err)
     } finally {
       loading.value = false
     }
@@ -48,7 +48,7 @@ export const useWorkflowsStore = defineStore('workflows', () => {
     try {
       templates.value = await api.listTemplates()
     } catch (err) {
-      error.value = err instanceof Error ? err.message : String(err)
+      error.value = errorMessage(err)
       templates.value = []
     }
   }
@@ -64,7 +64,7 @@ export const useWorkflowsStore = defineStore('workflows', () => {
     try {
       versions.value = await api.listVersions(id)
     } catch (err) {
-      error.value = err instanceof Error ? err.message : String(err)
+      error.value = errorMessage(err)
       versions.value = []
     }
   }

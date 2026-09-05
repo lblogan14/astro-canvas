@@ -10,7 +10,7 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 
-import { api } from '@/api/client'
+import { api, errorMessage } from '@/api/client'
 import type {
   EdgeDoc,
   GroupDoc,
@@ -1129,6 +1129,24 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   // --- document metadata ----------------------------------------------------------------------
 
+  /**
+   * Set when the server could not read the stored document and handed back one of its versions
+   * instead (`runtime.get_or_recover`). Saving accepts the recovery, and the server drops the
+   * key, so this is only ever true for the session that opened the broken document.
+   */
+  const recovered = computed<{ version: number; created: string; reason: string } | null>(() => {
+    const value = doc.value?.meta?.['recovered']
+    if (typeof value !== 'object' || value === null) return null
+    const row = value as { version?: unknown; created?: unknown; reason?: unknown }
+    return typeof row.version === 'number'
+      ? {
+          version: row.version,
+          created: String(row.created ?? ''),
+          reason: String(row.reason ?? ''),
+        }
+      : null
+  })
+
   function rename(title: string): void {
     const next = title.trim()
     if (!next || next === doc.value?.name) return
@@ -1219,7 +1237,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       }
       return true
     } catch (err) {
-      saveError.value = err instanceof Error ? err.message : String(err)
+      saveError.value = errorMessage(err)
       saveState.value = 'error'
       return false
     }
@@ -1250,6 +1268,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     saveError,
     lastSavedAt,
     isDirty,
+    recovered,
     changeSeq,
     savedSeq,
     autosaveDelayMs,

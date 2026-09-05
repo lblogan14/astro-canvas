@@ -9,7 +9,7 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 
-import { api } from '@/api/client'
+import { api, errorMessage } from '@/api/client'
 import type { BatchInfo, BatchRowState, BatchSpec } from '@/api/types'
 import type { BatchFinishedEvent, BatchRowEvent, BatchStartedEvent } from '@/api/events'
 import { type Row, parseDelimited, parseSpecguiBatch, suggestMapping } from '@/modes/batchTable'
@@ -177,7 +177,7 @@ export const useBatchStore = defineStore('batch', () => {
       reset()
       return table.rows.length
     } catch (err) {
-      error.value = err instanceof Error ? err.message : String(err)
+      error.value = errorMessage(err)
       return 0
     }
   }
@@ -268,7 +268,7 @@ export const useBatchStore = defineStore('batch', () => {
       return info.batch_id
     } catch (err) {
       status.value = 'error'
-      error.value = err instanceof Error ? err.message : String(err)
+      error.value = errorMessage(err)
       return null
     }
   }
@@ -279,7 +279,7 @@ export const useBatchStore = defineStore('batch', () => {
     try {
       await api.cancelBatch(id, batchId.value)
     } catch (err) {
-      error.value = err instanceof Error ? err.message : String(err)
+      error.value = errorMessage(err)
     }
   }
 
@@ -317,7 +317,7 @@ export const useBatchStore = defineStore('batch', () => {
       const info = await api.getBatch(id, batchId.value)
       results.value = info.results
     } catch (err) {
-      error.value = err instanceof Error ? err.message : String(err)
+      error.value = errorMessage(err)
     }
   }
 

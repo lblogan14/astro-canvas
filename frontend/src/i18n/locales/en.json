@@ -20,6 +20,15 @@
     "reconnecting": "Events reconnecting…",
     "closed": "Events closed"
   },
+  "notice": {
+    "offline": "No contact with the server. Nothing will update until it is back.",
+    "reconnecting": "Reconnecting to the server (attempt {attempt})…",
+    "workspace_gone": "The workspace folder is not there any more: {root}. Reconnect the drive, or switch to another workspace.",
+    "packs_failed": "One node pack failed to load ({named}); its nodes are missing from the library. | {count} node packs failed to load ({named}); their nodes are missing from the library.",
+    "open_manager": "Open the Manager",
+    "recovered": "This workflow could not be read, so version {version} (saved {when}) was restored. Nothing has been written yet.",
+    "keep_it": "Keep it"
+  },
   "theme": {
     "toggle": "Switch theme (current: {theme})",
     "system": "system",
@@ -30,7 +39,8 @@
     "close": "Close",
     "clear": "Clear",
     "cancel": "Cancel",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "dismiss": "Dismiss"
   },
   "canvas": {
     "empty_title": "No workflow open",

@@ -9,7 +9,7 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 
-import { ApiError, api } from '@/api/client'
+import { ApiError, api, errorMessage } from '@/api/client'
 import type {
   InstallPlan,
   InstallResult,
@@ -29,11 +29,6 @@ export type ManagerTab = 'installed' | 'registry' | 'snapshots' | 'settings'
 export interface PackBusy {
   kind: 'resolve' | 'install' | 'update' | 'uninstall' | 'enable' | 'rollback' | 'snapshot'
   target: string
-}
-
-function message(error: unknown): string {
-  if (error instanceof ApiError) return error.message
-  return error instanceof Error ? error.message : String(error)
 }
 
 export const usePacksStore = defineStore('packs', () => {
@@ -83,7 +78,7 @@ export const usePacksStore = defineStore('packs', () => {
     try {
       return await run()
     } catch (err) {
-      error.value = message(err)
+      error.value = errorMessage(err)
       if (err instanceof ApiError && err.status === 404) available.value = false
       return null
     } finally {
@@ -107,7 +102,7 @@ export const usePacksStore = defineStore('packs', () => {
         available.value = false
         return
       }
-      error.value = message(err)
+      error.value = errorMessage(err)
     }
   }
 

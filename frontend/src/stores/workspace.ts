@@ -6,7 +6,7 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 
-import { api, type UploadConflict } from '@/api/client'
+import { api, errorMessage, type UploadConflict } from '@/api/client'
 import type { SniffResult, WorkspaceEntry, WorkspaceInfo } from '@/api/types'
 
 export type UploadState = 'pending' | 'uploading' | 'done' | 'error'
@@ -49,6 +49,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const root = computed(() => info.value?.root ?? null)
   const rootName = computed(() => info.value?.name ?? '')
   const recent = computed(() => info.value?.recent ?? [])
+  /** False when the workspace folder has gone away (unplugged drive, unmounted share). */
+  const available = computed(() => info.value?.available !== false)
   const activeUploads = computed(() =>
     uploads.value.filter((u) => u.state === 'pending' || u.state === 'uploading'),
   )
@@ -73,7 +75,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       sniffCache.value = {}
       await refresh('')
     } catch (err) {
-      error.value = err instanceof Error ? err.message : String(err)
+      error.value = errorMessage(err)
     }
   }
 
@@ -96,7 +98,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       }
       if (changed) children.value = next
     } catch (err) {
-      error.value = err instanceof Error ? err.message : String(err)
+      error.value = errorMessage(err)
     } finally {
       const rest = new Set(loading.value)
       rest.delete(key)
@@ -185,7 +187,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         job.path = result.file?.path ?? null
         job.state = 'done'
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
+        const message = errorMessage(err)
         update({ state: 'error', error: message })
         job.state = 'error'
         job.error = message
@@ -227,6 +229,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     root,
     rootName,
     recent,
+    available,
     children,
     expanded,
     loading,

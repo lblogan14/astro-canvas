@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import structlog
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from sqlalchemy import select
 
 from astro_canvas.engine.batch import BatchRunner
@@ -297,6 +297,51 @@ class EngineRuntime:
                 raise UnknownWorkflowError(workflow_id)
             return WorkflowDoc.model_validate_json(row.doc_json)
 
+    def get_or_recover(self, workflow_id: str) -> WorkflowDoc:
+        """``get``, but a document that no longer validates falls back to its newest version.
+
+        A stored document can stop parsing: it was written by a later version of the format, a
+        pack that owned a subgraph is gone, or the row was edited by hand. Losing the workflow
+        over that would be the worst possible answer when every save since the first one is
+        sitting in ``workflow_versions``. So the newest version that *does* validate is returned
+        instead, with ``meta.recovered`` describing what happened -- the SPA shows that as a
+        banner, and ``save`` drops the key again, so accepting the recovery is one edit.
+
+        Raises:
+            UnknownWorkflowError: no such workflow.
+            ValidationError: the document is unreadable and so is every version of it.
+        """
+        with self.workspace.session() as session:
+            row = session.get(Workflow, workflow_id)
+            if row is None:
+                raise UnknownWorkflowError(workflow_id)
+            try:
+                return WorkflowDoc.model_validate_json(row.doc_json)
+            except ValidationError as first:
+                reason = f"{type(first).__name__}: {first.error_count()} problems"
+                log.warning("workflow_unreadable", workflow_id=workflow_id, error=str(first))
+                versions = session.scalars(
+                    select(WorkflowVersion)
+                    .where(WorkflowVersion.workflow_id == workflow_id)
+                    .order_by(WorkflowVersion.id.desc())
+                ).all()
+                for version in versions:
+                    try:
+                        doc = WorkflowDoc.model_validate_json(version.doc_json)
+                    except ValidationError:
+                        continue
+                    doc.meta = {
+                        **doc.meta,
+                        "recovered": {
+                            "version": version.id,
+                            "created": version.created.isoformat(),
+                            "reason": reason,
+                        },
+                    }
+                    log.info("workflow_recovered", workflow_id=workflow_id, version=version.id)
+                    return doc
+                raise
+
     def exists(self, workflow_id: str) -> bool:
         with self.workspace.session() as session:
             return session.get(Workflow, workflow_id) is not None
@@ -308,6 +353,8 @@ class EngineRuntime:
         now = utcnow()
         doc.meta = {**doc.meta, "modified": now.isoformat()}
         doc.meta.setdefault("created", now.isoformat())
+        # Saving is how the user accepts a recovery; the notice is not part of the document.
+        doc.meta.pop("recovered", None)
         payload = doc.model_dump_json(by_alias=True)
         new_hash = doc_hash(doc)
         with self.workspace.session() as session:

@@ -56,13 +56,15 @@ watch(
 )
 
 const problems = computed(() => {
-  const rows: { nodeId: string; code: string; message: string }[] = []
+  const rows: { nodeId: string; code: string; message: string; hint: string | null }[] = []
   for (const [nodeId, issues] of Object.entries(execution.issues)) {
-    for (const issue of issues) rows.push({ nodeId, code: issue.code, message: issue.message })
+    for (const issue of issues)
+      rows.push({ nodeId, code: issue.code, message: issue.message, hint: null })
   }
   for (const nodeId of execution.errorNodeIds) {
     const error = execution.node(nodeId).error
-    if (error) rows.push({ nodeId, code: 'error', message: error.message })
+    // The hint is the whole point of the errors tab: it is what the user can do next.
+    if (error) rows.push({ nodeId, code: 'error', message: error.message, hint: error.hint })
   }
   return rows
 })
@@ -186,7 +188,10 @@ function gib(bytes: number): string {
               {{ nodeTitle(row.nodeId) }}
             </button>
             <code class="shrink-0 rounded bg-muted px-1">{{ row.code }}</code>
-            <span class="min-w-0 break-words">{{ row.message }}</span>
+            <span class="min-w-0 break-words">
+              {{ row.message }}
+              <span v-if="row.hint" class="text-muted-foreground">— {{ row.hint }}</span>
+            </span>
           </li>
         </ul>
       </template>

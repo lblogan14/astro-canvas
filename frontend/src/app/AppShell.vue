@@ -4,6 +4,7 @@ import { RouterView, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { LogOut, Monitor, Moon, ShieldCheck, Sun, UserRound } from '@lucide/vue'
 
+import ShellNotices from '@/app/ShellNotices.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
@@ -113,6 +114,7 @@ async function signOut(): Promise<void> {
         </Button>
       </div>
     </header>
+    <ShellNotices />
     <main class="relative min-h-0 flex-1 overflow-hidden">
       <RouterView />
       <!-- One toast for the whole shell: the Manager and the gallery notify from their own pages. -->

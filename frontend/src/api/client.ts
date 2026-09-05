@@ -44,13 +44,37 @@ import type {
 export class ApiError extends Error {
   readonly status: number
   readonly detail: unknown
+  /**
+   * The server's one-line "what to do next", when it sent one. Every error the app generates
+   * itself carries the same hint a failing node does (`engine/hints.py`), so a toast can say
+   * more than the exception's own words.
+   */
+  readonly hint: string | null
 
   constructor(status: number, message: string, detail?: unknown) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.detail = detail
+    this.hint = hintOf(detail)
   }
+
+  /** `message`, with the hint appended when there is one: what a toast should show. */
+  get full(): string {
+    return this.hint ? `${this.message} — ${this.hint}` : this.message
+  }
+}
+
+/** A message to show a user for any thrown value; an `ApiError`'s hint is part of it. */
+export function errorMessage(error: unknown): string {
+  if (error instanceof ApiError) return error.full
+  return error instanceof Error ? error.message : String(error)
+}
+
+function hintOf(detail: unknown): string | null {
+  if (typeof detail !== 'object' || detail === null) return null
+  const hint = (detail as { hint?: unknown }).hint
+  return typeof hint === 'string' && hint ? hint : null
 }
 
 const TOKEN_KEY = 'astro-canvas-token'

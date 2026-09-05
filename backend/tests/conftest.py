@@ -64,11 +64,15 @@ def settings(tmp_path: Path) -> Settings:
     )
 
 
-def authed_client(app: Any) -> TestClient:
-    """A ``TestClient`` sending the app's bearer token on every request."""
+def authed_client(app: Any, **options: Any) -> TestClient:
+    """A ``TestClient`` sending the app's bearer token on every request.
+
+    ``options`` reach ``TestClient``; ``raise_server_exceptions=False`` is the useful one, and it
+    has to be passed here because httpx fixes it on the transport at construction time.
+    """
     token = getattr(app.state, "token", None)
     headers = {"Authorization": f"Bearer {token}"} if token else {}
-    return TestClient(app, headers=headers)
+    return TestClient(app, headers=headers, **options)
 
 
 @pytest.fixture
