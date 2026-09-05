@@ -79,6 +79,16 @@ describe('probe', () => {
     expect(auth.label).toBe('A Student')
   })
 
+  it('treats an unauthorised probe as the single-user server, not as an error', async () => {
+    // A token server rejects every /api call the SPA makes before the token is in the URL.
+    mocked.getAuthInfo.mockRejectedValue(new ApiError(401, 'missing or invalid token'))
+    const auth = useAuthStore()
+
+    expect(await auth.probe()).toBe('single')
+    expect(auth.error).toBeNull()
+    expect(auth.requiresLogin).toBe(false)
+  })
+
   it('falls back to the single-user server when the probe fails outright', async () => {
     mocked.getAuthInfo.mockRejectedValue(new TypeError('offline'))
     const auth = useAuthStore()

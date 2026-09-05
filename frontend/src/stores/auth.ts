@@ -45,12 +45,12 @@ export const useAuthStore = defineStore('auth', () => {
       info.value = await api.getAuthInfo()
       mode.value = 'users'
     } catch (err) {
-      if (err instanceof ApiError && err.status === 404) {
-        mode.value = 'single'
-        return mode.value
-      }
-      error.value = message(err)
+      // On a users server this route is public and answers. On a single-user server it does
+      // not exist (404), or the bearer token is not in the URL yet and the middleware rejects
+      // it (401) — either way there are no accounts here, and neither is worth an error.
       mode.value = 'single'
+      const expected = err instanceof ApiError && (err.status === 404 || err.status === 401)
+      if (!expected) error.value = message(err)
       return mode.value
     }
     await refresh()
