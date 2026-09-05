@@ -497,6 +497,23 @@ describe('ApertureEditor', () => {
     expect(written[1]).toMatchObject({ label: 'clump', role: 'background' })
   })
 
+  it('keeps a label that was typed but never blurred, spaces included', async () => {
+    const { wrapper } = await setup({ regions: toParam([CIRCLE, BOX]) })
+    const field = wrapper.findAll('[data-testid="aperture-label"]')[1]
+    const element = field?.element as HTMLInputElement
+    // `input` only, no blur: Apply must not depend on the field losing focus, and trimming
+    // while typing would have eaten the space in "e2e box".
+    element.value = 'e2e '
+    await field?.trigger('input')
+    expect(element.value).toBe('e2e ')
+    element.value = 'e2e box'
+    await field?.trigger('input')
+    await wrapper.find('[data-testid="aperture-apply"]').trigger('click')
+    const workflow = useWorkflowStore()
+    const written = workflow.nodes['extract']?.params?.['regions'] as Record<string, unknown>[]
+    expect(written[1]).toMatchObject({ label: 'e2e box' })
+  })
+
   it('cannot apply without a source aperture', async () => {
     const { wrapper, workflow } = await setup({ regions: toParam([CIRCLE]) })
     await wrapper.find('[data-testid="aperture-row-background"]').setValue(true)
