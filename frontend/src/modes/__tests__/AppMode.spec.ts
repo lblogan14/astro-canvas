@@ -123,6 +123,7 @@ describe('App mode', () => {
     expect(exportOutputs).toHaveBeenCalledWith(workflow.id, {
       refs: ['sum.out'],
       overwrite: true,
+      run: true,
     })
     expect(app.get('[data-testid="app-exported"]').text()).toContain('exports/Math-chain')
     expect(ui.toast?.message).toContain('exports/Math-chain')

@@ -993,6 +993,12 @@
             },
             "title": "Refs",
             "type": "array"
+          },
+          "run": {
+            "default": false,
+            "description": "Run the refs' nodes first, so cost-gated ones are computed rather than reported missing. What a GUI's *Export results* means; a script that wants only what is already cached leaves it off.",
+            "title": "Run",
+            "type": "boolean"
           }
         },
         "title": "ExportRequest",
@@ -3028,6 +3034,7 @@
           "reason": {
             "enum": [
               "no_output",
+              "failed",
               "bad_ref",
               "not_written"
             ],

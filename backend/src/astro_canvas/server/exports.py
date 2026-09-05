@@ -43,6 +43,14 @@ class ExportRequest(BaseModel):
         description="Workspace-relative folder; defaults to ``exports/<workflow name>``.",
     )
     overwrite: bool = True
+    run: bool = Field(
+        default=False,
+        description=(
+            "Run the refs' nodes first, so cost-gated ones are computed rather than reported "
+            "missing. What a GUI's *Export results* means; a script that wants only what is "
+            "already cached leaves it off."
+        ),
+    )
 
 
 class ExportedFile(BaseModel):
@@ -55,7 +63,7 @@ class ExportedFile(BaseModel):
 
 class SkippedExport(BaseModel):
     ref: str
-    reason: Literal["no_output", "bad_ref", "not_written"]
+    reason: Literal["no_output", "failed", "bad_ref", "not_written"]
     message: str
 
 
@@ -118,6 +126,28 @@ def _write(target: Path, payload: bytes, *, overwrite: bool) -> Path:
     return target
 
 
+def _why_missing(scheduler: Scheduler, ref: str, node: str) -> SkippedExport:
+    """Say *why* a value is not there. "No cached output" is true of all three and useless.
+
+    A failed node is the common case and the one worth naming: its own message and hint are
+    already in the record, and repeating "no cached output" instead of them sent one nightly
+    failure round in circles.
+    """
+    rec = scheduler.state_of(node)
+    if rec is None:
+        return SkippedExport(ref=ref, reason="no_output", message=f"no node {node!r} in the graph")
+    if rec.state == "error":
+        detail = " ".join(part for part in (rec.error, rec.hint) if part)
+        return SkippedExport(ref=ref, reason="failed", message=f"{node} failed: {detail}".strip())
+    if rec.state != "done":
+        return SkippedExport(
+            ref=ref, reason="no_output", message=f"{ref} has not been computed ({rec.state})"
+        )
+    return SkippedExport(
+        ref=ref, reason="no_output", message=f"{ref} is no longer cached; run the node again"
+    )
+
+
 def export_outputs(
     scheduler: Scheduler,
     refs: list[str],
@@ -138,9 +168,7 @@ def export_outputs(
             continue
         value = scheduler.output(node, port)
         if value is None:
-            skipped.append(
-                SkippedExport(ref=ref, reason="no_output", message=f"{ref} has no cached output")
-            )
+            skipped.append(_why_missing(scheduler, ref, node))
             continue
         try:
             fmt, payload = render_export(value)
@@ -174,10 +202,19 @@ async def create_export(request: Request, workflow_id: str, body: ExportRequest)
         folder = runtime.workspace.safe_path(relative)
     except PathOutsideWorkspaceError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    # An export arriving on the heels of an edit would otherwise read the graph mid-recompute and
-    # answer "no cached output" for a value that is seconds away. The client cannot wait for this
-    # itself: its node states arrive after the server has changed them.
-    settled = await scheduler.settle([ref.rpartition(".")[0] for ref in body.refs])
+    nodes = list(dict.fromkeys(ref.rpartition(".")[0] for ref in body.refs))
+    # `run` asks for the values rather than for whatever happens to be cached. It matters for
+    # cost-gated nodes: an `auto` node whose average crosses the threshold -- which is what a slow
+    # machine does to the absorption chain -- is `stale` until someone runs it explicitly, and a
+    # wizard's Save step has no other way to ask. Nodes already done are cache hits.
+    targets = [nid for nid in nodes if nid in scheduler.graph.nodes] if body.run else []
+    if targets:
+        _, settled = await scheduler.run_and_settle(targets)
+    else:
+        # An export arriving on the heels of an edit would otherwise read the graph mid-recompute
+        # and answer "no cached output" for a value that is seconds away. The client cannot wait
+        # for this itself: its node states arrive after the server has changed them.
+        settled = await scheduler.settle(nodes)
     if not settled:
         log.warning("exporting before the graph settled", workflow=workflow_id)
     files, skipped, written = export_outputs(scheduler, body.refs, folder, overwrite=body.overwrite)

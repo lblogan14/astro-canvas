@@ -268,6 +268,25 @@ async def test_settle_does_not_wait_for_what_nothing_is_going_to_run(harness: Ha
     assert scheduler.settling(["ghost"]) is False
 
 
+async def test_run_and_settle_computes_what_auto_run_left_gated(harness: Harness) -> None:
+    """What an *Export results* button needs: the values, not what happens to be cached."""
+    doc = make_doc(
+        {
+            "c": {"type": "core.math.constant", "params": {"value": 2.0}},
+            "slow": {"type": "test.sleep", "params": {"seconds": 0.01}, "linked": ["x"]},
+        },
+        {"e1": {"from": ["c", "out"], "to": ["slow", "x"]}},
+    )
+    scheduler = harness.scheduler(doc)
+    await wait_for(lambda: scheduler.records["c"].state == "done" and not scheduler.current_run)
+    assert scheduler.output("slow", "out") is None
+
+    run_id, settled = await scheduler.run_and_settle(["slow"])
+    assert settled is True and run_id
+    assert scheduler.records["slow"].state == "done"
+    assert scheduler.output("slow", "out").value == 2.0  # type: ignore[union-attr]
+
+
 async def test_settle_gives_up_instead_of_waiting_forever(harness: Harness) -> None:
     doc = make_doc(
         {"slow": {"type": "test.sleep", "params": {"seconds": 0.4}}},

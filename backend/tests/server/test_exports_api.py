@@ -87,7 +87,30 @@ def test_missing_outputs_and_bad_refs_are_skipped_not_fatal(api: TestClient) -> 
         ("sum", "bad_ref"),
         ("ghost.out", "no_output"),
     ]
+    assert body["skipped"][1]["message"] == "no node 'ghost' in the graph"
     assert [f["ref"] for f in body["files"]] == ["sum.out"]
+
+
+def test_a_failed_node_is_skipped_with_its_own_message(api: TestClient) -> None:
+    """A missing value says which of the three reasons it is; "no cached output" said none."""
+    doc = {
+        "format": "astro-canvas/workflow",
+        "version": 1,
+        "id": "failed-export",
+        "name": "Failed",
+        "nodes": {"boom": {"type": "test.fail", "params": {}, "pos": [0, 0]}},
+        "edges": {},
+    }
+    assert api.post("/api/workflows", json=doc).status_code == 201
+    status = wait_status(api, doc["id"])
+    assert status["nodes"]["boom"]["state"] == "error"
+
+    body = api.post(
+        f"/api/workflows/{doc['id']}/exports", json={"refs": ["boom.out"], "run": True}
+    ).json()
+    assert body["files"] == []
+    assert body["skipped"][0]["reason"] == "failed"
+    assert body["skipped"][0]["message"].startswith("boom failed:")
 
 
 def test_an_export_on_the_heels_of_an_edit_waits_for_the_new_value(
@@ -110,6 +133,49 @@ def test_an_export_on_the_heels_of_an_edit_waits_for_the_new_value(
     written = Path(settings.workspace) / body["files"][0]["path"]
     payload = json.loads(written.read_text(encoding="utf-8"))
     assert payload == {"type_id": "astro.Float", "data": {"value": 31.0}}  # 5**2 + 5 + 1
+
+
+def test_run_computes_a_cost_gated_node_instead_of_reporting_it_missing(
+    api: TestClient, settings: Settings
+) -> None:
+    """The other half of the nightly's macOS failure.
+
+    An expensive node -- or an `auto` one whose average runtime crossed the threshold, which is
+    what a slow machine does to a real analysis chain -- is `stale` after an edit: auto-run leaves
+    it alone on purpose and it waits for someone to ask. A wizard's Save step is someone asking,
+    and it has no canvas to press Run on, so the export asks for it.
+    """
+    doc = {
+        "format": "astro-canvas/workflow",
+        "version": 1,
+        "id": "gated-export",
+        "name": "Gated",
+        "nodes": {
+            "c": {"type": "core.math.constant", "params": {"value": 2.0}, "pos": [0, 0]},
+            "slow": {
+                "type": "test.sleep",
+                "params": {"seconds": 0.01},
+                "linked": ["x"],
+                "pos": [200, 0],
+            },
+        },
+        "edges": {"e1": {"from": ["c", "out"], "to": ["slow", "x"]}},
+    }
+    assert api.post("/api/workflows", json=doc).status_code == 201
+    status = wait_status(api, doc["id"])
+    # Auto-run computed the cheap node and left the expensive one alone, which is the point.
+    assert status["nodes"]["c"]["state"] == "done"
+    assert status["nodes"]["slow"]["state"] != "done"
+
+    without = api.post(f"/api/workflows/{doc['id']}/exports", json={"refs": ["slow.out"]}).json()
+    assert [(s["ref"], s["reason"]) for s in without["skipped"]] == [("slow.out", "no_output")]
+
+    body = api.post(
+        f"/api/workflows/{doc['id']}/exports", json={"refs": ["slow.out"], "run": True}
+    ).json()
+    assert body["skipped"] == []
+    written = Path(settings.workspace) / body["files"][0]["path"]
+    assert json.loads(written.read_text(encoding="utf-8"))["data"] == {"value": 2.0}
 
 
 def test_paths_outside_the_workspace_are_refused(api: TestClient) -> None:

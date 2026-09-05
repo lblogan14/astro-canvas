@@ -138,7 +138,13 @@ export function useMode() {
     if (!id || exportRefs.value.length === 0) return null
     await workflow.saveNow()
     try {
-      const result = await api.exportOutputs(id, { refs: exportRefs.value, overwrite: true })
+      const result = await api.exportOutputs(id, {
+        refs: exportRefs.value,
+        overwrite: true,
+        // Ask for the values, not for whatever is cached: a cost-gated node is `stale` until
+        // someone runs it explicitly, and a mode has no canvas to press Run on.
+        run: true,
+      })
       const written = result.files?.length ?? 0
       if (written === 0) {
         ui.notify(String(result.skipped?.[0]?.message ?? ''), 'error')
