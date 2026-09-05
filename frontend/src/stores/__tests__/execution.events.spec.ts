@@ -50,6 +50,41 @@ describe('execution store', () => {
     })
   })
 
+  it('takes the failure from a status when the node.error was missed', () => {
+    // What a reconnecting client gets, and what a client opening a document whose node failed
+    // in an earlier session gets: a status and no `node.error`. Without this the canvas said
+    // "Error" and had nothing to show.
+    const ex = useExecutionStore()
+    ex.applyEngineEvent(
+      status('b', {
+        state: 'error',
+        error: 'FileNotFoundError: no such file',
+        hint: 'Pick it again in the Workspace panel.',
+      }),
+    )
+    expect(ex.node('b').error).toEqual({
+      message: 'FileNotFoundError: no such file',
+      traceback: '',
+      hint: 'Pick it again in the Workspace panel.',
+    })
+    expect(ex.errorNodeIds).toEqual(['b'])
+
+    // The event's traceback wins once it arrives, and a re-run clears both.
+    ex.applyEngineEvent({
+      type: 'node.error',
+      ts: 2,
+      workflow_id: WF,
+      node_id: 'b',
+      message: 'FileNotFoundError: no such file',
+      traceback: 'Traceback…',
+      hint: 'Pick it again in the Workspace panel.',
+    })
+    ex.applyEngineEvent(status('b', { state: 'error' }))
+    expect(ex.node('b').error?.traceback).toBe('Traceback…')
+    ex.applyEngineEvent(status('b', { state: 'queued' }))
+    expect(ex.node('b').error).toBeNull()
+  })
+
   it('keeps errors while the node is in error and clears them on the next status', () => {
     const ex = useExecutionStore()
     ex.applyEngineEvent({

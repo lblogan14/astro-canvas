@@ -94,6 +94,7 @@ class NodeRecord:
     cache_hit: bool = False
     elapsed_ms: float | None = None
     error: str | None = None
+    hint: str | None = None
     cost_class: CostClass = "cheap"
     run_id: str | None = None
 
@@ -185,7 +186,7 @@ class Scheduler:
                 rec.key = keys[nid]
                 rec.state = "dirty"
                 rec.stale = rec.cache_hit = False
-                rec.error = None
+                rec.error = rec.hint = None
                 rec.elapsed_ms = None
                 changed.append(nid)
         for nid in list(self.records):
@@ -471,6 +472,7 @@ class Scheduler:
         nid = node.id
         rec = self.records[nid]
         rec.state, rec.run_id, rec.cache_hit, rec.stale = "queued", run_id, False, False
+        rec.error = rec.hint = None  # a re-run starts without the last failure attached
         self._emit_status(nid)
         cancel_event = threading.Event()
         self._cancel_events[nid] = cancel_event
@@ -499,6 +501,7 @@ class Scheduler:
         except Exception as exc:  # noqa: BLE001 - every node failure becomes an event
             rec.state = "error"
             rec.error = f"{type(exc).__name__}: {exc}"
+            rec.hint = hint_for(exc)
             rec.elapsed_ms = (time.perf_counter() - started) * 1000.0
             self.bus.publish(
                 NodeErrorEvent(
@@ -506,7 +509,7 @@ class Scheduler:
                     node_id=nid,
                     message=rec.error,
                     traceback=traceback.format_exc(),
-                    hint=hint_for(exc),
+                    hint=rec.hint,
                 )
             )
             self._emit_status(nid)
@@ -800,6 +803,8 @@ class Scheduler:
             elapsed_ms=rec.elapsed_ms,
             cost_class=rec.cost_class,
             stale=rec.stale,
+            error=rec.error if rec.state == "error" else None,
+            hint=rec.hint if rec.state == "error" else None,
         )
 
     def _emit_status(self, nid: str) -> None:

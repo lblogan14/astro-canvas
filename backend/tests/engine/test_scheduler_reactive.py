@@ -128,6 +128,33 @@ async def test_error_halts_descendants_but_not_siblings(harness: Harness) -> Non
     assert statuses["bad"] == "error" and statuses["sibling"] == "done" and "child" not in statuses
 
 
+async def test_the_status_snapshot_carries_the_failure(harness: Harness) -> None:
+    """A client that missed the `node.error` still has something to show.
+
+    The snapshot is what a reconnecting client gets, and what a client opening a document whose
+    node failed earlier gets. Without the message on it, the canvas says "Error" and offers
+    nothing to click.
+    """
+    doc = make_doc({"bad": {"type": "test.fail", "params": {"message": "kaboom"}}})
+    scheduler = harness.scheduler(doc)
+    await wait_for(lambda: scheduler.records["bad"].state == "error")
+
+    status = scheduler.snapshot()["bad"]
+    assert status.state == "error"
+    assert status.error == "RuntimeError: kaboom"
+    # `RuntimeError` has no honest hint; a recognised failure does.
+    assert status.hint is None
+
+    # Re-running clears it, so a node that recovered does not keep reporting its last failure.
+    doc.nodes["bad"] = doc.nodes["bad"].model_copy(
+        update={"type": "core.math.constant", "params": {"value": 2.0}}
+    )
+    scheduler.update(doc)
+    await wait_for(lambda: scheduler.records["bad"].state == "done")
+    recovered = scheduler.snapshot()["bad"]
+    assert recovered.state == "done" and recovered.error is None and recovered.hint is None
+
+
 async def test_fingerprint_busts_the_cache(harness: Harness) -> None:
     doc = make_doc({"f": {"type": "test.fingerprint", "params": {"x": 1.0}}})
     scheduler = harness.scheduler(doc)
