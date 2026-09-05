@@ -102,7 +102,11 @@ async function exportResults(): Promise<void> {
       </Button>
       <span
         class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px]"
-        :class="mode.autoRun.value ? 'bg-amber-500/10 text-amber-600' : 'text-muted-foreground'"
+        :class="
+          mode.autoRun.value
+            ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+            : 'text-muted-foreground'
+        "
         data-testid="app-autorun"
         :data-on="mode.autoRun.value ? 'true' : 'false'"
       >

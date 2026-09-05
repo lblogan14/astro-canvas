@@ -99,17 +99,25 @@ function onDragStart(event: DragEvent, entry: WorkspaceEntry): void {
 </script>
 
 <template>
-  <ul class="space-y-px" role="tree" :aria-level="depth + 1">
-    <li v-if="loading && !entries.length" class="px-2 py-1 text-[11px] text-muted-foreground">
+  <!-- The root list is the tree; every nested level is a `group` inside its own `treeitem`, and
+       `aria-level` belongs on the items rather than on the list (ARIA 1.2). -->
+  <ul class="space-y-px" :role="depth === 0 ? 'tree' : 'group'">
+    <li
+      v-if="loading && !entries.length"
+      role="none"
+      class="px-2 py-1 text-[11px] text-muted-foreground"
+    >
       {{ t('common.loading') }}
     </li>
-    <li v-else-if="!entries.length" class="px-2 py-1 text-[11px] text-muted-foreground">
+    <li v-else-if="!entries.length" role="none" class="px-2 py-1 text-[11px] text-muted-foreground">
       {{ t('workspace.empty') }}
     </li>
     <li
       v-for="entry in entries"
       :key="entry.path"
       role="treeitem"
+      :aria-level="depth + 1"
+      :aria-selected="workspace.selectedPath === entry.path"
       :aria-expanded="entry.is_dir ? workspace.expanded.has(entry.path) : undefined"
     >
       <div

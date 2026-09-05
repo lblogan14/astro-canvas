@@ -171,7 +171,7 @@ async function trustAll(): Promise<void> {
         <div class="flex items-center gap-2">
           <p
             v-if="untrusted.length === 0 && snippets.length"
-            class="flex-1 text-xs text-emerald-500"
+            class="flex-1 text-xs text-emerald-700 dark:text-emerald-400"
           >
             {{ t('trust.done') }}
           </p>

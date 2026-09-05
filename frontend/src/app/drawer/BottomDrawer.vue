@@ -18,6 +18,25 @@ const selection = useSelectionStore()
 const workflow = useWorkflowStore()
 
 const TABS: DrawerTab[] = ['log', 'errors', 'system']
+
+/**
+ * Roving tabindex plus Left/Right/Home/End, which is what `role="tablist"` promises a keyboard
+ * user. Only the selected tab is in the tab order; the arrows move between them.
+ */
+function onTabKey(event: KeyboardEvent, tab: DrawerTab): void {
+  const keys: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1 }
+  const index = TABS.indexOf(tab)
+  let next = index
+  if (event.key in keys) next = (index + keys[event.key]! + TABS.length) % TABS.length
+  else if (event.key === 'Home') next = 0
+  else if (event.key === 'End') next = TABS.length - 1
+  else return
+  event.preventDefault()
+  const target = TABS[next]
+  if (target === undefined) return
+  ui.drawerTab = target
+  document.getElementById(`drawer-tab-${target}`)?.focus()
+}
 const system = ref<SystemInfo | null>(null)
 const systemError = ref<string | null>(null)
 
@@ -67,29 +86,37 @@ function gib(bytes: number): string {
     :aria-label="t('drawer.title')"
     data-testid="drawer"
   >
-    <div class="flex items-center gap-1 border-b px-2" role="tablist">
-      <button
-        v-for="tab in TABS"
-        :key="tab"
-        type="button"
-        role="tab"
-        class="relative px-2 py-1.5 text-muted-foreground hover:text-foreground aria-selected:text-foreground"
-        :aria-selected="ui.drawerTab === tab"
-        :data-tab="tab"
-        @click="ui.drawerTab = tab"
-      >
-        {{ t(`drawer.${tab}`) }}
-        <span
-          v-if="tab === 'errors' && problems.length"
-          class="ml-1 rounded-full bg-destructive/15 px-1.5 text-[10px] text-destructive"
-          >{{ problems.length }}</span
+    <div class="flex items-center gap-1 border-b px-2">
+      <!-- Only the tabs go inside the tablist: Clear and Close are not tabs (`aria-required-
+           children`), and a tablist that contains them is what axe flags. -->
+      <div class="flex items-center gap-1" role="tablist" :aria-label="t('drawer.title')">
+        <button
+          v-for="tab in TABS"
+          :key="tab"
+          :id="`drawer-tab-${tab}`"
+          type="button"
+          role="tab"
+          class="relative px-2 py-1.5 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none aria-selected:text-foreground"
+          :aria-selected="ui.drawerTab === tab"
+          :aria-controls="'drawer-panel'"
+          :tabindex="ui.drawerTab === tab ? 0 : -1"
+          :data-tab="tab"
+          @click="ui.drawerTab = tab"
+          @keydown="onTabKey($event, tab)"
         >
-        <span
-          v-if="ui.drawerTab === tab"
-          class="absolute inset-x-1 bottom-0 h-0.5 bg-foreground"
-          aria-hidden="true"
-        />
-      </button>
+          {{ t(`drawer.${tab}`) }}
+          <span
+            v-if="tab === 'errors' && problems.length"
+            class="ml-1 rounded-full bg-destructive/15 px-1.5 text-[10px] text-destructive"
+            >{{ problems.length }}</span
+          >
+          <span
+            v-if="ui.drawerTab === tab"
+            class="absolute inset-x-1 bottom-0 h-0.5 bg-foreground"
+            aria-hidden="true"
+          />
+        </button>
+      </div>
       <span class="flex-1" />
       <button
         v-if="ui.drawerTab === 'log'"
@@ -109,7 +136,13 @@ function gib(bytes: number): string {
       </button>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-auto font-mono text-[11px]" role="tabpanel">
+    <div
+      id="drawer-panel"
+      class="min-h-0 flex-1 overflow-auto font-mono text-[11px]"
+      role="tabpanel"
+      tabindex="0"
+      :aria-labelledby="`drawer-tab-${ui.drawerTab}`"
+    >
       <template v-if="ui.drawerTab === 'log'">
         <p v-if="!execution.log.length" class="p-3 font-sans text-muted-foreground">
           {{ t('drawer.empty_log') }}
@@ -121,7 +154,7 @@ function gib(bytes: number): string {
             class="flex gap-3 px-3 py-0.5"
             :class="{
               'text-destructive': entry.level === 'error',
-              'text-amber-600': entry.level === 'warning',
+              'text-amber-700 dark:text-amber-400': entry.level === 'warning',
             }"
           >
             <span class="shrink-0 text-muted-foreground">{{ formatTime(entry.ts) }}</span>

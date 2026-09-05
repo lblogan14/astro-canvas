@@ -5,6 +5,7 @@
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Maximize, Minus, Plus } from '@lucide/vue'
 import {
   type Connection,
   ConnectionMode,
@@ -19,7 +20,7 @@ import {
   useVueFlow,
 } from '@vue-flow/core'
 import { Background, BackgroundVariant } from '@vue-flow/background'
-import { Controls } from '@vue-flow/controls'
+import { ControlButton, Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
 
 import {
@@ -353,8 +354,46 @@ const isGroupSelected = computed(() => selection.nodeIds.some(isGroupNodeId))
         <GroupNode v-bind="nodeProps" />
       </template>
       <Background :variant="BackgroundVariant.Dots" :gap="20" :size="1.2" />
-      <MiniMap pannable zoomable position="bottom-right" :node-color="miniMapColor" />
-      <Controls position="bottom-left" :show-interactive="false" />
+      <MiniMap
+        pannable
+        zoomable
+        position="bottom-right"
+        :node-color="miniMapColor"
+        :aria-label="t('canvas.minimap')"
+      />
+      <!--
+        Vue Flow's own control buttons hold an icon and no text, which is a `button-name`
+        violation; the slots let us keep its styling and give each one a name.
+      -->
+      <Controls position="bottom-left" :show-interactive="false" :aria-label="t('canvas.controls')">
+        <template #control-zoom-in>
+          <ControlButton
+            :aria-label="t('canvas.zoom_in')"
+            :title="t('canvas.zoom_in')"
+            @click="zoomIn()"
+          >
+            <Plus class="size-3" aria-hidden="true" />
+          </ControlButton>
+        </template>
+        <template #control-zoom-out>
+          <ControlButton
+            :aria-label="t('canvas.zoom_out')"
+            :title="t('canvas.zoom_out')"
+            @click="zoomOut()"
+          >
+            <Minus class="size-3" aria-hidden="true" />
+          </ControlButton>
+        </template>
+        <template #control-fit-view>
+          <ControlButton
+            :aria-label="t('canvas.fit_view')"
+            :title="t('canvas.fit_view')"
+            @click="fitView()"
+          >
+            <Maximize class="size-3" aria-hidden="true" />
+          </ControlButton>
+        </template>
+      </Controls>
     </VueFlow>
     <div
       v-if="!hasDocument"

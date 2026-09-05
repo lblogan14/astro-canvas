@@ -15,7 +15,7 @@ has four areas:
 ## Working with nodes
 
 - **Add** a node by dragging it from the library onto the canvas, double-clicking it (added at the
-  viewport centre), or pressing `Tab` and typing its name.
+  viewport centre), or pressing `Ctrl+K` and typing its name.
 - **Connect** ports by dragging from an output handle (right) to an input handle (left). Handles
   are coloured by type with a shape glyph (Okabe–Ito palette). Incompatible drops are refused with
   a message; dropping a connection on empty canvas opens the quick-add palette filtered to node
@@ -50,7 +50,7 @@ document, auto-runs cheap nodes and streams status over the WebSocket; expensive
 | `Ctrl+Shift+C` / `Ctrl+Shift+E` | Collapse the selection into a subgraph / expand a subgraph in place |
 | `Ctrl+Shift+L` | Auto-layout the graph (or the selection) left to right |
 | `Ctrl+A` | Select every node |
-| `Tab` | Quick-add palette |
+| `Ctrl+K`, `Shift+A` | Quick-add palette |
 | `Space` + drag | Pan |
 | `.` / `F` | Fit view / fit the selection |
 | `Ctrl+S` | Save now |

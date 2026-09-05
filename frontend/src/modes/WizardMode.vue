@@ -209,43 +209,44 @@ async function exportResults(): Promise<void> {
 <template>
   <div class="flex h-full min-h-0 flex-col bg-background" data-testid="wizard-mode">
     <!-- stepper -->
-    <ol
-      class="flex shrink-0 flex-wrap items-center gap-1 border-b px-2 py-1.5 text-xs"
-      data-testid="wizard-stepper"
-    >
-      <li v-for="entry in steps" :key="entry.index" class="flex items-center gap-1">
-        <button
-          type="button"
-          class="inline-flex items-center gap-1 rounded-md border px-2 py-1"
-          :class="[
-            entry.index === current
-              ? 'border-primary bg-primary/10 font-medium text-primary'
-              : 'border-transparent',
-            entry.index > current && !canAdvance ? 'text-muted-foreground' : '',
-          ]"
-          :aria-current="entry.index === current ? 'step' : undefined"
-          :data-testid="`wizard-step-${entry.index}`"
-          :data-state="entry.state"
-          @click="go(entry.index)"
-        >
-          <Check v-if="entry.state === 'done'" class="size-3 text-emerald-600" />
-          <TriangleAlert v-else-if="entry.state === 'error'" class="size-3 text-destructive" />
-          <span
-            v-else
-            class="inline-block size-2 rounded-full"
-            :class="
-              entry.state === 'running' ? 'animate-pulse bg-blue-500' : 'bg-muted-foreground/40'
-            "
+    <!-- The stepper is the list; the layout buttons are its siblings, because an `<ol>` may only
+         contain `<li>` (axe `list`). -->
+    <div class="flex shrink-0 flex-wrap items-center gap-1 border-b px-2 py-1.5 text-xs">
+      <ol class="flex flex-wrap items-center gap-1" data-testid="wizard-stepper">
+        <li v-for="entry in steps" :key="entry.index" class="flex items-center gap-1">
+          <button
+            type="button"
+            class="inline-flex items-center gap-1 rounded-md border px-2 py-1"
+            :class="[
+              entry.index === current
+                ? 'border-primary bg-primary/10 font-medium text-primary'
+                : 'border-transparent',
+              entry.index > current && !canAdvance ? 'text-muted-foreground' : '',
+            ]"
+            :aria-current="entry.index === current ? 'step' : undefined"
+            :data-testid="`wizard-step-${entry.index}`"
+            :data-state="entry.state"
+            @click="go(entry.index)"
+          >
+            <Check v-if="entry.state === 'done'" class="size-3 text-emerald-600" />
+            <TriangleAlert v-else-if="entry.state === 'error'" class="size-3 text-destructive" />
+            <span
+              v-else
+              class="inline-block size-2 rounded-full"
+              :class="
+                entry.state === 'running' ? 'animate-pulse bg-blue-500' : 'bg-muted-foreground/40'
+              "
+              aria-hidden="true"
+            />
+            {{ entry.title }}
+          </button>
+          <ChevronRight
+            v-if="entry.index < steps.length - 1"
+            class="size-3 text-muted-foreground"
             aria-hidden="true"
           />
-          {{ entry.title }}
-        </button>
-        <ChevronRight
-          v-if="entry.index < steps.length - 1"
-          class="size-3 text-muted-foreground"
-          aria-hidden="true"
-        />
-      </li>
+        </li>
+      </ol>
 
       <span class="flex-1" />
 
@@ -275,7 +276,7 @@ async function exportResults(): Promise<void> {
       >
         <Workflow /> {{ t('modes.show_graph') }}
       </Button>
-    </ol>
+    </div>
 
     <p
       v-if="steps.length === 0"

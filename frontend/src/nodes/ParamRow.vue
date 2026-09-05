@@ -398,7 +398,7 @@ const invalid = computed(() => clientMessages.value.length > 0 || serverIssues.v
           class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           :class="
             promoted
-              ? 'border-amber-500 bg-amber-500/10 text-amber-600'
+              ? 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400'
               : 'border-input bg-background'
           "
           :aria-pressed="promoted"

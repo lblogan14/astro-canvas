@@ -101,6 +101,7 @@ const LAYOUTS: readonly AppMode[] = ['canvas', 'app', 'wizard', 'dashboard', 'ba
       size="icon-sm"
       :aria-pressed="ui.sidebarOpen && ui.sidebarPanel === 'library'"
       :title="t('toolbar.library')"
+      data-testid="toggle-library"
       @click="ui.showSidebar('library')"
     >
       <Library />
@@ -141,7 +142,7 @@ const LAYOUTS: readonly AppMode[] = ['canvas', 'app', 'wizard', 'dashboard', 'ba
 
     <input
       v-model="nameDraft"
-      class="h-7 w-56 rounded-md border border-transparent bg-transparent px-2 text-sm font-medium hover:border-input focus:border-input focus:outline-none"
+      class="h-7 w-56 rounded-md border border-transparent bg-transparent px-2 text-sm font-medium hover:border-input focus-visible:border-input focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:text-muted-foreground"
       :placeholder="t('toolbar.name_placeholder')"
       :aria-label="t('toolbar.workflow_name')"
       :disabled="!workflow.isOpen"

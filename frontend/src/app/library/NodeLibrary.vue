@@ -126,7 +126,7 @@ function addAtCenter(spec: NodeSpec): void {
             />
           </ul>
         </template>
-        <ul class="space-y-px" role="tree">
+        <ul class="space-y-px">
           <LibraryCategory
             v-for="category in schema.categories"
             :key="category.path"

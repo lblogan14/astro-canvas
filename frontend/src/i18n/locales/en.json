@@ -42,7 +42,12 @@
       "multiple_inputs": "That input is already connected. Disconnect it first.",
       "type_mismatch": "Incompatible types: the output cannot feed that input.",
       "cycle": "That connection would create a cycle."
-    }
+    },
+    "controls": "Canvas controls",
+    "zoom_in": "Zoom in",
+    "zoom_out": "Zoom out",
+    "fit_view": "Fit the graph into the view",
+    "minimap": "Overview of the whole graph"
   },
   "node": {
     "rename": "Rename",
@@ -88,7 +93,7 @@
   },
   "toolbar": {
     "label": "Workflow toolbar",
-    "library": "Node library (Tab to search)",
+    "library": "Node library (Ctrl+K to search)",
     "workflows": "Workflows",
     "workspace": "Workspace files",
     "inspector": "Inspector",
@@ -125,7 +130,7 @@
     "add_hint": "Add {name} (Enter or double-click; drag onto the canvas)",
     "favorite": "Add {name} to favourites",
     "unfavorite": "Remove {name} from favourites",
-    "drag_hint": "Drag a node onto the canvas, double-click to add it at the centre, or press Tab."
+    "drag_hint": "Drag a node onto the canvas, double-click to add it at the centre, or press Ctrl+K."
   },
   "workflows": {
     "title": "Workflows",
