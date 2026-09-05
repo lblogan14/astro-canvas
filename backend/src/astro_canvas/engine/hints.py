@@ -27,6 +27,9 @@ BY_NAME: dict[str, str] = {
     "MemoryError": "Not enough memory for this step. Crop or rebin the data first, or mark the "
     "node expensive so it runs in its own process.",
     "RecursionError": "The graph or the data nests too deeply for this node.",
+    # `concurrent.futures.TimeoutError` on 3.10, where it is not the builtin `TimeoutError` the
+    # `isinstance` check below would catch.
+    "TimeoutError": "The node exceeded the configured time limit.",
     # Environment
     "ModuleNotFoundError": "A package this node needs is not installed. Install it from "
     "Manager > Packs, or install the pack that provides it.",

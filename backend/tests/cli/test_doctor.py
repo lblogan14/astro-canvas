@@ -24,7 +24,10 @@ def test_doctor_reports_green_on_this_installation(tmp_path: Path) -> None:
     result = runner.invoke(cli.app, ["doctor", "--workspace", str(tmp_path / "ws")])
     assert result.exit_code == 0, result.output
     assert "all checks passed" in result.output
-    assert "[ok  ] python" in result.output
+    # Below 3.12 `doctor` says so -- a warning, not a failure, which is why "all checks passed"
+    # still holds. The 3.10 leg of the CI matrix runs this.
+    expected = "[ok  ] python" if sys.version_info >= (3, 12) else "[warn] python"
+    assert expected in result.output
     assert "[ok  ] qt not imported" in result.output
     assert "pack core" in result.output and "pack rbcodes" in result.output
 

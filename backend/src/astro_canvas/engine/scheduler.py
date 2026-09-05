@@ -356,7 +356,11 @@ class Scheduler:
             )
             try:
                 await asyncio.wait_for(self._execute_plan(info, plan), self.config.run_timeout_s)
-            except TimeoutError:
+            # `asyncio.TimeoutError` only *became* the builtin `TimeoutError` in 3.11. On 3.10 it
+            # is `concurrent.futures.TimeoutError`, a different class, and catching the builtin
+            # let the wall-clock limit escape: the run was never marked cancelled and its nodes
+            # were never stopped.
+            except asyncio.TimeoutError:
                 info.abort = True
                 info.status = "cancelled"
                 info.message = f"run exceeded {self.config.run_timeout_s} s"

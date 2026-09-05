@@ -217,7 +217,7 @@ class Subscription:
         """Next event or ``None`` on timeout / close."""
         try:
             return await asyncio.wait_for(self.queue.get(), timeout)
-        except TimeoutError:
+        except asyncio.TimeoutError:  # not the builtin `TimeoutError` before 3.11
             return None
 
 

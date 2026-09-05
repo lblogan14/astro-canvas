@@ -588,6 +588,8 @@ class BatchRunner:
 
 
 def _now() -> str:
-    from datetime import UTC, datetime  # noqa: PLC0415 - only needed per finished row
+    # `datetime.UTC` is 3.11+; this package supports 3.10, where the alias does not exist and
+    # every batch row failed with an ImportError.
+    from datetime import datetime, timezone  # noqa: PLC0415 - only needed per finished row
 
-    return datetime.now(UTC).isoformat(timespec="seconds")
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
