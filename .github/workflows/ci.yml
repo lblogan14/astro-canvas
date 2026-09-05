@@ -115,6 +115,69 @@ jobs:
           name: astro-canvas-wheel
           path: backend/dist/*.whl
 
+  # The identity database is the one thing that has to work on Postgres as well as SQLite:
+  # a lab deployment points DATABASE_URL at it, and the Alembic tree is its own head.
+  postgres:
+    name: user accounts on postgres
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: canvas
+          POSTGRES_USER: canvas
+          POSTGRES_PASSWORD: canvas
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U canvas -d canvas"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+          python-version: '3.12'
+      - name: Sync
+        run: uv sync --directory backend --all-extras --locked
+      - name: The identity head applies to Postgres
+        env:
+          ASTRO_CANVAS_DATABASE_URL: postgresql://canvas:canvas@127.0.0.1:5432/canvas
+        run: uv run --directory backend pytest tests/store/test_identity.py -q --no-cov
+      - name: A users server really runs on it
+        env:
+          ASTRO_CANVAS_DATABASE_URL: postgresql://canvas:canvas@127.0.0.1:5432/canvas
+        run: uv run --directory backend python ../scripts/smoke_postgres.py
+
+  launcher:
+    name: installer scripts (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: install.sh / uninstall.sh against a stub uv
+        if: runner.os != 'Windows'
+        run: bash launcher/tests/install-smoke.sh
+      - name: install.ps1 against a stub uv
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./launcher/tests/install-smoke.ps1
+
+  compose:
+    name: lab server over https
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: docker compose up, two users, admin-only manager
+        run: bash deploy/tests/compose.sh
+        env:
+          HTTP_PORT: '8080'
+          HTTPS_PORT: '8443'
+
   e2e:
     name: playwright smoke (ubuntu)
     needs: [backend, frontend]
@@ -140,6 +203,8 @@ jobs:
           uv sync --directory backend --all-extras --locked
           pnpm -C frontend exec playwright install --with-deps chromium
       - name: Playwright
+        # Two projects: the token-authenticated suite, and `users` against a second backend
+        # started with login accounts (playwright.config.ts brings both pairs up).
         run: pnpm -C frontend test:e2e
         env:
           CI: 'true'

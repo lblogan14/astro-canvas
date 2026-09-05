@@ -164,7 +164,7 @@ def test_template_compiles_and_runs_headless(tmp_path: Path, workspace: Path) ->
     graph = compile_workflow(doc, registry)
     assert not hasattr(graph, "node_errors") or not graph.node_errors, graph
     settings = Settings(
-        workspace=workspace, config_dir=tmp_path / "config", process_pool=False, auth=False
+        workspace=workspace, config_dir=tmp_path / "config", process_pool=False, auth="none"
     )
     summary = asyncio.run(run_headless(settings, TEMPLATE, None))
     assert summary["status"] == "done", summary

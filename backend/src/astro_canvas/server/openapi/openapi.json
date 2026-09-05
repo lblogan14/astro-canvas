@@ -1,6 +1,33 @@
 {
   "components": {
     "schemas": {
+      "AuthInfo": {
+        "description": "``GET /api/auth/info``: what the login page needs before anybody is logged in.",
+        "properties": {
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "providers": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Providers",
+            "type": "array"
+          },
+          "registration": {
+            "default": true,
+            "title": "Registration",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "AuthInfo",
+        "type": "object"
+      },
       "BatchBinding": {
         "description": "One table column feeding one node param (``layouts.batch.columns`` entry).",
         "properties": {
@@ -252,6 +279,142 @@
           }
         },
         "title": "BatchSpec",
+        "type": "object"
+      },
+      "BearerResponse": {
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "token_type": {
+            "title": "Token Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token",
+          "token_type"
+        ],
+        "title": "BearerResponse",
+        "type": "object"
+      },
+      "Body_auth_bearer_login_api_auth_bearer_login_post": {
+        "properties": {
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "format": "password",
+            "title": "Client Secret"
+          },
+          "grant_type": {
+            "anyOf": [
+              {
+                "pattern": "^password$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
+          },
+          "password": {
+            "format": "password",
+            "title": "Password",
+            "type": "string"
+          },
+          "scope": {
+            "default": "",
+            "title": "Scope",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_auth_bearer_login_api_auth_bearer_login_post",
+        "type": "object"
+      },
+      "Body_auth_cookie_login_api_auth_login_post": {
+        "properties": {
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "format": "password",
+            "title": "Client Secret"
+          },
+          "grant_type": {
+            "anyOf": [
+              {
+                "pattern": "^password$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
+          },
+          "password": {
+            "format": "password",
+            "title": "Password",
+            "type": "string"
+          },
+          "scope": {
+            "default": "",
+            "title": "Scope",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_auth_cookie_login_api_auth_login_post",
         "type": "object"
       },
       "Body_import_bundle_api_bundles_import_post": {
@@ -778,6 +941,29 @@
           "is_dir"
         ],
         "title": "EntryModel",
+        "type": "object"
+      },
+      "ErrorModel": {
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorModel",
         "type": "object"
       },
       "ExportRequest": {
@@ -3270,6 +3456,182 @@
         "title": "UploadResult",
         "type": "object"
       },
+      "UserCreate": {
+        "description": "Sign-up payload.",
+        "properties": {
+          "display_name": {
+            "default": "",
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": true,
+            "title": "Is Active"
+          },
+          "is_superuser": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": false,
+            "title": "Is Superuser"
+          },
+          "is_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": false,
+            "title": "Is Verified"
+          },
+          "password": {
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserCreate",
+        "type": "object"
+      },
+      "UserRead": {
+        "description": "A user as ``/api/users/me`` returns it.",
+        "properties": {
+          "display_name": {
+            "default": "",
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_active": {
+            "default": true,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "is_superuser": {
+            "default": false,
+            "title": "Is Superuser",
+            "type": "boolean"
+          },
+          "is_verified": {
+            "default": false,
+            "title": "Is Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "email"
+        ],
+        "title": "UserRead",
+        "type": "object"
+      },
+      "UserUpdate": {
+        "description": "Profile update payload.",
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "format": "email",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "is_superuser": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Superuser"
+          },
+          "is_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Verified"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password"
+          }
+        },
+        "title": "UserUpdate",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -3602,6 +3964,12 @@
       "WorkspaceInfo": {
         "description": "The active workspace and the user's recent ones.",
         "properties": {
+          "can_select": {
+            "default": true,
+            "description": "False when the server pins each user to their own workspace.",
+            "title": "Can Select",
+            "type": "boolean"
+          },
           "downloads_dir": {
             "default": "downloads",
             "title": "Downloads Dir",
@@ -3628,6 +3996,18 @@
             "title": "Samples Dir",
             "type": "string"
           },
+          "shared_dir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Read-only mount on a lab server (design 12); ``null`` locally.",
+            "title": "Shared Dir"
+          },
           "uploads_dir": {
             "default": "uploads",
             "title": "Uploads Dir",
@@ -3641,6 +4021,22 @@
         "title": "WorkspaceInfo",
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "APIKeyCookie": {
+        "in": "cookie",
+        "name": "astro_canvas_auth",
+        "type": "apiKey"
+      },
+      "OAuth2PasswordBearer": {
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "api/auth/bearer/login"
+          }
+        },
+        "type": "oauth2"
+      }
     }
   },
   "info": {
@@ -3649,6 +4045,294 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/auth/bearer/login": {
+      "post": {
+        "operationId": "auth_bearer_login_api_auth_bearer_login_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_auth_bearer_login_api_auth_bearer_login_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiOTIyMWZmYzktNjQwZi00MzcyLTg2ZDMtY2U2NDJjYmE1NjAzIiwiYXVkIjoiZmFzdGFwaS11c2VyczphdXRoIiwiZXhwIjoxNTcxNTA0MTkzfQ.M10bjOe45I5Ncu_uXvOmVV8QxnL-nZfcH96U90JaocI",
+                  "token_type": "bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/BearerResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "LOGIN_BAD_CREDENTIALS": {
+                    "summary": "Bad credentials or the user is inactive.",
+                    "value": {
+                      "detail": "LOGIN_BAD_CREDENTIALS"
+                    }
+                  },
+                  "LOGIN_USER_NOT_VERIFIED": {
+                    "summary": "The user is not verified.",
+                    "value": {
+                      "detail": "LOGIN_USER_NOT_VERIFIED"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth:Bearer.Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/bearer/logout": {
+      "post": {
+        "operationId": "auth_bearer_logout_api_auth_bearer_logout_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing token or inactive user."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Auth:Bearer.Logout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/info": {
+      "get": {
+        "description": "Which login methods this server offers (public: the login page needs it).",
+        "operationId": "auth_info_api_auth_info_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Info",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "auth_cookie_login_api_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_auth_cookie_login_api_auth_login_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "LOGIN_BAD_CREDENTIALS": {
+                    "summary": "Bad credentials or the user is inactive.",
+                    "value": {
+                      "detail": "LOGIN_BAD_CREDENTIALS"
+                    }
+                  },
+                  "LOGIN_USER_NOT_VERIFIED": {
+                    "summary": "The user is not verified.",
+                    "value": {
+                      "detail": "LOGIN_USER_NOT_VERIFIED"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Auth:Cookie.Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "auth_cookie_logout_api_auth_logout_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Missing token or inactive user."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Auth:Cookie.Logout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "register_register_api_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "REGISTER_INVALID_PASSWORD": {
+                    "summary": "Password validation failed.",
+                    "value": {
+                      "detail": {
+                        "code": "REGISTER_INVALID_PASSWORD",
+                        "reason": "Password should beat least 3 characters"
+                      }
+                    }
+                  },
+                  "REGISTER_USER_ALREADY_EXISTS": {
+                    "summary": "A user with this email already exists.",
+                    "value": {
+                      "detail": "REGISTER_USER_ALREADY_EXISTS"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register:Register",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/bundles/download": {
       "get": {
         "description": "Serve a bundle that lives in the workspace.",
@@ -3684,6 +4368,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Download Bundle",
         "tags": [
           "bundles"
@@ -3726,6 +4418,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Create Bundle",
         "tags": [
           "bundles"
@@ -3768,6 +4468,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Import Bundle",
         "tags": [
           "bundles"
@@ -3816,6 +4524,14 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "List Packs",
         "tags": [
           "manager"
@@ -3858,6 +4574,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Install",
         "tags": [
           "manager"
@@ -3900,6 +4624,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Resolve",
         "tags": [
           "manager"
@@ -3942,6 +4674,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Uninstall Pack",
         "tags": [
           "manager"
@@ -3995,6 +4735,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Set Enabled",
         "tags": [
           "manager"
@@ -4038,6 +4786,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Import Test",
         "tags": [
           "manager"
@@ -4080,6 +4836,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Update Pack",
         "tags": [
           "manager"
@@ -4150,6 +4914,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Registry",
         "tags": [
           "manager"
@@ -4192,6 +4964,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Update Settings",
         "tags": [
           "manager"
@@ -4217,6 +4997,14 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "List Snapshots",
         "tags": [
           "manager"
@@ -4264,6 +5052,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Create Snapshot",
         "tags": [
           "manager"
@@ -4310,6 +5106,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Snapshot Packages",
         "tags": [
           "manager"
@@ -4353,6 +5157,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Rollback",
         "tags": [
           "manager"
@@ -4375,6 +5187,14 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Status",
         "tags": [
           "manager"
@@ -4401,9 +5221,17 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "List Trust",
         "tags": [
-          "manager"
+          "trust"
         ]
       },
       "post": {
@@ -4441,9 +5269,17 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Set Trust",
         "tags": [
-          "manager"
+          "trust"
         ]
       }
     },
@@ -4477,9 +5313,17 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Forget Trust",
         "tags": [
-          "manager"
+          "trust"
         ]
       }
     },
@@ -4531,6 +5375,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "List Nodes",
         "tags": [
           "nodes"
@@ -4574,6 +5426,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Node",
         "tags": [
           "nodes"
@@ -4686,6 +5546,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Output",
         "tags": [
           "outputs"
@@ -4712,6 +5580,14 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "List Packs",
         "tags": [
           "nodes"
@@ -4776,6 +5652,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "List Runs",
         "tags": [
           "runs"
@@ -4818,6 +5702,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Run",
         "tags": [
           "runs"
@@ -4861,6 +5753,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Cancel Run",
         "tags": [
           "runs"
@@ -4883,6 +5783,14 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "System",
         "tags": [
           "system"
@@ -4909,6 +5817,14 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Templates",
         "tags": [
           "templates"
@@ -4952,6 +5868,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Template",
         "tags": [
           "templates"
@@ -4993,6 +5917,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Template Figure",
         "tags": [
           "templates"
@@ -5053,6 +5985,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Instantiate Template",
         "tags": [
           "templates"
@@ -5079,9 +6019,329 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "List Types",
         "tags": [
           "nodes"
+        ]
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "operationId": "users_current_user_api_users_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing token or inactive user."
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Users:Current User",
+        "tags": [
+          "users"
+        ]
+      },
+      "patch": {
+        "operationId": "users_patch_current_user_api_users_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "UPDATE_USER_EMAIL_ALREADY_EXISTS": {
+                    "summary": "A user with this email already exists.",
+                    "value": {
+                      "detail": "UPDATE_USER_EMAIL_ALREADY_EXISTS"
+                    }
+                  },
+                  "UPDATE_USER_INVALID_PASSWORD": {
+                    "summary": "Password validation failed.",
+                    "value": {
+                      "detail": {
+                        "code": "UPDATE_USER_INVALID_PASSWORD",
+                        "reason": "Password should beat least 3 characters"
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Missing token or inactive user."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Users:Patch Current User",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/{id}": {
+      "delete": {
+        "operationId": "users_delete_user_api_users__id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing token or inactive user."
+          },
+          "403": {
+            "description": "Not a superuser."
+          },
+          "404": {
+            "description": "The user does not exist."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Users:Delete User",
+        "tags": [
+          "users"
+        ]
+      },
+      "get": {
+        "operationId": "users_user_api_users__id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing token or inactive user."
+          },
+          "403": {
+            "description": "Not a superuser."
+          },
+          "404": {
+            "description": "The user does not exist."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Users:User",
+        "tags": [
+          "users"
+        ]
+      },
+      "patch": {
+        "operationId": "users_patch_user_api_users__id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "UPDATE_USER_EMAIL_ALREADY_EXISTS": {
+                    "summary": "A user with this email already exists.",
+                    "value": {
+                      "detail": "UPDATE_USER_EMAIL_ALREADY_EXISTS"
+                    }
+                  },
+                  "UPDATE_USER_INVALID_PASSWORD": {
+                    "summary": "Password validation failed.",
+                    "value": {
+                      "detail": {
+                        "code": "UPDATE_USER_INVALID_PASSWORD",
+                        "reason": "Password should beat least 3 characters"
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Missing token or inactive user."
+          },
+          "403": {
+            "description": "Not a superuser."
+          },
+          "404": {
+            "description": "The user does not exist."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Users:Patch User",
+        "tags": [
+          "users"
         ]
       }
     },
@@ -5105,6 +6365,14 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "List Workflows",
         "tags": [
           "workflows"
@@ -5145,6 +6413,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Create Workflow",
         "tags": [
           "workflows"
@@ -5180,6 +6456,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Delete Workflow",
         "tags": [
           "workflows"
@@ -5220,6 +6504,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Workflow",
         "tags": [
           "workflows"
@@ -5271,6 +6563,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Put Workflow",
         "tags": [
           "workflows"
@@ -5324,6 +6624,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Start Batch",
         "tags": [
           "batch"
@@ -5376,6 +6684,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Batch",
         "tags": [
           "batch"
@@ -5428,6 +6744,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Cancel Batch",
         "tags": [
           "batch"
@@ -5481,6 +6805,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Create Export",
         "tags": [
           "workflows"
@@ -5541,6 +6873,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Start Run",
         "tags": [
           "runs"
@@ -5584,6 +6924,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Settings",
         "tags": [
           "workflows"
@@ -5635,6 +6983,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Update Settings",
         "tags": [
           "workflows"
@@ -5678,6 +7034,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Workflow Status",
         "tags": [
           "workflows"
@@ -5721,9 +7085,17 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Review Workflow",
         "tags": [
-          "manager"
+          "trust"
         ]
       }
     },
@@ -5768,6 +7140,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "List Versions",
         "tags": [
           "workflows"
@@ -5819,6 +7199,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Version",
         "tags": [
           "workflows"
@@ -5841,6 +7229,14 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Workspace Info",
         "tags": [
           "workspace"
@@ -5889,6 +7285,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Delete Path",
         "tags": [
           "workspace"
@@ -5930,6 +7334,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Download File",
         "tags": [
           "workspace"
@@ -5985,6 +7397,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "File Info",
         "tags": [
           "workspace"
@@ -6027,6 +7447,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Make Directory",
         "tags": [
           "workspace"
@@ -6069,6 +7497,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Select Workspace",
         "tags": [
           "workspace"
@@ -6114,6 +7550,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Sniff File",
         "tags": [
           "workspace"
@@ -6182,6 +7626,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Workspace Tree",
         "tags": [
           "workspace"
@@ -6224,6 +7676,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "APIKeyCookie": []
+          },
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Upload File",
         "tags": [
           "workspace"

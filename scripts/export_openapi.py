@@ -2,6 +2,10 @@
 
 ``--check`` exits 1 when the committed snapshot differs from the running app (CI runs this so the
 generated frontend client, ``task api:gen``, never drifts from the backend).
+
+The app is rendered in ``--auth users`` mode because that is the superset: the single-user server
+serves the same routes minus ``/api/auth`` and ``/api/users``, and the SPA has to be typed against
+both, since it does not know which one it is talking to until ``/api/auth/info`` answers.
 """
 
 from __future__ import annotations
@@ -22,7 +26,14 @@ def render() -> str:
     from astro_canvas.settings import Settings  # noqa: PLC0415
 
     workspace = Path(tempfile.mkdtemp(prefix="astro-canvas-openapi-"))
-    app = create_app(Settings(workspace=workspace, auth=False), discover())
+    settings = Settings(
+        workspace=workspace,
+        config_dir=workspace / "config",
+        users_dir=workspace / "users",
+        auth="users",
+        watch_workspace=False,
+    )
+    app = create_app(settings, discover())
     return json.dumps(app.openapi(), indent=2, sort_keys=True) + "\n"
 
 

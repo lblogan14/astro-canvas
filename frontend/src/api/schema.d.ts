@@ -4,6 +4,111 @@
  */
 
 export interface paths {
+  '/api/auth/bearer/login': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Auth:Bearer.Login */
+    post: operations['auth_bearer_login_api_auth_bearer_login_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/auth/bearer/logout': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Auth:Bearer.Logout */
+    post: operations['auth_bearer_logout_api_auth_bearer_logout_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/auth/info': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Auth Info
+     * @description Which login methods this server offers (public: the login page needs it).
+     */
+    get: operations['auth_info_api_auth_info_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/auth/login': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Auth:Cookie.Login */
+    post: operations['auth_cookie_login_api_auth_login_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/auth/logout': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Auth:Cookie.Logout */
+    post: operations['auth_cookie_logout_api_auth_logout_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/auth/register': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Register:Register */
+    post: operations['register_register_api_auth_register_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/bundles/download': {
     parameters: {
       query?: never
@@ -640,6 +745,43 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/users/me': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Users:Current User */
+    get: operations['users_current_user_api_users_me_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    /** Users:Patch Current User */
+    patch: operations['users_patch_current_user_api_users_me_patch']
+    trace?: never
+  }
+  '/api/users/{id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Users:User */
+    get: operations['users_user_api_users__id__get']
+    put?: never
+    post?: never
+    /** Users:Delete User */
+    delete: operations['users_delete_user_api_users__id__delete']
+    options?: never
+    head?: never
+    /** Users:Patch User */
+    patch: operations['users_patch_user_api_users__id__patch']
+    trace?: never
+  }
   '/api/workflows': {
     parameters: {
       query?: never
@@ -1059,6 +1201,24 @@ export type webhooks = Record<string, never>
 export interface components {
   schemas: {
     /**
+     * AuthInfo
+     * @description ``GET /api/auth/info``: what the login page needs before anybody is logged in.
+     */
+    AuthInfo: {
+      /** Mode */
+      mode: string
+      /**
+       * Providers
+       * @default []
+       */
+      providers: string[]
+      /**
+       * Registration
+       * @default true
+       */
+      registration: boolean
+    }
+    /**
      * BatchBinding
      * @description One table column feeding one node param (``layouts.batch.columns`` entry).
      */
@@ -1166,6 +1326,61 @@ export interface components {
        * @description Rows in flight; default cpu-1 with expensive nodes, else 8.
        */
       max_workers?: number | null
+    }
+    /** BearerResponse */
+    BearerResponse: {
+      /** Access Token */
+      access_token: string
+      /** Token Type */
+      token_type: string
+    }
+    /** Body_auth_bearer_login_api_auth_bearer_login_post */
+    Body_auth_bearer_login_api_auth_bearer_login_post: {
+      /** Client Id */
+      client_id?: string | null
+      /**
+       * Client Secret
+       * Format: password
+       */
+      client_secret?: string | null
+      /** Grant Type */
+      grant_type?: string | null
+      /**
+       * Password
+       * Format: password
+       */
+      password: string
+      /**
+       * Scope
+       * @default
+       */
+      scope: string
+      /** Username */
+      username: string
+    }
+    /** Body_auth_cookie_login_api_auth_login_post */
+    Body_auth_cookie_login_api_auth_login_post: {
+      /** Client Id */
+      client_id?: string | null
+      /**
+       * Client Secret
+       * Format: password
+       */
+      client_secret?: string | null
+      /** Grant Type */
+      grant_type?: string | null
+      /**
+       * Password
+       * Format: password
+       */
+      password: string
+      /**
+       * Scope
+       * @default
+       */
+      scope: string
+      /** Username */
+      username: string
     }
     /** Body_import_bundle_api_bundles_import_post */
     Body_import_bundle_api_bundles_import_post: {
@@ -1441,6 +1656,15 @@ export interface components {
        * @default 0
        */
       size: number
+    }
+    /** ErrorModel */
+    ErrorModel: {
+      /** Detail */
+      detail:
+        | string
+        | {
+            [key: string]: string
+          }
     }
     /**
      * ExportRequest
@@ -2690,6 +2914,93 @@ export interface components {
       /** Upload Id */
       upload_id?: string | null
     }
+    /**
+     * UserCreate
+     * @description Sign-up payload.
+     */
+    UserCreate: {
+      /**
+       * Display Name
+       * @default
+       */
+      display_name: string
+      /**
+       * Email
+       * Format: email
+       */
+      email: string
+      /**
+       * Is Active
+       * @default true
+       */
+      is_active: boolean | null
+      /**
+       * Is Superuser
+       * @default false
+       */
+      is_superuser: boolean | null
+      /**
+       * Is Verified
+       * @default false
+       */
+      is_verified: boolean | null
+      /** Password */
+      password: string
+    }
+    /**
+     * UserRead
+     * @description A user as ``/api/users/me`` returns it.
+     */
+    UserRead: {
+      /**
+       * Display Name
+       * @default
+       */
+      display_name: string
+      /**
+       * Email
+       * Format: email
+       */
+      email: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /**
+       * Is Active
+       * @default true
+       */
+      is_active: boolean
+      /**
+       * Is Superuser
+       * @default false
+       */
+      is_superuser: boolean
+      /**
+       * Is Verified
+       * @default false
+       */
+      is_verified: boolean
+    }
+    /**
+     * UserUpdate
+     * @description Profile update payload.
+     */
+    UserUpdate: {
+      /** Display Name */
+      display_name?: string | null
+      /** Email */
+      email?: string | null
+      /** Is Active */
+      is_active?: boolean | null
+      /** Is Superuser */
+      is_superuser?: boolean | null
+      /** Is Verified */
+      is_verified?: boolean | null
+      /** Password */
+      password?: string | null
+    }
     /** ValidationError */
     ValidationError: {
       /** Context */
@@ -2859,6 +3170,12 @@ export interface components {
      */
     WorkspaceInfo: {
       /**
+       * Can Select
+       * @description False when the server pins each user to their own workspace.
+       * @default true
+       */
+      can_select: boolean
+      /**
        * Downloads Dir
        * @default downloads
        */
@@ -2878,6 +3195,11 @@ export interface components {
        */
       samples_dir: string
       /**
+       * Shared Dir
+       * @description Read-only mount on a lab server (design 12); ``null`` locally.
+       */
+      shared_dir?: string | null
+      /**
        * Uploads Dir
        * @default uploads
        */
@@ -2892,6 +3214,226 @@ export interface components {
 }
 export type $defs = Record<string, never>
 export interface operations {
+  auth_bearer_login_api_auth_bearer_login_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/x-www-form-urlencoded': components['schemas']['Body_auth_bearer_login_api_auth_bearer_login_post']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          /**
+           * @example {
+           *       "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiOTIyMWZmYzktNjQwZi00MzcyLTg2ZDMtY2U2NDJjYmE1NjAzIiwiYXVkIjoiZmFzdGFwaS11c2VyczphdXRoIiwiZXhwIjoxNTcxNTA0MTkzfQ.M10bjOe45I5Ncu_uXvOmVV8QxnL-nZfcH96U90JaocI",
+           *       "token_type": "bearer"
+           *     }
+           */
+          'application/json': components['schemas']['BearerResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ErrorModel']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  auth_bearer_logout_api_auth_bearer_logout_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': unknown
+        }
+      }
+      /** @description Missing token or inactive user. */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  auth_info_api_auth_info_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AuthInfo']
+        }
+      }
+    }
+  }
+  auth_cookie_login_api_auth_login_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/x-www-form-urlencoded': components['schemas']['Body_auth_cookie_login_api_auth_login_post']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': unknown
+        }
+      }
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ErrorModel']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  auth_cookie_logout_api_auth_logout_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': unknown
+        }
+      }
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Missing token or inactive user. */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  register_register_api_auth_register_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UserCreate']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['UserRead']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ErrorModel']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
   download_bundle_api_bundles_download_get: {
     parameters: {
       query: {
@@ -3874,6 +4416,249 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['PortTypeSpec'][]
+        }
+      }
+    }
+  }
+  users_current_user_api_users_me_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['UserRead']
+        }
+      }
+      /** @description Missing token or inactive user. */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  users_patch_current_user_api_users_me_patch: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UserUpdate']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['UserRead']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ErrorModel']
+        }
+      }
+      /** @description Missing token or inactive user. */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  users_user_api_users__id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['UserRead']
+        }
+      }
+      /** @description Missing token or inactive user. */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not a superuser. */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description The user does not exist. */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  users_delete_user_api_users__id__delete: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Missing token or inactive user. */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not a superuser. */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description The user does not exist. */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  users_patch_user_api_users__id__patch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UserUpdate']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['UserRead']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ErrorModel']
+        }
+      }
+      /** @description Missing token or inactive user. */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not a superuser. */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description The user does not exist. */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
         }
       }
     }

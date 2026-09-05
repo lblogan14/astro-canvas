@@ -41,7 +41,9 @@ def wait_ready(deadline_s: float = 30.0) -> None:
 
 
 def main() -> int:
-    with tempfile.TemporaryDirectory() as workspace:
+    # ``ignore_cleanup_errors``: on Windows the just-terminated server can still hold the
+    # workspace SQLite handle for a moment, and a smoke test must not fail on the tidy-up.
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as workspace:
         cmd = [
             sys.executable,
             "-m",

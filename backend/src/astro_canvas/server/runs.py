@@ -5,8 +5,8 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
+from astro_canvas.server.deps import get_runtime
 from astro_canvas.server.runtime import EngineRuntime, UnknownWorkflowError
-from astro_canvas.server.workflows import get_runtime
 
 router = APIRouter(tags=["runs"])
 

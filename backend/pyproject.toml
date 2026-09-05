@@ -57,6 +57,11 @@ dev = [
   "mypy>=1.11",
   "respx>=0.21",
 ]
+users = [
+    "aiosqlite>=0.20",
+    "asyncpg>=0.29",
+    "fastapi-users[oauth,sqlalchemy]>=14",
+]
 
 [project.scripts]
 astro-canvas = "astro_canvas.cli:app"

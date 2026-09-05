@@ -18,7 +18,8 @@ from pydantic import BaseModel, Field, ValidationError
 from astro_canvas.engine.graph import WorkflowDoc, new_id
 from astro_canvas.engine.layouts import LAYOUT_NAMES
 from astro_canvas.sdk import NodeRegistry
-from astro_canvas.server.runtime import EngineRuntime, seed_samples
+from astro_canvas.server.deps import get_runtime
+from astro_canvas.server.runtime import seed_samples
 from astro_canvas.server.workflows import WorkflowSaved, saved_response
 
 log = structlog.get_logger("astro_canvas.templates")
@@ -144,11 +145,6 @@ def instantiate(template: Template, *, name: str | None = None) -> WorkflowDoc:
     meta.pop("modified", None)
     meta["template"] = template.info.id
     return doc.model_copy(update={"id": new_id(), "name": name or doc.name, "meta": meta})
-
-
-def get_runtime(request: Request) -> EngineRuntime:
-    runtime: EngineRuntime = request.app.state.runtime
-    return runtime
 
 
 def _not_found(template_id: str) -> HTTPException:

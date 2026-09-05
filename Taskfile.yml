@@ -75,6 +75,16 @@ tasks:
     cmds:
       - pnpm -C {{.FE}} test:e2e
 
+  test:compose:
+    desc: Build the Docker image and check the lab-server tier end to end (needs Docker)
+    cmds:
+      - bash deploy/tests/compose.sh
+
+  test:launcher:
+    desc: Smoke the one-line installers against a stub uv (no network)
+    cmds:
+      - bash launcher/tests/install-smoke.sh
+
   fmt:
     desc: Format and auto-fix backend and frontend
     cmds:
@@ -103,6 +113,16 @@ tasks:
       - uv run --directory {{.BE}} python ../scripts/export_openapi.py
       - pnpm -C {{.FE}} exec openapi-typescript ../backend/src/astro_canvas/server/openapi/openapi.json -o src/api/schema.d.ts
       - pnpm -C {{.FE}} exec prettier --write src/api/schema.d.ts
+
+  docs:
+    desc: Serve the documentation site locally (http://127.0.0.1:8000)
+    cmds:
+      - uv run --isolated --no-project --with 'mkdocs-material>=9.5,<10' --with 'mkdocs<2' mkdocs serve
+
+  docs:build:
+    desc: Build the docs into site/ with --strict, so a broken link fails the build
+    cmds:
+      - uv run --isolated --no-project --with 'mkdocs-material>=9.5,<10' --with 'mkdocs<2' mkdocs build --strict
 
   check:tooling:
     desc: Fail if npm/npx/yarn/bun/pip/poetry/conda are invoked anywhere

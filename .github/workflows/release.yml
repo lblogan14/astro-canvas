@@ -1,0 +1,342 @@
+name: Release
+
+# Tagging `v0.1.0-phase12` builds and verifies everything; publishing to real PyPI is a separate,
+# deliberate act (`workflow_dispatch` with `publish: pypi`) because it cannot be undone.
+#
+#   git tag v0.1.0-phase12 && git push --tags     -> wheels, launchers, TestPyPI
+#   Actions > Release > Run workflow (pypi)       -> the same wheels, to pypi.org
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Where to publish the distributions
+        type: choice
+        options: [none, testpypi, pypi]
+        default: none
+      version:
+        description: Version to build (defaults to the tag, or the checked-in version)
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  MPLBACKEND: Agg
+  QT_QPA_PLATFORM: offscreen
+  FORCE_COLOR: '1'
+
+jobs:
+  # --- the four distributions ------------------------------------------------------------------
+
+  wheels:
+    name: wheels (with the SPA)
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+          python-version: '3.12'
+
+      - name: Resolve the version
+        id: version
+        run: |
+          version="${{ inputs.version }}"
+          if [ -z "$version" ] && [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          if [ -z "$version" ]; then
+            version="$(sed -n 's/^__version__ *= *"\(.*\)"$/\1/p' backend/src/astro_canvas/_version.py)"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "building $version"
+
+      - name: Build the SPA
+        run: |
+          pnpm -C frontend install --frozen-lockfile
+          pnpm -C frontend build
+
+      - name: Build the wheels
+        run: |
+          uv run --directory backend python ../scripts/copy_static.py
+          uv build backend/sdk --out-dir dist
+          uv build backend --out-dir dist
+          uv build packs/core --out-dir dist
+          uv build packs/rbcodes --out-dir dist
+          uv run --directory backend python ../scripts/check_wheel.py --dist ../dist
+
+      - name: Smoke the wheel in a clean environment
+        run: |
+          uv run --isolated --no-project \
+            --with dist/astro_canvas_sdk-*.whl --with dist/astro_canvas-*.whl \
+            python scripts/smoke_wheel.py
+
+      - name: Record the sizes
+        run: |
+          {
+            echo '### Distributions'
+            echo
+            echo '| File | Size |'
+            echo '|---|---|'
+            for f in dist/*; do
+              printf '| `%s` | %s |\n' "$(basename "$f")" "$(du -h "$f" | cut -f1)"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distributions
+          path: dist/*
+          if-no-files-found: error
+
+  # --- the click-to-run launchers --------------------------------------------------------------
+
+  launchers:
+    name: launcher (${{ matrix.name }})
+    needs: wheels
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu, name: linux-x64 }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, name: windows-x64 }
+          - { os: macos-latest, target: aarch64-apple-darwin, name: macos-arm64 }
+          - { os: macos-13, target: x86_64-apple-darwin, name: macos-x64 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: pyapp-${{ matrix.target }}
+
+      - name: Build the launcher
+        shell: bash
+        env:
+          # Until the first real release the payload comes from TestPyPI; PyPI stays in the list
+          # because TestPyPI does not mirror the whole dependency tree.
+          ASTRO_CANVAS_INDEX: https://test.pypi.org/simple/
+        run: launcher/pyapp/build.sh --target ${{ matrix.target }} --version ${{ needs.wheels.outputs.version }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: launcher-${{ matrix.name }}
+          path: launcher/dist/*
+          if-no-files-found: error
+
+  # --- the OS wrappers -------------------------------------------------------------------------
+
+  installers:
+    name: installer (${{ matrix.name }})
+    needs: [wheels, launchers]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, name: windows-x64 }
+          - { os: macos-latest, name: macos-arm64 }
+          - { os: ubuntu-latest, name: linux-x64 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: launcher-${{ matrix.name }}
+          path: launcher/dist
+
+      - name: NSIS installer
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          choco install nsis --no-progress -y
+          "/c/Program Files (x86)/NSIS/makensis.exe" \
+            -DVERSION=${{ needs.wheels.outputs.version }} \
+            -DLAUNCHER=../dist/astro-canvas-launcher-windows-x64.exe \
+            -DOUTFILE=../dist/astro-canvas-${{ needs.wheels.outputs.version }}-setup.exe \
+            launcher/nsis/astro-canvas.nsi
+
+      # Signing is env-gated: without a certificate the artefacts are unsigned and the docs say
+      # so plainly rather than the build pretending otherwise.
+      - name: Sign the Windows installer
+        # A step-level `if` can read `secrets`, so an unconfigured certificate simply skips
+        # this rather than failing the build.
+        if: matrix.os == 'windows-latest' && secrets.SIGNPATH_API_TOKEN != ''
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ github.run_id }}
+          wait-for-completion: true
+
+      - name: DMG
+        if: matrix.os == 'macos-latest'
+        env:
+          CODESIGN_IDENTITY: ${{ secrets.APPLE_CODESIGN_IDENTITY }}
+          NOTARY_PROFILE: ${{ secrets.APPLE_NOTARY_PROFILE }}
+        run: |
+          chmod +x launcher/dist/astro-canvas-launcher-macos-arm64
+          launcher/dmg/build-dmg.sh \
+            --launcher launcher/dist/astro-canvas-launcher-macos-arm64 \
+            --version ${{ needs.wheels.outputs.version }}
+
+      - name: AppImage
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          chmod +x launcher/dist/astro-canvas-launcher-linux-x64
+          launcher/appimage/build-appimage.sh \
+            --launcher launcher/dist/astro-canvas-launcher-linux-x64 \
+            --version ${{ needs.wheels.outputs.version }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.name }}
+          path: |
+            launcher/dist/*.exe
+            launcher/dist/*.dmg
+            launcher/dist/*.AppImage
+          if-no-files-found: error
+
+  # --- publishing ------------------------------------------------------------------------------
+
+  testpypi:
+    name: publish to TestPyPI
+    needs: wheels
+    if: github.ref_type == 'tag' || inputs.publish == 'testpypi'
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/astro-canvas/
+    permissions:
+      id-token: write # Trusted Publishing: no API token in a secret
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+
+  pypi:
+    name: publish to PyPI
+    needs: [wheels, launchers, installers]
+    # Deliberately never automatic: publishing to pypi.org cannot be undone, and the `pypi`
+    # environment adds a manual approval on top.
+    if: inputs.publish == 'pypi'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/astro-canvas/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  # --- the artefacts a human downloads ---------------------------------------------------------
+
+  release:
+    name: draft the GitHub release
+    needs: [wheels, launchers, installers]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      attestations: write
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Collect and checksum
+        run: |
+          mkdir -p release
+          find artifacts -type f \
+            \( -name '*.whl' -o -name '*.tar.gz' -o -name '*.exe' -o -name '*.dmg' \
+               -o -name '*.AppImage' -o -name 'astro-canvas-launcher-*' \) \
+            -exec cp {} release/ \;
+          cd release && sha256sum * > SHA256SUMS && cat SHA256SUMS
+      # Design 11: release artefacts carry provenance attestations.
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: release/*
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: release/*
+
+  # --- does a fresh machine actually end up with a working app? --------------------------------
+
+  install-smoke:
+    name: fresh install (${{ matrix.os }})
+    needs: [wheels, testpypi]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install.sh
+        if: runner.os != 'Windows'
+        env:
+          ASTRO_CANVAS_INDEX: https://test.pypi.org/simple/
+          ASTRO_CANVAS_VERSION: ${{ needs.wheels.outputs.version }}
+          NO_OPEN: '1'
+        run: sh launcher/install.sh
+
+      - name: install.ps1
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: >
+          ./launcher/install.ps1
+          -Index 'https://test.pypi.org/simple/'
+          -Version '${{ needs.wheels.outputs.version }}'
+          -NoOpen
+
+      - name: The installed app works
+        shell: bash
+        run: |
+          export PATH="$HOME/.local/bin:$LOCALAPPDATA/astro-canvas/bin:$PATH"
+          astro-canvas version
+          astro-canvas doctor
+          astro-canvas serve --port 8765 &
+          for _ in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:8765/api/health && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8765/api/health | grep -q '"status":"ok"'
+
+      - name: Uninstall cleanly
+        if: runner.os != 'Windows'
+        run: sh launcher/uninstall.sh
+
+      - name: Uninstall cleanly (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./launcher/uninstall.ps1

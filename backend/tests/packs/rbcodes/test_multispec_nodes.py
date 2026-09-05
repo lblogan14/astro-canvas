@@ -333,7 +333,7 @@ def test_template_compiles_and_runs_headless(tmp_path: Path) -> None:
     workspace = tmp_path / "ws"
     workspace.mkdir()
     settings = Settings(
-        workspace=workspace, config_dir=workspace / "config", process_pool=False, auth=False
+        workspace=workspace, config_dir=workspace / "config", process_pool=False, auth="none"
     )
     summary = asyncio.run(run_headless(settings, TEMPLATE, None))
     assert summary["status"] == "done", summary

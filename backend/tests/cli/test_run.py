@@ -2,15 +2,20 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from astro_canvas import cli
+from astro_canvas.cli import serve as serve_mod
+from astro_canvas.settings import Settings
 
 runner = CliRunner()
-WORKFLOWS = Path(__file__).resolve().parent / "fixtures" / "workflows"
+WORKFLOWS = Path(__file__).resolve().parents[1] / "fixtures" / "workflows"
 
 
 def test_run_prints_summary_and_exit_zero(tmp_path: Path) -> None:
@@ -61,20 +66,11 @@ def test_run_invalid_workflow_exits_one(tmp_path: Path) -> None:
     assert "! a: cycle" in result.output and "! b: cycle" in result.output
 
 
-def test_serve_prints_token_url(monkeypatch: object, tmp_path: Path) -> None:
-    import pytest
-
-    mp = monkeypatch
-    assert isinstance(mp, pytest.MonkeyPatch)
-    mp.setattr(cli.uvicorn, "run", lambda app, **kw: None)
-    from astro_canvas.settings import Settings
-
+def test_serve_prints_token_url(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(serve_mod.uvicorn, "run", lambda app, **kw: None)
     settings = Settings(
         port=8123, workspace=tmp_path / "ws", config_dir=tmp_path / "cfg", token="abc"
     )
-    import contextlib
-    import io
-
     buffer = io.StringIO()
     with contextlib.redirect_stdout(buffer):
         cli.run_server(settings, open_browser=False)

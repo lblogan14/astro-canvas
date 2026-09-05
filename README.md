@@ -8,7 +8,7 @@ headless nodes so undergrads and researchers can run the same tools in a browser
 
 ## Status
 
-**Pre-alpha, phase 11 of 13 (pack manager, bundles and trust).** The repository builds, lints, tests, and runs a FastAPI + Vue app
+**Pre-alpha, phase 12 of 13 (distribution).** The repository builds, lints, tests, and runs a FastAPI + Vue app
 on Windows, macOS, and Linux. Packs register nodes and port types through `astro_canvas.sdk`; the server lists their
 schemas, stores `workflow.json` documents, and executes them reactively (content-hash cache, cost gating, thread/process
 executors, cancellation) with events over `/ws`. The browser canvas (Vue Flow) lets you browse nodes, place and connect
@@ -47,7 +47,29 @@ See [docs/guide/canvas.md](docs/guide/canvas.md), [docs/guide/data.md](docs/guid
 | 09 | Batch runner (a workflow over a table of rows, specgui batch import) and subgraphs (collapse, breadcrumb navigation, blueprints) with elk auto-layout |
 | 10 | App modes: promoted parameters and pinned views rendered as App, Wizard and Dashboard layouts (linked selection), templates gallery |
 | 11 | Pack manager (uv resolution plans, snapshots and rollback), git-backed registry, `.acw` bundles, Python code node behind a trust gate |
-| 12–13 | Distribution (launchers, Docker), hardening and `v0.1.0` |
+| 12 | Distribution: full CLI, one-line and click-to-run installers, Docker Compose lab server with user accounts, docs site |
+| 13 | Hardening and `v0.1.0` |
+
+## Install it
+
+Not a developer? Start at the [documentation site](https://lblogan14.github.io/astro-canvas/) —
+[Windows](docs/install/windows.md), [macOS](docs/install/macos.md), [Linux](docs/install/linux.md),
+or a [lab server](docs/deploy/server.md).
+
+```sh
+# macOS and Linux
+curl -fsSL https://raw.githubusercontent.com/lblogan14/astro-canvas/main/launcher/install.sh | sh
+```
+
+```powershell
+# Windows
+irm https://raw.githubusercontent.com/lblogan14/astro-canvas/main/launcher/install.ps1 | iex
+```
+
+Either installs [uv](https://docs.astral.sh/uv/) if it is missing, installs the app and the
+rbcodes pack, makes a desktop shortcut that runs `astro-canvas open`, and opens the browser. The
+click-to-run launchers (`.exe`, `.dmg`, `.AppImage`) are on the
+[releases page](https://github.com/lblogan14/astro-canvas/releases).
 
 ## Quick start (developers)
 
@@ -71,14 +93,36 @@ uv run --with backend/dist/astro_canvas_sdk-*.whl --with backend/dist/astro_canv
 
 Configuration is via `ASTRO_CANVAS_*` environment variables (`HOST`, `PORT`, `WORKSPACE`, `LOG_LEVEL`, `TOKEN`, `AUTH`,
 `CACHE_MEMORY_MB`, `CACHE_DISK_GB`, `CACHE_MAX_AGE_DAYS`, `MAX_WORKERS`, `PROCESS_POOL`, `RUN_TIMEOUT_S`, `DEBOUNCE_MS`,
-`AUTO_THRESHOLD_MS`, `WATCH_WORKSPACE`) or the `astro-canvas serve --host --port --workspace --open` flags. The server prints a
+`AUTO_THRESHOLD_MS`, `WATCH_WORKSPACE`) or the `astro-canvas serve` flags. The server prints a
 `http://127.0.0.1:8765/?token=…` URL at startup; every `/api` and `/ws` request needs that bearer token
-(also written to `<config>/token`).
+(also written to `<config>/token`). `--host 0.0.0.0` refuses to start without `--auth users`.
 
-Execute a workflow without the UI:
+The CLI is the whole app — full reference in [docs/cli.md](docs/cli.md):
 
 ```sh
-uv run --directory backend astro-canvas run tests/fixtures/workflows/math_chain.json --workspace /tmp/ws
+astro-canvas open                      # what the desktop shortcut runs
+astro-canvas doctor                    # python, uv, packs, disk, ports, Qt: paste into a bug report
+astro-canvas workspace new ~/papers/lya
+astro-canvas pack install astro-canvas-rbcodes --yes
+astro-canvas bundle export wf-123 --out share.acw
+astro-canvas run tests/fixtures/workflows/math_chain.json --workspace /tmp/ws
+```
+
+A lab server is Docker Compose — the app behind Caddy, accounts in Postgres, one private
+workspace per person ([docs/deploy/server.md](docs/deploy/server.md)):
+
+```sh
+cp deploy/.env.example deploy/.env     # POSTGRES_PASSWORD, CANVAS_DOMAIN, ADMIN_EMAILS
+docker compose -f deploy/compose.yaml up -d --build
+```
+
+## Documentation
+
+[mkdocs-material](https://squidfunk.github.io/mkdocs-material/) in [docs/](docs/):
+
+```sh
+task docs          # serve on http://127.0.0.1:8000
+task docs:build    # build into site/ (--strict: a broken link fails)
 ```
 
 ## Tooling rule

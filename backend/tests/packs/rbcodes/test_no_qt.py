@@ -26,7 +26,7 @@ from astro_canvas.cli import run_headless
 
 workspace = Path(sys.argv[1]); template = Path(sys.argv[2])
 settings = Settings(
-    workspace=workspace, config_dir=workspace / "config", process_pool=False, auth=False
+    workspace=workspace, config_dir=workspace / "config", process_pool=False, auth="none"
 )
 discovery = discover()
 assert all(p.error is None for p in discovery.packs), [p.error for p in discovery.packs]

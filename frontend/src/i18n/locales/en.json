@@ -765,5 +765,27 @@
     "done": "Everything in this workflow is trusted.",
     "empty": "This workflow has no code nodes.",
     "quarantined_node": "Not trusted yet"
+  },
+  "auth": {
+    "title": "Sign in to Astro Canvas",
+    "subtitle": "This server keeps a separate workspace for every account.",
+    "email": "Email",
+    "password": "Password",
+    "display_name": "Display name",
+    "display_name_hint": "Optional — shown instead of your email.",
+    "sign_in": "Sign in",
+    "sign_up": "Create an account",
+    "signing_in": "Signing in…",
+    "to_sign_up": "New here? Create an account",
+    "to_sign_in": "Already have an account? Sign in",
+    "registration_closed": "New accounts are created by the server administrator.",
+    "with_provider": "Continue with {provider}",
+    "or": "or",
+    "sign_out": "Sign out",
+    "account": "Account",
+    "admin": "Administrator",
+    "failed": "Sign-in failed. Check the address and password.",
+    "password_hint": "At least 8 characters.",
+    "manager_admin_only": "Only an administrator can install packs on this server."
   }
 }

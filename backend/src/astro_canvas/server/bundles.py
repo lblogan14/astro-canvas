@@ -25,8 +25,8 @@ from astro_canvas.manager.bundles import (
     open_bundle,
     prepare_import,
 )
+from astro_canvas.server.deps import get_runtime
 from astro_canvas.server.runtime import UnknownWorkflowError
-from astro_canvas.server.workflows import get_runtime
 from astro_canvas.store.workspace import PathOutsideWorkspaceError
 
 log = structlog.get_logger("astro_canvas.bundles")

@@ -30,7 +30,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from astro_canvas.engine.events import EventBus, PacksChanged
-from astro_canvas.engine.graph import WorkflowDoc
 from astro_canvas.manager.plan import (
     InstallPlan,
     PackSource,
@@ -116,8 +115,8 @@ def _snapshot_payload(freeze: Iterable[str], label: str) -> str:
 def freeze_index(lines: Iterable[str]) -> dict[str, str]:
     """``{distribution name: requirement line}`` for a ``uv pip freeze``.
 
-    Freeze lines come in three shapes: ``name==version``, ``name @ file:///…`` (a direct URL or
-    a workspace member) and ``-e file:///…`` (editable). Editable lines carry no name, so they
+    Freeze lines come in three shapes: ``name==version``, ``name @ file:///â€¦`` (a direct URL or
+    a workspace member) and ``-e file:///â€¦`` (editable). Editable lines carry no name, so they
     are skipped: a rollback leaves them alone rather than guessing what they were.
     """
     index: dict[str, str] = {}
@@ -143,6 +142,9 @@ class PackManager:
         records: The ``PackRecord`` list ``discover()`` produced at start-up.
         on_change: Called after the registry changed so the server can refresh derived state.
         on_recompile: Called when a trust decision changed, so open workflows re-evaluate the gate.
+        registry_client: Pack registry client; built from the settings when omitted.
+        trust: The workspace's trust store; the server passes the runtime's so that decisions
+            follow a workspace switch instead of sticking to the one open at start-up.
     """
 
     def __init__(
@@ -157,6 +159,7 @@ class PackManager:
         on_change: Callable[[list[str]], None] | None = None,
         on_recompile: Callable[[], None] | None = None,
         registry_client: RegistryClient | None = None,
+        trust: TrustStore | None = None,
     ) -> None:
         self.registry = registry
         self.sessions = sessions
@@ -165,23 +168,11 @@ class PackManager:
         self.records: list[PackRecord] = list(records or [])
         self.on_change = on_change
         self.on_recompile = on_recompile
-        self.trust = TrustStore(sessions)
+        self.trust = trust if trust is not None else TrustStore(sessions)
         self.restart_required = False
         self._uv = uv
         self._registry_client = registry_client
         self.sync_records()
-
-    def on_workflow_saved(self, doc: WorkflowDoc) -> None:
-        """Trust hook for every save (``EngineRuntime.before_save``).
-
-        Code the user wrote here is trusted on the spot; an imported document stays quarantined
-        until every one of its snippets has a decision, and then loses the flag for good.
-        """
-        if doc.meta.get("quarantine"):
-            if not self.trust.quarantined(doc):
-                doc.meta = {k: v for k, v in doc.meta.items() if k != "quarantine"}
-            return
-        self.trust.trust_local(doc)
 
     def recompile(self) -> None:
         """Re-evaluate the trust gate on every open workflow (after a decision changed)."""
@@ -212,12 +203,16 @@ class PackManager:
         return self._registry_client
 
     def uv_status(self) -> tuple[str | None, str]:
-        """``(path, version)`` of the located uv, or ``(None, <why not>)``."""
+        """``(path, version)`` of the located uv, or ``(None, <why not>)``.
+
+        Running it is part of the check: a configured path that no longer exists is exactly the
+        case ``doctor`` and Manager > Settings have to report, not raise on.
+        """
         try:
             runner = self.uv
+            return str(runner.uv_path), runner.version()
         except UvNotFoundError as exc:
             return None, str(exc)
-        return str(runner.uv_path), runner.version()
 
     # --- installed packs ---------------------------------------------------------------------
 

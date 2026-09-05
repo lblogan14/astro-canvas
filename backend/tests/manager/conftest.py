@@ -233,7 +233,7 @@ def manager(
     fake_uv: FakeEnvironment, sessions: sessionmaker[Session], tmp_path: Path
 ) -> PackManager:
     """A ``PackManager`` on an empty registry, the fake uv and a temp workspace database."""
-    settings = Settings(workspace=tmp_path / "ws", config_dir=tmp_path / "cfg", auth=False)
+    settings = Settings(workspace=tmp_path / "ws", config_dir=tmp_path / "cfg", auth="none")
     store = SettingsStore(sessions, settings)
     return PackManager(
         NodeRegistry(),

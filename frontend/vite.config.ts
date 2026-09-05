@@ -1,3 +1,4 @@
+import process from 'node:process'
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
@@ -5,7 +6,12 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
 
-const BACKEND = 'http://127.0.0.1:8765'
+/**
+ * The backend `/api` and `/ws` are proxied to. Overridable so a second dev server can talk to a
+ * second backend, which is how the `--auth users` e2e project gets its own login-protected
+ * server without disturbing the shared one every other spec uses.
+ */
+const BACKEND = process.env.ASTRO_CANVAS_DEV_BACKEND ?? 'http://127.0.0.1:8765'
 
 // https://vite.dev/config/
 export default defineConfig({

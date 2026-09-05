@@ -30,6 +30,8 @@ const info: WorkspaceInfo = {
   samples_dir: 'samples',
   downloads_dir: 'downloads',
   uploads_dir: 'uploads',
+  shared_dir: null,
+  can_select: true,
 }
 
 function entry(path: string, isDir = false): WorkspaceEntry {

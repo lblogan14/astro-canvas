@@ -1,0 +1,109 @@
+site_name: Astro Canvas
+site_description: A node-based infinite canvas for exploring astronomical spectra, images and cubes.
+site_url: https://lblogan14.github.io/astro-canvas/
+repo_url: https://github.com/lblogan14/astro-canvas
+repo_name: lblogan14/astro-canvas
+edit_uri: edit/main/docs/
+copyright: MIT licensed
+
+docs_dir: docs
+
+# `docs/designs/` is the local design folder: gitignored, present on a developer's machine, and
+# not part of the published site. `not_in_nav` keeps mkdocs from warning about the pages that are
+# deliberately linked only from other pages.
+exclude_docs: |
+  designs/
+  *.patch
+
+not_in_nav: |
+  dev/
+
+theme:
+  name: material
+  language: en
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+    - toc.follow
+  palette:
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Install:
+      - Overview: install/index.md
+      - Windows: install/windows.md
+      - macOS: install/macos.md
+      - Linux: install/linux.md
+      - Upgrading and removing: install/upgrading.md
+  - Quick start: quickstart.md
+  - Concepts: concepts.md
+  - Using Astro Canvas:
+      - The canvas: guide/canvas.md
+      - Data and visualization: guide/data.md
+      - App modes: guide/modes.md
+      - Batch mode: guide/batch.md
+      - Bundles: guide/bundles.md
+      - Node packs: guide/packs.md
+      - Code nodes: guide/code-nodes.md
+  - Science packs:
+      - Absorption lines: guide/absorption.md
+      - Redshift finding: guide/redshift.md
+      - Multi-spectrum: guide/multispec.md
+      - IFU cubes: guide/ifu.md
+  - Command line: cli.md
+  - Authoring packs:
+      - Node schema: formats/node-schema.md
+      - Publishing a pack: packs/publishing.md
+  - Formats:
+      - Workflow document: formats/workflow.md
+      - Bundle (.acw): formats/bundle.md
+  - Server deployment: deploy/server.md
+  - Troubleshooting: faq.md
+
+watch:
+  - README.md

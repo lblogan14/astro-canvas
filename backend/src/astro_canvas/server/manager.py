@@ -27,7 +27,6 @@ from astro_canvas.manager.settings import (
     ManagerSettings,
     ManagerSettingsUpdate,
 )
-from astro_canvas.manager.trust import Decision, TrustRecord, TrustReview
 from astro_canvas.manager.uv import UvError, UvNotFoundError
 from astro_canvas.settings import apply_security_level
 
@@ -67,11 +66,6 @@ class EnableRequest(BaseModel):
 
 class SnapshotRequest(BaseModel):
     label: str = ""
-
-
-class TrustRequest(BaseModel):
-    hash: str
-    decision: Decision = "trusted"
 
 
 def get_manager(request: Request) -> PackManager:
@@ -227,48 +221,6 @@ def get_registry(
     if not q and category is None:
         return index
     return index.model_copy(update={"entries": index.search(q, category)})
-
-
-@router.get("/manager/trust", response_model=list[TrustRecord])
-def list_trust(request: Request) -> list[TrustRecord]:
-    """Every code-snippet decision this workspace has made."""
-    return get_manager(request).trust.records()
-
-
-@router.post("/manager/trust", response_model=TrustRecord)
-def set_trust(request: Request, body: TrustRequest) -> TrustRecord:
-    """Trust or block one snippet hash; every node with that snippet follows."""
-    manager = get_manager(request)
-    record = manager.trust.set(body.hash, body.decision)
-    manager.recompile()
-    return record
-
-
-@router.get("/workflows/{workflow_id}/trust", response_model=TrustReview)
-def review_workflow(request: Request, workflow_id: str) -> TrustReview:
-    """The code snippets of one workflow with their decisions: the quarantine banner's source."""
-    manager = get_manager(request)
-    runtime = request.app.state.runtime
-    try:
-        doc = runtime.get(workflow_id)
-    except LookupError:
-        raise HTTPException(status_code=404, detail=f"unknown workflow {workflow_id!r}") from None
-    blocked = manager.trust.quarantined(doc)
-    return TrustReview(
-        workflow_id=workflow_id,
-        quarantined=bool(blocked),
-        snippets=manager.trust.review(doc),
-        blocked_nodes=sorted(blocked),
-    )
-
-
-@router.delete("/manager/trust/{snippet_hash}", status_code=204)
-def forget_trust(request: Request, snippet_hash: str) -> None:
-    """Forget a decision, so the snippet is quarantined again."""
-    manager = get_manager(request)
-    if not manager.trust.forget(snippet_hash):
-        raise HTTPException(status_code=404, detail=f"unknown snippet {snippet_hash!r}")
-    manager.recompile()
 
 
 __all__ = ["ManagerStatus", "get_manager", "router"]

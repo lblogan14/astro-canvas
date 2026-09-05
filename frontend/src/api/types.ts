@@ -94,3 +94,8 @@ export type CodeSnippet = Schemas['CodeSnippet']
 export type TrustRecord = Schemas['TrustRecord']
 export type TrustReview = Schemas['TrustReview']
 export type TrustDecision = TrustRecord['decision']
+
+// Phase 12: user accounts on a lab server (`--auth users`).
+export type AuthInfo = Schemas['AuthInfo']
+export type User = Schemas['UserRead']
+export type UserCreate = Schemas['UserCreate']

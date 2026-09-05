@@ -36,6 +36,7 @@ import { Button } from '@/components/ui/button'
 import { useCanvasAdapter } from '@/canvas/CanvasAdapter'
 import BundleDialog from '@/manager/BundleDialog.vue'
 import { bundleFrom, dropBundle } from '@/manager/importBundle'
+import { useAuthStore } from '@/stores/auth'
 import { useExecutionStore } from '@/stores/execution'
 import { useSessionStore } from '@/stores/session'
 import { type AppMode, useUiStore } from '@/stores/ui'
@@ -46,6 +47,7 @@ const workflow = useWorkflowStore()
 const execution = useExecutionStore()
 const session = useSessionStore()
 const ui = useUiStore()
+const auth = useAuthStore()
 const canvas = useCanvasAdapter()
 const router = useRouter()
 
@@ -270,6 +272,7 @@ const LAYOUTS: readonly AppMode[] = ['canvas', 'app', 'wizard', 'dashboard', 'ba
             <Upload class="size-3.5" /> {{ t('bundle.import') }}
           </DropdownMenuItem>
           <DropdownMenuItem
+            v-if="auth.canManagePacks"
             class="ac-menu-item"
             data-testid="share-manager"
             @select="router.push({ name: 'manager' })"

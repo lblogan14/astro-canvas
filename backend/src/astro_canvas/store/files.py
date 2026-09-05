@@ -70,10 +70,14 @@ def relative_posix(root: Path, path: Path) -> str:
     return path.relative_to(root).as_posix()
 
 
-def list_dir(root: Path, directory: Path, *, depth: int = 1, hidden: bool = False) -> list[Entry]:
+def list_dir(
+    root: Path, directory: Path, *, depth: int = 1, hidden: bool = False, prefix: str = ""
+) -> list[Entry]:
     """Sorted entries of ``directory`` (folders first); folders deeper than ``depth`` are lazy.
 
     Hidden entries (dot-prefixed, including ``.astro-canvas``) are skipped unless ``hidden``.
+    ``prefix`` names the mount the listing came from (``shared`` on a lab server), so the reported
+    paths are what the API will accept back.
     """
     entries: list[Entry] = []
     try:
@@ -90,10 +94,11 @@ def list_dir(root: Path, directory: Path, *, depth: int = 1, hidden: bool = Fals
         is_dir = child.is_dir()
         nested: tuple[Entry, ...] | None = None
         if is_dir and depth > 1:
-            nested = tuple(list_dir(root, child, depth=depth - 1, hidden=hidden))
+            nested = tuple(list_dir(root, child, depth=depth - 1, hidden=hidden, prefix=prefix))
+        rel = relative_posix(root, child)
         entries.append(
             Entry(
-                path=relative_posix(root, child),
+                path=f"{prefix}/{rel}" if prefix else rel,
                 name=child.name,
                 is_dir=is_dir,
                 size=0 if is_dir else stat.st_size,
@@ -112,10 +117,16 @@ class FileIndex:
         self._sessions = sessions
         self._lock = threading.Lock()
 
-    def info(self, root: Path, path: Path, *, hash: bool = True) -> FileInfo:  # noqa: A002
-        """Size, mtime, MIME and (optionally cached) blake3 of ``path`` under ``root``."""
+    def info(  # noqa: A002
+        self, root: Path, path: Path, *, hash: bool = True, rel: str | None = None
+    ) -> FileInfo:
+        """Size, mtime, MIME and (optionally cached) blake3 of ``path`` under ``root``.
+
+        ``rel`` overrides the cache key and the reported path, which is how a file inside the
+        read-only ``shared/`` mount keeps its prefix instead of colliding with the user's own.
+        """
         stat = path.stat()
-        rel = relative_posix(root, path)
+        rel = relative_posix(root, path) if rel is None else rel
         digest: str | None = None
         if hash:
             digest = self.cached_hash(rel, stat.st_mtime_ns, stat.st_size)

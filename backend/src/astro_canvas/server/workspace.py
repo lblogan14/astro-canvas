@@ -23,10 +23,16 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
+from astro_canvas.server.deps import get_runtime
 from astro_canvas.server.runtime import EngineRuntime
 from astro_canvas.server.sniff import KIND_NODES, Kind, sniff_kind
 from astro_canvas.store.files import Entry, FileInfo, list_dir
-from astro_canvas.store.workspace import PathOutsideWorkspaceError, Workspace
+from astro_canvas.store.workspace import (
+    SHARED_DIR,
+    PathOutsideWorkspaceError,
+    ReadOnlyPathError,
+    Workspace,
+)
 
 router = APIRouter(tags=["workspace"])
 
@@ -43,6 +49,12 @@ class WorkspaceInfo(BaseModel):
     samples_dir: str = "samples"
     downloads_dir: str = "downloads"
     uploads_dir: str = "uploads"
+    shared_dir: str | None = Field(
+        default=None, description="Read-only mount on a lab server (design 12); ``null`` locally."
+    )
+    can_select: bool = Field(
+        default=True, description="False when the server pins each user to their own workspace."
+    )
 
 
 class SelectRequest(BaseModel):
@@ -94,18 +106,15 @@ class SniffResult(BaseModel):
     detail: str = ""
 
 
-def get_runtime(request: Request) -> EngineRuntime:
-    runtime: EngineRuntime = request.app.state.runtime
-    return runtime
-
-
 def _workspace(request: Request) -> Workspace:
     return get_runtime(request).workspace
 
 
-def _resolve(workspace: Workspace, relative: str) -> Path:
+def _resolve(workspace: Workspace, relative: str, *, write: bool = False) -> Path:
     try:
-        return workspace.safe_path(relative)
+        return workspace.safe_path(relative, write=write)
+    except ReadOnlyPathError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from None
     except PathOutsideWorkspaceError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from None
 
@@ -133,20 +142,33 @@ def _file_info(info: FileInfo) -> FileInfoModel:
     )
 
 
-def _info(runtime: EngineRuntime) -> WorkspaceInfo:
-    root = runtime.workspace.root
-    return WorkspaceInfo(root=str(root), name=root.name or str(root), recent=runtime.recent.list())
+def _info(request: Request, runtime: EngineRuntime) -> WorkspaceInfo:
+    workspace = runtime.workspace
+    root = workspace.root
+    pinned = getattr(request.app.state, "users", None) is not None
+    return WorkspaceInfo(
+        root=str(root),
+        name=root.name or str(root),
+        recent=[] if pinned else runtime.recent.list(),
+        shared_dir=SHARED_DIR if workspace.shared is not None else None,
+        can_select=not pinned,
+    )
 
 
 @router.get("/workspace", response_model=WorkspaceInfo)
 async def workspace_info(request: Request) -> WorkspaceInfo:
     """The active workspace folder and recently used ones."""
-    return _info(get_runtime(request))
+    return _info(request, get_runtime(request))
 
 
 @router.post("/workspace/select", response_model=WorkspaceInfo)
 async def select_workspace(request: Request, body: SelectRequest) -> WorkspaceInfo:
     """Switch the server to another workspace folder (closing every open workflow)."""
+    if getattr(request.app.state, "users", None) is not None:
+        raise HTTPException(
+            status_code=403,
+            detail="this server keeps each user in their own workspace; it cannot be changed",
+        )
     runtime = get_runtime(request)
     target = Path(body.path).expanduser()
     if not target.is_absolute():
@@ -159,7 +181,7 @@ async def select_workspace(request: Request, body: SelectRequest) -> WorkspaceIn
         raise HTTPException(status_code=400, detail=f"not a folder: {target}") from None
     except OSError as exc:
         raise HTTPException(status_code=400, detail=f"cannot open workspace: {exc}") from None
-    return _info(runtime)
+    return _info(request, runtime)
 
 
 @router.get("/workspace/tree", response_model=TreeResponse)
@@ -174,12 +196,25 @@ async def workspace_tree(
     directory = _resolve(workspace, path)
     if not directory.is_dir():
         raise HTTPException(status_code=404, detail=f"no such folder: {path}")
-    entries = await run_in_threadpool(
-        list_dir, workspace.root, directory, depth=depth, hidden=hidden
-    )
-    return TreeResponse(
-        path=path.replace("\\", "/").strip("/"), entries=[_entry(e) for e in entries]
-    )
+    root, prefix = workspace.mount_for(directory)
+    entries = [
+        _entry(e)
+        for e in await run_in_threadpool(
+            list_dir, root, directory, depth=depth, hidden=hidden, prefix=prefix
+        )
+    ]
+    relative = path.replace("\\", "/").strip("/")
+    if not relative and workspace.shared is not None:
+        entries.insert(0, _shared_entry(workspace))
+    return TreeResponse(path=relative, entries=entries)
+
+
+def _shared_entry(workspace: Workspace) -> EntryModel:
+    """The read-only mount as one folder row at the top of the root listing."""
+    shared = workspace.shared
+    assert shared is not None  # noqa: S101 - only called when the mount exists
+    mtime = shared.stat().st_mtime if shared.is_dir() else 0.0
+    return EntryModel(path=SHARED_DIR, name=SHARED_DIR, is_dir=True, mtime=mtime)
 
 
 @router.get("/workspace/info", response_model=FileInfoModel)
@@ -193,7 +228,10 @@ async def file_info(
     target = _resolve(workspace, path)
     if not target.is_file():
         raise HTTPException(status_code=404, detail=f"no such file: {path}")
-    info = await run_in_threadpool(workspace.files.info, workspace.root, target, hash=hash)
+    root, _ = workspace.mount_for(target)
+    info = await run_in_threadpool(
+        workspace.files.info, root, target, hash=hash, rel=workspace.relative(target)
+    )
     return _file_info(info)
 
 
@@ -228,7 +266,7 @@ async def sniff_file(
 async def make_directory(request: Request, body: MkdirRequest) -> EntryModel:
     """Create a folder (and parents) inside the workspace."""
     workspace = _workspace(request)
-    target = _resolve(workspace, body.path)
+    target = _resolve(workspace, body.path, write=True)
     if target == workspace.root:
         raise HTTPException(status_code=400, detail="cannot create the root")
     target.mkdir(parents=True, exist_ok=True)
@@ -246,7 +284,7 @@ async def delete_path(
 ) -> Response:
     """Delete a file, or a folder (``recursive=true`` removes its contents)."""
     workspace = _workspace(request)
-    target = _resolve(workspace, path)
+    target = _resolve(workspace, path, write=True)
     if target in (workspace.root, workspace.state_dir):
         raise HTTPException(status_code=400, detail="refusing to delete that folder")
     if target.is_dir():
@@ -293,7 +331,7 @@ async def upload_file(  # noqa: PLR0917 - multipart form fields
     at its final path when the last chunk (``chunk_index == chunk_count - 1``) arrives.
     """
     workspace = _workspace(request)
-    directory = _resolve(workspace, dir)
+    directory = _resolve(workspace, dir, write=True)
     directory.mkdir(parents=True, exist_ok=True)
     raw_name = filename or file.filename or "upload.bin"
     if raw_name in ("", ".", "..") or any(ch in raw_name for ch in ("/", "\\", chr(0))):
@@ -302,6 +340,7 @@ async def upload_file(  # noqa: PLR0917 - multipart form fields
     target = _resolve(
         workspace,
         f"{workspace.relative(directory)}/{name}" if directory != workspace.root else name,
+        write=True,
     )
     conflict = "overwrite" if overwrite else on_conflict
 
@@ -326,7 +365,9 @@ async def upload_file(  # noqa: PLR0917 - multipart form fields
         received = await _write_stream(file, target, "wb")
 
     workspace.files.forget(workspace.relative(target))
-    info = await run_in_threadpool(workspace.files.info, workspace.root, target, hash=True)
+    info = await run_in_threadpool(
+        workspace.files.info, workspace.root, target, hash=True, rel=workspace.relative(target)
+    )
     return UploadResult(
         upload_id=upload_id, received=received, complete=True, file=_file_info(info)
     )
