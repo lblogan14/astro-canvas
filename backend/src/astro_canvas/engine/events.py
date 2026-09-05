@@ -70,6 +70,13 @@ class RunFinished(_Event):
 
 
 class NodeStatus(_Event):
+    """A node's current state.
+
+    ``error``/``hint`` repeat what the matching ``node.error`` carried, because a status is also
+    what a *reconnecting* client (or one opening a document whose node failed in an earlier
+    session) is given: without them a node reads "Error" with nothing to click on.
+    """
+
     type: Literal["node.status"] = "node.status"
     node_id: str
     state: NodeState
@@ -78,6 +85,8 @@ class NodeStatus(_Event):
     elapsed_ms: float | None = None
     cost_class: Cost = "cheap"
     stale: bool = False
+    error: str | None = None
+    hint: str | None = None
 
 
 class NodeProgress(_Event):

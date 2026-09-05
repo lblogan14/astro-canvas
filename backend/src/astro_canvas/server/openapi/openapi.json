@@ -2066,6 +2066,7 @@
         "type": "object"
       },
       "NodeStatus": {
+        "description": "A node's current state.\n\n``error``/``hint`` repeat what the matching ``node.error`` carried, because a status is also\nwhat a *reconnecting* client (or one opening a document whose node failed in an earlier\nsession) is given: without them a node reads \"Error\" with nothing to click on.",
         "properties": {
           "cache_hit": {
             "default": false,
@@ -2092,6 +2093,28 @@
               }
             ],
             "title": "Elapsed Ms"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hint"
           },
           "node_id": {
             "title": "Node Id",

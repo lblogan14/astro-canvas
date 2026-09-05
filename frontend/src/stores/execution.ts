@@ -214,7 +214,16 @@ export const useExecutionStore = defineStore('execution', () => {
           costClass: event.cost_class,
           runId: event.run_id,
           progress: event.state === 'running' ? record.progress : null,
-          error: event.state === 'error' ? record.error : null,
+          // A status carries the failure too, so a node that failed before this client
+          // connected -- or before it re-subscribed -- still has something to show. The
+          // `node.error` event's traceback wins when both have arrived.
+          error:
+            event.state === 'error'
+              ? (record.error ??
+                (event.error
+                  ? { message: event.error, traceback: '', hint: event.hint ?? null }
+                  : null))
+              : null,
         }
         break
       }

@@ -2182,7 +2182,14 @@ export interface components {
        */
       version: string
     }
-    /** NodeStatus */
+    /**
+     * NodeStatus
+     * @description A node's current state.
+     *
+     *     ``error``/``hint`` repeat what the matching ``node.error`` carried, because a status is also
+     *     what a *reconnecting* client (or one opening a document whose node failed in an earlier
+     *     session) is given: without them a node reads "Error" with nothing to click on.
+     */
     NodeStatus: {
       /**
        * Cache Hit
@@ -2197,6 +2204,10 @@ export interface components {
       cost_class: 'cheap' | 'expensive' | 'auto'
       /** Elapsed Ms */
       elapsed_ms?: number | null
+      /** Error */
+      error?: string | null
+      /** Hint */
+      hint?: string | null
       /** Node Id */
       node_id: string
       /** Run Id */

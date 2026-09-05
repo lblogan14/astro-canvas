@@ -39,6 +39,13 @@ export interface NodeStatusEvent extends BaseEvent {
   elapsed_ms: number | null
   cost_class: Cost
   stale: boolean
+  /**
+   * The failure, repeated from the matching `node.error`, when `state` is `error`. A status is
+   * also what a reconnecting client is given, so without this a node that failed earlier reads
+   * "Error" with nothing to click on.
+   */
+  error?: string | null
+  hint?: string | null
 }
 
 export interface NodeProgressEvent extends BaseEvent {

@@ -45,6 +45,7 @@ test.describe('error UX', () => {
     page,
     request,
   }) => {
+    test.slow() // a cold pack import on a shared runner can take most of a minute
     const doc = missingFile()
     await createWorkflow(request, doc)
     try {
@@ -57,7 +58,11 @@ test.describe('error UX', () => {
       const detail = page.getByTestId('error-detail')
       await expect(detail).toContainText(/FileNotFoundError|no such file/i)
       await expect(detail).toContainText('Workspace panel')
+      // Wait for the popover's dismissable layer to detach. Until it does, it holds
+      // `pointer-events: none` on the body, and the next click waits for an element that will
+      // never be actionable -- which Playwright reports as a bare test timeout.
       await page.keyboard.press('Escape')
+      await expect(detail).toHaveCount(0)
 
       await page.getByTestId('toggle-drawer').click()
       const drawer = page.getByTestId('drawer')
