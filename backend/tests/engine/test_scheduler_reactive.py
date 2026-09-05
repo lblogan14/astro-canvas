@@ -287,6 +287,24 @@ async def test_run_and_settle_computes_what_auto_run_left_gated(harness: Harness
     assert scheduler.output("slow", "out").value == 2.0  # type: ignore[union-attr]
 
 
+async def test_a_node_stuck_behind_a_failure_is_settled_not_pending(harness: Harness) -> None:
+    """A skipped node stays dirty for good, and waiting for it is waiting for the user."""
+    doc = make_doc(
+        {
+            "boom": {"type": "test.fail", "params": {"message": "kaboom"}},
+            "after": {"type": "core.math.expr", "params": {"expression": "x + 1"}, "linked": ["x"]},
+        },
+        {"e1": {"from": ["boom", "out"], "to": ["after", "x"]}},
+    )
+    scheduler = harness.scheduler(doc)
+    await wait_for(lambda: scheduler.records["boom"].state == "error" and not scheduler.current_run)
+    after = scheduler.records["after"]
+    assert (after.state, after.stale) == ("dirty", False)
+
+    assert scheduler.settling(["after"]) is False
+    assert await scheduler.settle(["after"], timeout_s=0.5) is True
+
+
 async def test_settle_gives_up_instead_of_waiting_forever(harness: Harness) -> None:
     doc = make_doc(
         {"slow": {"type": "test.sleep", "params": {"seconds": 0.4}}},

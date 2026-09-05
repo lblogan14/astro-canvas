@@ -17,7 +17,7 @@ import structlog
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from astro_canvas.engine.scheduler import Scheduler
+from astro_canvas.engine.scheduler import NodeRecord, Scheduler
 from astro_canvas.sdk import PortType
 from astro_canvas.sdk.blob import encode_npz, split_binary, to_manifest_data
 from astro_canvas.server.deps import get_runtime
@@ -126,6 +126,12 @@ def _write(target: Path, payload: bytes, *, overwrite: bool) -> Path:
     return target
 
 
+def _failure(node: str, rec: NodeRecord) -> str:
+    """``"<node> failed: <its message> <its hint>"``."""
+    detail = " ".join(part for part in (rec.error, rec.hint) if part)
+    return f"{node} failed: {detail}".strip()
+
+
 def _why_missing(scheduler: Scheduler, ref: str, node: str) -> SkippedExport:
     """Say *why* a value is not there. "No cached output" is true of all three and useless.
 
@@ -137,9 +143,19 @@ def _why_missing(scheduler: Scheduler, ref: str, node: str) -> SkippedExport:
     if rec is None:
         return SkippedExport(ref=ref, reason="no_output", message=f"no node {node!r} in the graph")
     if rec.state == "error":
-        detail = " ".join(part for part in (rec.error, rec.hint) if part)
-        return SkippedExport(ref=ref, reason="failed", message=f"{node} failed: {detail}".strip())
+        return SkippedExport(ref=ref, reason="failed", message=_failure(node, rec))
     if rec.state != "done":
+        # A node whose upstream failed is *skipped*, and keeps whatever state it had -- usually
+        # `dirty`. Reporting that state describes the symptom; the ancestor's own error is the
+        # answer, and the only one the user can act on.
+        for nid in scheduler.graph.ancestors([node]):
+            upstream = scheduler.state_of(nid)
+            if upstream is not None and upstream.state == "error":
+                return SkippedExport(
+                    ref=ref,
+                    reason="failed",
+                    message=f"{ref} was not computed: {_failure(nid, upstream)}",
+                )
         return SkippedExport(
             ref=ref, reason="no_output", message=f"{ref} has not been computed ({rec.state})"
         )

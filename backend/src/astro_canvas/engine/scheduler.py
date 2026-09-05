@@ -327,7 +327,25 @@ class Scheduler:
                 continue
             if rec.state in ("queued", "running"):
                 return True
-            if rec.state == "dirty" and self.auto_run and not rec.stale:
+            if (
+                rec.state == "dirty"
+                and self.auto_run
+                and not rec.stale
+                and not self._upstream_failed(nid)
+            ):
+                return True
+        return False
+
+    def _upstream_failed(self, node_id: str) -> bool:
+        """Whether an ancestor failed, which is why this node is dirty and will stay dirty.
+
+        A node the executor skipped because its input never arrived keeps the state it had --
+        usually ``dirty`` -- and re-running would skip it again for the same reason. So it is not
+        waiting for anything: it is waiting for the user.
+        """
+        for nid in self.graph.ancestors([node_id]):
+            rec = self.records.get(nid)
+            if rec is not None and rec.state in ("error", "cancelled"):
                 return True
         return False
 

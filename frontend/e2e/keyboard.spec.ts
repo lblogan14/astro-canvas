@@ -12,7 +12,7 @@
  * 3. **`prefers-reduced-motion` is honoured**, which is a stylesheet rule and therefore exactly
  *    the kind of thing that gets silently dropped.
  */
-import type { Page } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
 import { E2E_TOKEN, expect, test } from './fixtures'
 
 import { createWorkflow, deleteWorkflow, mathChain, openWorkflow, uniqueId } from './helpers'
@@ -44,6 +44,24 @@ async function tabTo(page: Page, testId: string, limit = 60): Promise<void> {
   }
   const where = await focused(page)
   throw new Error(`"${testId}" was not reachable within ${limit} tabs (stopped on ${where.id})`)
+}
+
+/**
+ * Every node's state and error, for a failure message. A wizard shows one step at a time, so a
+ * failure inside it says nothing about which node is unhappy -- and this one ran four nightlies
+ * on a runner nobody here has.
+ */
+async function nodeStates(request: APIRequestContext, id: string): Promise<string> {
+  try {
+    const body = (await (
+      await request.get(`/api/workflows/${encodeURIComponent(id)}/status`)
+    ).json()) as { nodes: Record<string, { state: string; error: string | null }> }
+    return Object.entries(body.nodes)
+      .map(([node, n]) => `${node}=${n.state}${n.error ? ` (${n.error})` : ''}`)
+      .join(', ')
+  } catch (error) {
+    return `unavailable: ${String(error)}`
+  }
 }
 
 test.describe('keyboard and motion', () => {
@@ -104,7 +122,7 @@ test.describe('keyboard and motion', () => {
         .catch(() => null)
       await expect(
         exported,
-        `export failed; the toast said: ${toast ?? '(nothing)'}`,
+        `export failed; the toast said: ${toast ?? '(nothing)'}; nodes: ${await nodeStates(request, id)}`,
       ).toContainText('exports/', { timeout: 30000 })
     } finally {
       await deleteWorkflow(request, id)
