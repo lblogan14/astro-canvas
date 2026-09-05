@@ -38,7 +38,7 @@ graph reaches 90 % of *that*, plus an absolute floor of 40 fps.
 
 Even that turned out to be a statement about the machine: on a shared CI runner (four vCPUs, a
 neighbour on the other four) the same interaction measured 0.74, 0.76 and 0.89 of its own ceiling
-across three nightlies — 43.8 fps against a 59.6 fps ceiling on the last one — because the
+across three nightlies, and 45.1 fps against a 58.7 fps ceiling on a green one — because the
 browser rather than the canvas is the bottleneck there. The two gates are therefore much looser
 under `CI`, ≥ 0.6 of the ceiling and ≥ 25 fps: at twice the cost the fraction would be around 0.5
 and the frame rate around 28, so they still catch the regression they are for, and the number in
