@@ -254,17 +254,27 @@ class Scheduler:
         except RuntimeError:  # no event loop (synchronous callers): nothing to debounce
             return
         self._loop = loop
+        self._cancel_debounce()
+        self._debounce = loop.create_task(self._debounced())
+
+    def _cancel_debounce(self) -> None:
         if self._debounce is not None and not self._debounce.done():
             self._debounce.cancel()
-        self._debounce = loop.create_task(self._debounced())
+        self._debounce = None
 
     async def _debounced(self) -> None:
         await asyncio.sleep(self.config.debounce_s)
+        # Auto-run can be switched off *inside* the debounce window, and a run that starts after
+        # the user turned it off is exactly what they asked not to happen.
+        if not self.auto_run:
+            return
         await self.run(None, auto=True)
 
     def set_auto_run(self, enabled: bool) -> None:
         self.auto_run = enabled
-        if enabled and any(r.state == "dirty" for r in self.records.values()):
+        if not enabled:
+            self._cancel_debounce()
+        elif any(r.state == "dirty" for r in self.records.values()):
             self._arm_debounce()
 
     # --- queries -----------------------------------------------------------------------------

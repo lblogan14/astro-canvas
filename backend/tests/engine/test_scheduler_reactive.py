@@ -128,6 +128,25 @@ async def test_error_halts_descendants_but_not_siblings(harness: Harness) -> Non
     assert statuses["bad"] == "error" and statuses["sibling"] == "done" and "child" not in statuses
 
 
+async def test_turning_auto_run_off_stops_a_run_already_armed(harness: Harness) -> None:
+    """The debounce window is 250 ms in production, and a user can switch off inside it.
+
+    `update` arms the window; nothing had cancelled it, so a run started anyway a quarter of a
+    second after the user said not to. It also made every test that turns auto-run off racy: the
+    armed run fired mid-test and ran the whole graph.
+    """
+    doc = load_doc("math_chain")
+    scheduler = harness.scheduler(doc)  # `update` arms the debounce
+    scheduler.set_auto_run(False)
+    await asyncio.sleep(0.2)  # comfortably past the harness's 50 ms window
+    assert harness.events("run.started") == []
+    assert all(r.state == "dirty" for r in scheduler.records.values())
+
+    # Switching it back on picks the dirty nodes up again.
+    scheduler.set_auto_run(True)
+    await wait_for(lambda: all(r.state == "done" for r in scheduler.records.values()))
+
+
 async def test_the_status_snapshot_carries_the_failure(harness: Harness) -> None:
     """A client that missed the `node.error` still has something to show.
 
