@@ -54,13 +54,20 @@ function explain(violation: Violation): string {
  * because waiting for those never returns.
  */
 async function settle(page: Page): Promise<void> {
-  await page.evaluate(async () => {
-    const finite = document.getAnimations().filter((animation) => {
-      const timing = animation.effect?.getComputedTiming()
-      return timing !== undefined && timing.iterations !== Infinity
+  // Three rounds: waiting for the animations in flight can let a late render start new ones
+  // (a preview arriving, a chip re-rendering), and those are the ones axe would catch halfway.
+  for (let round = 0; round < 3; round += 1) {
+    const running = await page.evaluate(async () => {
+      const finite = document.getAnimations().filter((animation) => {
+        const timing = animation.effect?.getComputedTiming()
+        return timing !== undefined && timing.iterations !== Infinity
+      })
+      await Promise.all(finite.map((animation) => animation.finished.catch(() => undefined)))
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      return finite.length
     })
-    await Promise.all(finite.map((animation) => animation.finished.catch(() => undefined)))
-  })
+    if (running === 0) return
+  }
 }
 
 /** Run axe over `page` (or the `include` subtree), fail on serious/critical, report the rest. */
