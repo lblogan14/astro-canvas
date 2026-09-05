@@ -1,11 +1,12 @@
 # Accessibility: what is checked, and what it found
 
 *Phase 13.* Design §10.3 asks for a canvas that works without a mouse, without colour vision, and
-without motion. That is checked rather than asserted, by four suites:
+without motion. That is checked rather than asserted, by five suites:
 
 | | Command | What it covers |
 |---|---|---|
 | axe-core | `pnpm -C frontend exec playwright test e2e/a11y.spec.ts` | WCAG 2.1 A/AA over the shell, library, inspector, drawer, palette, panels, gallery, all four app modes, an editor and the viewer |
+| axe-core, login | `… --project=users e2e/users-auth.spec.ts` | the login page in all three states (sign in, sign up, with an error) — it only exists on a `--auth users` server, and it is the first page a lab user ever sees |
 | Keyboard | `… e2e/keyboard.spec.ts` | the absorption wizard start to finish with the keyboard alone, a focus indicator on every control the Tab order reaches |
 | Motion | `… e2e/keyboard.spec.ts` | `prefers-reduced-motion` really stops the transitions |
 | Colour vision | `pnpm -C frontend exec vitest run src/canvas/__tests__/portPalette.spec.ts` | the port palette under protanopia, deuteranopia and tritanopia |
@@ -14,14 +15,14 @@ They run as part of `task test:e2e` and `task test:fe`.
 
 ## The gate
 
-**Zero serious or critical violations.** Moderate and minor findings are printed rather than
-failed: what is left of them is landmark advice that does not map onto a canvas application, and a
-gate that has to be argued with gets switched off. Two things are excluded from the axe pass and
-both are written down in the spec:
+**Zero serious or critical violations** — and, as of this writing, zero moderate or minor ones
+either. Findings below `serious` are printed rather than failed, because what tends to be left of
+them is landmark advice that does not map onto a canvas application, and a gate that has to be
+argued with gets switched off. One thing is excluded from the axe pass:
 
 - `.vue-flow__pane` and `.vue-flow__edges`, which are the canvas library's own markup. Everything
   around them — the chrome, the node bodies Astro Canvas renders into them, the on-canvas zoom
-  controls — is audited.
+  controls — is audited. The pass itself lives in `e2e/a11y.ts`, shared by the two projects.
 - Nothing else. In particular *disabled controls are not exempted*, even though WCAG 1.4.3 would
   allow it; see below.
 
@@ -32,7 +33,7 @@ either end.
 
 ## What the checks found
 
-Nine fixes, in the order they turned up.
+Eleven fixes, in the order they turned up.
 
 **`Tab` was bound to the quick-add palette**, globally, which meant a keyboard user could never
 move focus off the canvas: the first `Tab` opened a dialog instead of reaching the toolbar. This

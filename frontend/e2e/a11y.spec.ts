@@ -1,22 +1,13 @@
 /**
  * Accessibility (phase 13, scope item 3): axe-core over the surfaces a user cannot avoid.
  *
- * The gate is **zero serious or critical violations** against WCAG 2.1 A and AA. Moderate and
- * minor findings are printed rather than failed — most of what is left is landmark advice that
- * does not map onto a canvas application, and a gate that has to be argued with gets disabled.
- *
- * One deliberate exclusion:
- *
- * - `.vue-flow__pane` and `.vue-flow__edges` are Vue Flow's own markup. The chrome around them,
- *   the nodes Astro Canvas renders into them and the on-canvas controls are all audited.
- * Disabled controls are *not* exempted, even though WCAG 1.4.3 would allow it: the button
- * variants drop to `--muted-foreground` on `--muted` when disabled rather than fading to 50 %
- * opacity, so an inactive label stays readable and the audit stays honest.
+ * The gate, the exclusions and the animation settling live in `a11y.ts`, because the login page
+ * is audited from the `users` project (`users-auth.spec.ts`) and shares them.
  */
-import AxeBuilder from '@axe-core/playwright'
 import type { APIRequestContext, Page } from '@playwright/test'
 import { expect, test } from './fixtures'
 
+import { audit } from './a11y'
 import {
   type WorkflowDocLike,
   createWorkflow,
@@ -26,73 +17,14 @@ import {
   uniqueId,
 } from './helpers'
 
-const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const ABSORPTION = 'rbcodes.absorption-line-measurement'
-
-interface Violation {
-  id: string
-  impact?: string | null
-  help: string
-  nodes: { target: unknown[]; failureSummary?: string }[]
-}
-
-/** One line per offending element, with axe's own explanation of what to change. */
-function explain(violation: Violation): string {
-  const where = violation.nodes
-    .slice(0, 3)
-    .map((n) => `${JSON.stringify(n.target)} ${n.failureSummary?.replace(/\s+/g, ' ') ?? ''}`)
-    .join(' | ')
-  return `${violation.id} [${violation.impact}] ${violation.help} :: ${where}`
-}
-
-/**
- * Wait for every finite animation and transition to finish.
- *
- * axe reads computed styles, so a colour caught halfway through a 150 ms transition is reported
- * as its own contrast failure — a button going from enabled to disabled measured 2.5:1 in the
- * middle and 5.5:1 at both ends. Infinite animations (the running badge's pulse) are skipped,
- * because waiting for those never returns.
- */
-async function settle(page: Page): Promise<void> {
-  // Three rounds: waiting for the animations in flight can let a late render start new ones
-  // (a preview arriving, a chip re-rendering), and those are the ones axe would catch halfway.
-  for (let round = 0; round < 3; round += 1) {
-    const running = await page.evaluate(async () => {
-      const finite = document.getAnimations().filter((animation) => {
-        const timing = animation.effect?.getComputedTiming()
-        return timing !== undefined && timing.iterations !== Infinity
-      })
-      await Promise.all(finite.map((animation) => animation.finished.catch(() => undefined)))
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
-      return finite.length
-    })
-    if (running === 0) return
-  }
-}
-
-/** Run axe over `page` (or the `include` subtree), fail on serious/critical, report the rest. */
-async function audit(page: Page, label: string, include?: string): Promise<void> {
-  await settle(page)
-  let builder = new AxeBuilder({ page }).withTags(TAGS)
-  builder = builder.exclude('.vue-flow__pane').exclude('.vue-flow__edges')
-  if (include) builder = builder.include(include)
-  const results = await builder.analyze()
-  const violations = results.violations as unknown as Violation[]
-  const blocking = violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
-  const rest = violations.filter((v) => !blocking.includes(v))
-  if (rest.length)
-    console.log(
-      `a11y ${label}: ${rest.length} moderate/minor - ` +
-        rest.map((v) => `${v.id} (${v.nodes.length})`).join(', '),
-    )
-  expect(blocking.map(explain), `serious or critical violations on ${label}`).toEqual([])
-}
 
 /** Open a fresh math chain and wait until the shell is live. */
 async function shell(page: Page, request: APIRequestContext): Promise<WorkflowDocLike> {
   const doc = mathChain()
   await createWorkflow(request, doc)
   await openWorkflow(page, doc.id)
+  // Audit the shell in its working state, with the toolbar live.
   await expect(page.getByTestId('run')).toBeEnabled()
   return doc
 }

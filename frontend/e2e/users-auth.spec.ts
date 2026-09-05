@@ -1,6 +1,8 @@
 import type { Page } from '@playwright/test'
 import { ADMIN_EMAIL, expect, test } from './fixtures'
 
+import { audit } from './a11y'
+
 /**
  * The `--auth users` tier (design §12), against a second backend started with login accounts.
  *
@@ -44,6 +46,29 @@ test('the canvas is behind a login, and remembers where you were going', async (
   await expect(page).toHaveURL('/login?redirect=/templates')
   await expect(page.getByTestId('login-form')).toBeVisible()
   await expect(page.getByTestId('canvas')).toHaveCount(0)
+})
+
+/**
+ * The login page is the first thing a lab user ever sees, and it only exists on this tier -- so
+ * this is where it gets its axe pass (phase 13, scope item 3). Both states: the sign-in form and
+ * the sign-up form, which adds a field and a different submit.
+ */
+test('the login page passes the accessibility audit, signed in or signing up', async ({ page }) => {
+  await page.goto('/login')
+  await expect(page.getByTestId('login-form')).toBeVisible()
+  await audit(page, 'login (sign in)')
+
+  await page.getByTestId('login-toggle').click()
+  await expect(page.getByTestId('login-display-name')).toBeVisible()
+  await audit(page, 'login (sign up)')
+
+  // And with an error on it, which is a live region the form has to label.
+  await page.getByTestId('login-toggle').click()
+  await page.getByTestId('login-email').fill('nobody@lab.example')
+  await page.getByTestId('login-password').fill('wrong password entirely')
+  await page.getByTestId('login-submit').click()
+  await expect(page.getByTestId('login-error')).toBeVisible()
+  await audit(page, 'login (error)')
 })
 
 test('a wrong password is reported and keeps you on the page', async ({ page }) => {
