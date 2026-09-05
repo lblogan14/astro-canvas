@@ -3,7 +3,8 @@
  * moment maps, the aperture editor draws an aperture on the white-light collapse and extracts a
  * spectrum through the node itself, and Apply pushes the apertures into the ds9 export.
  */
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 import { deleteWorkflow, getWorkflow, openWorkflow } from './helpers'
 

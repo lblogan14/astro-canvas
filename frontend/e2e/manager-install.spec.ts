@@ -7,9 +7,7 @@
  * pack whose pins conflict with the app is blocked with the resolver's reason and no confirm
  * button, disabling a pack takes its nodes out of the library, and a snapshot can be taken.
  */
-import { expect, test } from '@playwright/test'
-
-import { E2E_TOKEN } from '../playwright.config'
+import { E2E_TOKEN, USE_WHEEL, expect, test } from './fixtures'
 
 async function openManager(page: import('@playwright/test').Page) {
   await page.goto(`/manager?token=${E2E_TOKEN}`)
@@ -55,9 +53,17 @@ test.describe('pack manager', () => {
     const dialog = page.getByTestId('plan-dialog')
     await expect(dialog).toBeVisible({ timeout: 60000 })
     await expect(dialog).toHaveAttribute('data-blocked', 'false')
-    // Nothing would change, so there is nothing to confirm.
-    await expect(page.getByTestId('plan-empty')).toBeVisible()
-    await expect(page.getByTestId('plan-confirm')).toHaveCount(0)
+    if (USE_WHEEL) {
+      // Against the wheels the server runs in an ephemeral `uv run --with` overlay, and
+      // `uv pip install --dry-run` inside one does not see the overlay's own packages as
+      // installed -- so the plan is legitimately non-empty. What still has to hold is that a
+      // plan is *shown*, before anything is touched.
+      await expect(page.getByTestId('plan-summary')).toBeVisible()
+    } else {
+      // Nothing would change, so there is nothing to confirm.
+      await expect(page.getByTestId('plan-empty')).toBeVisible()
+      await expect(page.getByTestId('plan-confirm')).toHaveCount(0)
+    }
 
     await page.getByTestId('plan-cancel').click()
     await expect(dialog).toHaveCount(0)

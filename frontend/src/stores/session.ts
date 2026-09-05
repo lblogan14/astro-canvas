@@ -5,7 +5,7 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 
-import { api } from '@/api/client'
+import { api, errorMessage } from '@/api/client'
 import type { ComputeRequest, PreviewViewport } from '@/api/events'
 import type { DecodedFrame } from '@/api/frames'
 import { type WsStatus, WsClient } from '@/api/ws'
@@ -97,7 +97,7 @@ export const useSessionStore = defineStore('session', () => {
       await refreshStatus(workflowId)
       ensureClient().subscribe(workflowId)
     } catch (err) {
-      openError.value = err instanceof Error ? err.message : String(err)
+      openError.value = errorMessage(err)
       throw err
     } finally {
       opening.value = false

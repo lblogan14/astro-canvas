@@ -32,13 +32,30 @@ from astro_canvas.store.models import Output, utcnow
 
 
 def canonical_json(value: Any) -> str:
-    """Deterministic JSON: sorted keys, no whitespace, numpy/pydantic values made JSON-safe."""
+    """Deterministic JSON: sorted keys, no whitespace, numpy/pydantic values made JSON-safe.
+
+    Integral floats are written as integers, because JSON cannot tell them apart: the SPA
+    round-trips every document through ``JSON.stringify``, where ``3.0`` becomes ``3``. Without
+    this, editing one parameter changed the cache key of every *other* node whose float
+    parameters happened to hold whole numbers, and a graph with expensive nodes went stale on
+    an edit that touched none of them.
+    """
     return json.dumps(
-        to_jsonable_python(value, fallback=_fallback),
+        _whole_floats_as_ints(to_jsonable_python(value, fallback=_fallback)),
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,
     )
+
+
+def _whole_floats_as_ints(value: Any) -> Any:
+    if isinstance(value, float):
+        return int(value) if value.is_integer() else value
+    if isinstance(value, dict):
+        return {k: _whole_floats_as_ints(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_whole_floats_as_ints(v) for v in value]
+    return value
 
 
 def _fallback(value: Any) -> Any:

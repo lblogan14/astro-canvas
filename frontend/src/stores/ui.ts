@@ -1,7 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 
-import { api } from '@/api/client'
+import { api, errorMessage } from '@/api/client'
 
 export type Theme = 'system' | 'light' | 'dark'
 export type BackendStatus = 'idle' | 'connecting' | 'online' | 'offline'
@@ -229,7 +229,7 @@ export const useUiStore = defineStore('ui', () => {
       backendStatus.value = 'online'
     } catch (error) {
       backendVersion.value = null
-      backendError.value = error instanceof Error ? error.message : String(error)
+      backendError.value = errorMessage(error)
       backendStatus.value = 'offline'
     }
   }

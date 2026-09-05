@@ -3,7 +3,8 @@
  * the viewer editor overlays a line list at a redshift and turns a click into an identified
  * line, and Apply pushes both catalogues into the export node's file.
  */
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 import { deleteWorkflow, getWorkflow, openWorkflow } from './helpers'
 

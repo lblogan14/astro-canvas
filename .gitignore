@@ -55,3 +55,7 @@ CLAUDE.md
 
 # mkdocs build output.
 /site/
+
+# Performance gate reports (`task test:e2e:perf`, `pytest -m perf`).
+backend/perf-report.json
+frontend/perf-report.json

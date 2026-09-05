@@ -38,16 +38,18 @@ jobs:
         run: uv sync --directory backend --all-extras --locked
       - name: Ruff
         run: |
-          uv run --directory backend ruff check . ../packs ../scripts
-          uv run --directory backend ruff format --check . ../packs ../scripts
+          uv run --directory backend ruff check . ../packs ../scripts ../docs/examples
+          uv run --directory backend ruff format --check . ../packs ../scripts ../docs/examples
       - name: Mypy
         run: uv run --directory backend mypy
       - name: Pytest
         run: uv run --directory backend pytest
       - name: Coverage gates
         run: uv run --directory backend python ../scripts/check_coverage.py
-      - name: OpenAPI snapshot is current
-        run: uv run --directory backend python ../scripts/export_openapi.py --check
+      - name: OpenAPI snapshot and API reference are current
+        run: |
+          uv run --directory backend python ../scripts/export_openapi.py --check
+          uv run --directory backend python ../scripts/gen_api_docs.py --check
       - name: Tooling rule (pnpm/uv only)
         run: uv run --directory backend python ../scripts/check_tooling.py
 
@@ -202,9 +204,15 @@ jobs:
           pnpm -C frontend install --frozen-lockfile
           uv sync --directory backend --all-extras --locked
           pnpm -C frontend exec playwright install --with-deps chromium
+      - name: Build the SPA into the app package
+        # The suite runs against the bundled SPA, not a dev server: every worker starts its own
+        # `astro-canvas serve`, which serves `astro_canvas/static/`.
+        run: |
+          pnpm -C frontend build
+          uv run --directory backend python ../scripts/copy_static.py
       - name: Playwright
         # Two projects: the token-authenticated suite, and `users` against a second backend
-        # started with login accounts (playwright.config.ts brings both pairs up).
+        # started with login accounts. Each Playwright worker brings up its own of either.
         run: pnpm -C frontend test:e2e
         env:
           CI: 'true'

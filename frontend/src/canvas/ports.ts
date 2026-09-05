@@ -47,7 +47,11 @@ const KNOWN: Readonly<Record<string, PortStyle>> = {
   'astro.Image2D': { color: OKABE_ITO.vermillion, glyph: 'hexagon' },
   'astro.Cube3D': { color: OKABE_ITO.purple, glyph: 'hexagon' },
   'astro.LineList': { color: OKABE_ITO.orange, glyph: 'triangle' },
-  'astro.Transition': { color: OKABE_ITO.orange, glyph: 'triangle' },
+  // A single transition is a wavelength on a spectrum, so it takes the spectral glyph in the
+  // line family's colour. It shared `triangle` with `LineList` until phase 13, which left the
+  // two indistinguishable for a viewer who cannot separate the colours -- and they meet on
+  // `rbcodes.lines.find_transition`, which takes one and returns the other.
+  'astro.Transition': { color: OKABE_ITO.orange, glyph: 'diamond' },
   'astro.Redshift': { color: OKABE_ITO.yellow, glyph: 'triangle' },
   'astro.Continuum': { color: OKABE_ITO.green, glyph: 'diamond' },
   'astro.RangeMask': { color: OKABE_ITO.green, glyph: 'triangle' },

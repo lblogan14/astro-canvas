@@ -12,16 +12,11 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
-import { ApiError, api } from '@/api/client'
+import { ApiError, api, errorMessage } from '@/api/client'
 import type { AuthInfo, User } from '@/api/types'
 
 /** `'single'` is a server without accounts; `'users'` is one with them. */
 export type AuthMode = 'unknown' | 'single' | 'users'
-
-function message(error: unknown): string {
-  if (error instanceof ApiError) return error.message
-  return error instanceof Error ? error.message : String(error)
-}
 
 export const useAuthStore = defineStore('auth', () => {
   const mode = ref<AuthMode>('unknown')
@@ -50,7 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
       // it (401) — either way there are no accounts here, and neither is worth an error.
       mode.value = 'single'
       const expected = err instanceof ApiError && (err.status === 404 || err.status === 401)
-      if (!expected) error.value = message(err)
+      if (!expected) error.value = errorMessage(err)
       return mode.value
     }
     await refresh()
@@ -76,7 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
       await refresh()
       return user.value !== null
     } catch (err) {
-      error.value = message(err)
+      error.value = errorMessage(err)
       return false
     } finally {
       busy.value = false
@@ -89,7 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await api.register(email, password, displayName)
     } catch (err) {
-      error.value = message(err)
+      error.value = errorMessage(err)
       busy.value = false
       return false
     }
@@ -113,7 +108,7 @@ export const useAuthStore = defineStore('auth', () => {
       const { authorization_url: url } = await api.oauthStart(provider)
       window.location.assign(url)
     } catch (err) {
-      error.value = message(err)
+      error.value = errorMessage(err)
     }
   }
 

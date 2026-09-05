@@ -10,7 +10,7 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 
-import { api } from '@/api/client'
+import { api, errorMessage } from '@/api/client'
 import type {
   EdgeDoc,
   GroupDoc,
@@ -217,7 +217,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
   /** Increments on every change; compared against the sequence a save started from. */
   const changeSeq = ref(0)
   const savedSeq = ref(0)
-  const autosaveDelayMs = ref(1000)
+  /**
+   * How long a burst of edits is collected before the document is PUT. The server debounces for
+   * another 250 ms before it auto-runs, so this is half of what a user waits between a keystroke
+   * and a new value on the canvas: a second here made an interactive edit feel like a second and
+   * a half. 250 ms still folds continuous typing (and a slider drag) into one save.
+   */
+  const autosaveDelayMs = ref(250)
   const coalesceWindowMs = ref(800)
   const autosaveEnabled = ref(true)
   /** Commands within one `transaction()` fold into a single undo entry. */
@@ -1123,6 +1129,24 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   // --- document metadata ----------------------------------------------------------------------
 
+  /**
+   * Set when the server could not read the stored document and handed back one of its versions
+   * instead (`runtime.get_or_recover`). Saving accepts the recovery, and the server drops the
+   * key, so this is only ever true for the session that opened the broken document.
+   */
+  const recovered = computed<{ version: number; created: string; reason: string } | null>(() => {
+    const value = doc.value?.meta?.['recovered']
+    if (typeof value !== 'object' || value === null) return null
+    const row = value as { version?: unknown; created?: unknown; reason?: unknown }
+    return typeof row.version === 'number'
+      ? {
+          version: row.version,
+          created: String(row.created ?? ''),
+          reason: String(row.reason ?? ''),
+        }
+      : null
+  })
+
   function rename(title: string): void {
     const next = title.trim()
     if (!next || next === doc.value?.name) return
@@ -1213,7 +1237,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       }
       return true
     } catch (err) {
-      saveError.value = err instanceof Error ? err.message : String(err)
+      saveError.value = errorMessage(err)
       saveState.value = 'error'
       return false
     }
@@ -1244,6 +1268,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     saveError,
     lastSavedAt,
     isDirty,
+    recovered,
     changeSeq,
     savedSeq,
     autosaveDelayMs,

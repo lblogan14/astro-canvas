@@ -3,7 +3,8 @@
  * per-row status, one deliberately broken row fails without stopping the others, the results
  * match the single-run measurement, and a row can be opened back on the canvas.
  */
-import { type APIRequestContext, type Page, expect, test } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 import { deleteWorkflow, openWorkflow } from './helpers'
 

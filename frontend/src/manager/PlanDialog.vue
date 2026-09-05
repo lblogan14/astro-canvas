@@ -98,7 +98,7 @@ const risky = computed(() =>
           <div class="flex flex-wrap gap-2 text-[11px]" data-testid="plan-summary">
             <span
               v-if="counts.add"
-              class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-500"
+              class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-emerald-700 dark:text-emerald-400"
             >
               {{ t('manager.plan.count_add', counts.add) }}
             </span>
@@ -107,7 +107,7 @@ const risky = computed(() =>
             </span>
             <span
               v-if="counts.downgrade"
-              class="rounded bg-amber-500/15 px-1.5 py-0.5 text-amber-500"
+              class="rounded bg-amber-500/15 px-1.5 py-0.5 text-amber-700 dark:text-amber-400"
             >
               {{ t('manager.plan.count_downgrade', counts.downgrade) }}
             </span>
@@ -139,7 +139,11 @@ const risky = computed(() =>
             </li>
           </ul>
 
-          <p v-if="risky" class="text-[11px] text-amber-500" data-testid="plan-risky">
+          <p
+            v-if="risky"
+            class="text-[11px] text-amber-700 dark:text-amber-400"
+            data-testid="plan-risky"
+          >
             {{ t('manager.plan.risky_hint') }}
           </p>
         </template>

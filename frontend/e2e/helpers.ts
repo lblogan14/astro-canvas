@@ -1,6 +1,6 @@
 import type { APIRequestContext, Page } from '@playwright/test'
 
-import { E2E_TOKEN } from '../playwright.config'
+import { E2E_TOKEN } from './fixtures'
 
 export interface WorkflowDocLike {
   format: 'astro-canvas/workflow'

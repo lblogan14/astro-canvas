@@ -14,9 +14,11 @@ docs_dir: docs
 exclude_docs: |
   designs/
   *.patch
+  examples/
 
 not_in_nav: |
   dev/
+  release-notes/
 
 theme:
   name: material
@@ -95,8 +97,16 @@ nav:
       - Redshift finding: guide/redshift.md
       - Multi-spectrum: guide/multispec.md
       - IFU cubes: guide/ifu.md
+  - Coming from rbcodes:
+      - Overview: migrating/index.md
+      - launch_specgui: migrating/specgui.md
+      - rb_zfind: migrating/rb_zfind.md
+      - rb_multispec: migrating/rb_multispec.md
+      - rb_ifuview: migrating/rb_ifuview.md
   - Command line: cli.md
+  - API reference: api.md
   - Authoring packs:
+      - Tutorial - wrap a function as a node: packs/tutorial.md
       - Node schema: formats/node-schema.md
       - Publishing a pack: packs/publishing.md
   - Formats:

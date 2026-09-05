@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 test('shell loads and shows the backend version from /api/health', async ({ page, request }) => {
   const health = await request.get('/api/health')

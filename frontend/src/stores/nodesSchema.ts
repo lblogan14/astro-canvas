@@ -1,7 +1,7 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 
-import { api } from '@/api/client'
+import { api, errorMessage } from '@/api/client'
 import type { NodeSpec, PackRecord, PortTypeSpec } from '@/api/types'
 import { isTypeCompatible } from '@/canvas/compat'
 
@@ -72,7 +72,7 @@ export const useNodesSchemaStore = defineStore('nodesSchema', () => {
       packs.value = packList
       status.value = 'ready'
     } catch (err) {
-      error.value = err instanceof Error ? err.message : String(err)
+      error.value = errorMessage(err)
       status.value = 'error'
     }
   }

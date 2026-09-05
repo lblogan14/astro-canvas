@@ -631,7 +631,7 @@
         "description": "Exactly what ran, so an import can say whether this machine can reproduce it.",
         "properties": {
           "app_version": {
-            "default": "0.1.0a0",
+            "default": "0.1.0",
             "title": "App Version",
             "type": "string"
           },
@@ -3964,6 +3964,12 @@
       "WorkspaceInfo": {
         "description": "The active workspace and the user's recent ones.",
         "properties": {
+          "available": {
+            "default": true,
+            "description": "False when the workspace folder is gone (unplugged drive, unmounted share, deleted while the app was open). Everything else in this response still describes it, so the UI can name what it lost.",
+            "title": "Available",
+            "type": "boolean"
+          },
           "can_select": {
             "default": true,
             "description": "False when the server pins each user to their own workspace.",
@@ -4041,7 +4047,7 @@
   },
   "info": {
     "title": "Astro Canvas",
-    "version": "0.1.0a0"
+    "version": "0.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -6470,6 +6476,7 @@
         ]
       },
       "get": {
+        "description": "The stored document, or its newest readable version with ``meta.recovered`` set.\n\nA document that no longer validates is not a lost workflow: every save is in\n``workflow_versions``. If none of them validates either, the pydantic error travels as a 422\n(`server/errors.py`) so the SPA can say what is wrong rather than \"internal server error\".",
         "operationId": "get_workflow_api_workflows__workflow_id__get",
         "parameters": [
           {

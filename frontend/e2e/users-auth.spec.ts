@@ -1,16 +1,17 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from '@playwright/test'
+import { ADMIN_EMAIL, expect, test } from './fixtures'
 
-import { ADMIN_EMAIL } from '../playwright.config'
+import { audit } from './a11y'
 
 /**
  * The `--auth users` tier (design §12), against a second backend started with login accounts.
  *
- * Runs in its own Playwright project so the token-authenticated suite is untouched. Each test
- * uses a fresh address, because this backend keeps its identity database between runs and a
- * shared account would make the tests order-dependent. The admin address is the exception: it
- * is the one `ASTRO_CANVAS_ADMIN_EMAILS` promotes, so a repeat registration is expected to be
- * refused and the sign-in is what matters.
+ * Runs in its own Playwright project so the token-authenticated suite is untouched: its worker
+ * fixture starts a `--auth users` backend, and every other spec authenticates with one bearer
+ * token. Each test uses a fresh address, because the identity database is shared by the tests
+ * inside a worker and a shared account would make them order-dependent. The admin address is
+ * the exception: it is the one `ASTRO_CANVAS_ADMIN_EMAILS` promotes, so a repeat registration is
+ * expected to be refused and the sign-in is what matters.
  */
 
 const PASSWORD = 'a good long phrase'
@@ -45,6 +46,29 @@ test('the canvas is behind a login, and remembers where you were going', async (
   await expect(page).toHaveURL('/login?redirect=/templates')
   await expect(page.getByTestId('login-form')).toBeVisible()
   await expect(page.getByTestId('canvas')).toHaveCount(0)
+})
+
+/**
+ * The login page is the first thing a lab user ever sees, and it only exists on this tier -- so
+ * this is where it gets its axe pass (phase 13, scope item 3). Both states: the sign-in form and
+ * the sign-up form, which adds a field and a different submit.
+ */
+test('the login page passes the accessibility audit, signed in or signing up', async ({ page }) => {
+  await page.goto('/login')
+  await expect(page.getByTestId('login-form')).toBeVisible()
+  await audit(page, 'login (sign in)')
+
+  await page.getByTestId('login-toggle').click()
+  await expect(page.getByTestId('login-display-name')).toBeVisible()
+  await audit(page, 'login (sign up)')
+
+  // And with an error on it, which is a live region the form has to label.
+  await page.getByTestId('login-toggle').click()
+  await page.getByTestId('login-email').fill('nobody@lab.example')
+  await page.getByTestId('login-password').fill('wrong password entirely')
+  await page.getByTestId('login-submit').click()
+  await expect(page.getByTestId('login-error')).toBeVisible()
+  await audit(page, 'login (error)')
 })
 
 test('a wrong password is reported and keeps you on the page', async ({ page }) => {
@@ -92,7 +116,13 @@ test('an admin sees the pack manager', async ({ page }) => {
   await page.getByTestId('share-menu').click()
   await page.getByTestId('share-manager').click()
   await expect(page.getByTestId('manager-page')).toBeVisible()
-  await expect(page.getByTestId('pack-core')).toBeVisible()
+  await expect(page.getByTestId('pack-core')).toBeVisible({ timeout: 20000 })
+  // The canvas's "open or create the first workflow" round trip must not steal the route back
+  // (it did: `router.replace` arrived after the user had already left for the Manager). Proving
+  // that nothing happens needs a wait; there is no event for a navigation that must not occur.
+  // eslint-disable-next-line playwright/no-wait-for-timeout
+  await page.waitForTimeout(2000)
+  await expect(page).toHaveURL(/\/manager$/)
 })
 
 test('each account gets its own workspace, and cannot change it', async ({ page }) => {

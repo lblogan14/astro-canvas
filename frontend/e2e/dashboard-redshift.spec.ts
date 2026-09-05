@@ -3,10 +3,10 @@
  * range on the chi-square curve highlights the matching rows of the candidates table — the two
  * views share the spectrum upstream, which is what links them.
  */
-import { type APIRequestContext, type Page, expect, test } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
+import { E2E_TOKEN, expect, test } from './fixtures'
 
 import { deleteWorkflow } from './helpers'
-import { E2E_TOKEN } from '../playwright.config'
 
 const TEMPLATE_ID = 'rbcodes.redshift-finder'
 

@@ -1,6 +1,6 @@
 {
   "name": "@astro-canvas/frontend",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.15.9",
@@ -16,7 +16,8 @@
     "typecheck": "vue-tsc --build",
     "test:unit": "vitest run --coverage",
     "test:unit:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=chromium --project=users",
+    "test:e2e:perf": "playwright test --project=perf --workers=1",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint .",
     "lint:eslint": "eslint . --cache",
@@ -55,6 +56,7 @@
     "vue-router": "^5.2.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.61.1",
     "@tsconfig/node24": "^24.0.4",
     "@types/jsdom": "^28.0.3",
@@ -66,6 +68,7 @@
     "@vue/eslint-config-typescript": "^14.9.0",
     "@vue/test-utils": "^2.4.11",
     "@vue/tsconfig": "^0.9.1",
+    "axe-core": "^4.13.0",
     "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-oxlint": "~1.73.0",

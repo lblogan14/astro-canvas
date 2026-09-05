@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 import {
   comparable,
@@ -164,12 +164,19 @@ test.describe('canvas basics', () => {
     await createWorkflow(request, doc)
     try {
       await openWorkflow(page, doc.id)
+      // `openWorkflow` returns once the canvas and the socket are up; the document's nodes reach
+      // Vue Flow a tick later, and Select All on an empty canvas selects nothing.
+      await expect(page.locator('.ac-node')).toHaveCount(4)
       await page.getByTestId('canvas').focus()
       await page.keyboard.press('Control+a')
+      await expect(page.locator('.vue-flow__node.selected')).toHaveCount(4)
       await page.keyboard.press('Control+c')
       await page.keyboard.press('Control+v')
       await expect(page.locator('.ac-node')).toHaveCount(8)
       await expect(page.locator('.vue-flow__edge')).toHaveCount(6)
+      // The paste selects what it pasted, and that lands a tick after the nodes render --
+      // grouping an empty selection does nothing, so wait for the selection to move.
+      await expect(page.locator('.vue-flow__node.selected')).toHaveCount(4)
       await page.keyboard.press('Control+g')
       await expect(page.getByTestId('group')).toHaveCount(1)
       await page.getByTestId('undo').click()

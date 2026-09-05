@@ -122,11 +122,35 @@ Every line below matches a line of that report.
 
 ??? question "The events badge says disconnected"
 
-    The WebSocket dropped; the client reconnects on its own and re-subscribes. If it stays
-    disconnected, something between you and the server is closing idle connections — a reverse
-    proxy without WebSocket support is the usual culprit
+    The WebSocket dropped; the client reconnects on its own and re-subscribes, and a banner
+    under the header says so while it is trying. If it stays disconnected, something between
+    you and the server is closing idle connections — a reverse proxy without WebSocket support
+    is the usual culprit
     ([the Caddyfile](https://github.com/lblogan14/astro-canvas/blob/main/deploy/Caddyfile) shows
-    what is needed).
+    what is needed). **Retry** in the banner reconnects immediately instead of waiting out the
+    back-off.
+
+??? question "A banner says this workflow could not be read"
+
+    The stored document did not parse — a hand edit, a document from a later version of the
+    format, or a pack that owned a subgraph and is now gone. Every save is snapshotted in the
+    workflow's version history, so the newest readable version was opened instead and *nothing
+    has been written*. Either **Keep it** (which saves the recovered document over the broken
+    one) or dismiss the banner and pick a different version from the Workflows panel.
+
+??? question "A banner says the workspace folder is not there any more"
+
+    The folder the app has open has been deleted, unmounted, or lives on a drive that is no
+    longer connected. Reconnect it — the banner clears by itself — or open **Workspace ▸ Switch
+    workspace** and choose another. Nothing is lost: the workflows, the cache and the version
+    history all live inside that folder, so they come back with it.
+
+??? question "A banner says a node pack failed to load"
+
+    That pack's nodes are missing from the library, and any workflow using them will show them
+    as unknown. The Manager's Installed tab shows the traceback (**Show error**), and
+    `astro-canvas doctor --verbose` prints the same thing from a terminal. A missing dependency
+    is the usual cause.
 
 ## Packs
 

@@ -248,7 +248,7 @@ const dragBand = computed<{ left: string; width: string } | null>(() => {
       <span class="min-w-0 flex-1 truncate" :title="`${view.node}.${view.port}`">{{ title }}</span>
       <span
         v-if="exec.state === 'running'"
-        class="rounded bg-blue-500/15 px-1 text-blue-600"
+        class="rounded bg-blue-500/15 px-1 text-blue-700 dark:text-blue-400"
         data-testid="view-tile-running"
       >
         {{
@@ -257,7 +257,10 @@ const dragBand = computed<{ left: string; width: string } | null>(() => {
             : t('node.state.running')
         }}
       </span>
-      <span v-else-if="exec.stale" class="rounded bg-amber-500/15 px-1 text-amber-600">
+      <span
+        v-else-if="exec.stale"
+        class="rounded bg-amber-500/15 px-1 text-amber-700 dark:text-amber-400"
+      >
         {{ t('node.state.stale') }}
       </span>
       <button
@@ -283,9 +286,12 @@ const dragBand = computed<{ left: string; width: string } | null>(() => {
       </button>
     </figcaption>
 
+    <!-- A scrollable region needs to be reachable by keyboard, or its content is unreadable
+         without a mouse (axe `scrollable-region-focusable`). -->
     <div
       ref="host"
-      class="min-h-0 min-w-0 flex-1 overflow-auto p-2"
+      class="min-h-0 min-w-0 flex-1 overflow-auto p-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      tabindex="0"
       :style="height === null ? undefined : { height: `${height}px` }"
     >
       <p v-if="exec.error" class="text-[11px] text-destructive" data-testid="view-tile-error">

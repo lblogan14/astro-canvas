@@ -275,6 +275,7 @@ const errorOpen = ref(false)
             side="bottom"
             :side-offset="6"
             class="nodrag nowheel z-50 max-h-80 w-96 overflow-auto rounded-md border bg-popover p-3 text-xs text-popover-foreground shadow-md"
+            data-testid="error-detail"
           >
             <ul v-if="issues.length" class="mb-2 space-y-1">
               <li v-for="(issue, i) in issues" :key="i" class="flex gap-2">

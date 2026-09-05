@@ -1,7 +1,7 @@
 /**
  * Keyboard shortcuts (design §8.1): Ctrl+Enter run · Ctrl+Z/Y undo/redo · Ctrl+C/V/D copy, paste,
  * duplicate · Delete · Ctrl+G / Ctrl+Shift+G group/ungroup · Ctrl+Shift+C / Ctrl+Shift+E collapse
- * to a subgraph / expand one · Ctrl+Shift+L auto-layout · Tab library search · `.` fit ·
+ * to a subgraph / expand one · Ctrl+Shift+L auto-layout · Ctrl+K or Shift+A quick add · `.` fit ·
  * `F` fit selection · Ctrl+A select all · Ctrl+S save · Escape.
  * Space-to-pan is handled by the canvas itself.
  */
@@ -162,6 +162,10 @@ export function useShortcuts(actions: ShortcutActions): void {
       actions.escape()
       return
     }
+    // `Tab` belongs to the browser. It used to open the quick-add palette, which meant a
+    // keyboard user could never move focus out of the canvas at all (phase 13, scope item 3);
+    // quick add is Ctrl+K or Shift+A now.
+    if (key === 'Tab') return
     if (inEditable(event.target)) return
     if (ui.paletteOpen) return
     let handled = true
@@ -181,7 +185,8 @@ export function useShortcuts(actions: ShortcutActions): void {
     } else if (mod && key.toLowerCase() === 'a') actions.selectAll()
     else if (mod && key.toLowerCase() === 's') actions.save()
     else if (!mod && (key === 'Delete' || key === 'Backspace')) actions.remove()
-    else if (!mod && key === 'Tab') actions.openPalette()
+    else if (mod && key.toLowerCase() === 'k') actions.openPalette()
+    else if (!mod && event.shiftKey && key.toLowerCase() === 'a') actions.openPalette()
     else if (!mod && key === '.') actions.fitView()
     else if (!mod && key.toLowerCase() === 'f') actions.fitSelection()
     else handled = false

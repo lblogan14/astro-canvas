@@ -1,0 +1,41 @@
+cff-version: 1.2.0
+message: If you use Astro Canvas in work you publish, please cite it.
+title: 'Astro Canvas: a node-based infinite canvas for astronomical data'
+abstract: >-
+  Astro Canvas is a node-based infinite canvas for exploring astronomical spectra, images and
+  integral-field cubes. A reactive execution engine runs a workflow document as a directed graph
+  with content-hash caching, cost gating and cancellation; a browser canvas builds itself from the
+  node schemas the server publishes; and the science lives in installable node packs. The first
+  packs rebuild the rbcodes analysis GUIs (equivalent widths, redshift finding, multi-spectrum line
+  identification and IFU cube tools) as headless, composable nodes, so the same measurement can be
+  made interactively, run over a table of targets, or executed from a shell with no display.
+type: software
+version: 0.1.0
+date-released: '2026-09-05'
+license: MIT
+repository-code: https://github.com/lblogan14/astro-canvas
+url: https://lblogan14.github.io/astro-canvas/
+keywords:
+  - astronomy
+  - spectroscopy
+  - absorption lines
+  - redshift
+  - integral field spectroscopy
+  - workflow
+  - reproducibility
+  - visual programming
+authors:
+  - family-names: Liu
+    given-names: Bin
+    email: binliu14qd@gmail.com
+references:
+  - type: software
+    title: rbcodes
+    abstract: >-
+      The absorption- and emission-line spectroscopy toolkit whose science kernels and GUIs the
+      first Astro Canvas node packs rebuild as nodes.
+    authors:
+      - family-names: Bordoloi
+        given-names: Rongmon
+    repository-code: https://github.com/rongmon/rbcodes
+    license: MIT

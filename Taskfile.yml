@@ -40,8 +40,8 @@ tasks:
   lint:
     desc: ruff + oxlint + eslint + prettier check + tooling rule
     cmds:
-      - uv run --directory {{.BE}} ruff check . ../packs ../scripts
-      - uv run --directory {{.BE}} ruff format --check . ../packs ../scripts
+      - uv run --directory {{.BE}} ruff check . ../packs ../scripts ../docs/examples
+      - uv run --directory {{.BE}} ruff format --check . ../packs ../scripts ../docs/examples
       - pnpm -C {{.FE}} lint
       - pnpm -C {{.FE}} format:check
       - task: check:tooling
@@ -71,7 +71,27 @@ tasks:
       - pnpm -C {{.FE}} test:unit
 
   test:e2e:
-    desc: Playwright smoke against a real backend (starts both servers)
+    desc: Playwright against the bundled SPA (one backend per worker; builds the SPA first)
+    deps: [build:spa]
+    cmds:
+      - pnpm -C {{.FE}} test:e2e
+
+  test:e2e:perf:
+    desc: Browser performance gates (frame rate, edit latency), alone on the machine
+    deps: [build:spa]
+    cmds:
+      - pnpm -C {{.FE}} test:e2e:perf
+
+  test:perf:
+    desc: Server performance gates (engine at 500 nodes, 1e6-point spectrum, cube, batch soak)
+    cmds:
+      - uv run --directory {{.BE}} pytest -m perf -q --no-cov
+
+  test:e2e:wheel:
+    desc: E2E against the built wheels in an isolated environment (needs `task build`)
+    deps: [build]
+    env:
+      ASTRO_CANVAS_E2E_WHEEL: '1'
     cmds:
       - pnpm -C {{.FE}} test:e2e
 
@@ -88,16 +108,28 @@ tasks:
   fmt:
     desc: Format and auto-fix backend and frontend
     cmds:
-      - uv run --directory {{.BE}} ruff format . ../packs ../scripts
-      - uv run --directory {{.BE}} ruff check --fix . ../packs ../scripts
+      - uv run --directory {{.BE}} ruff format . ../packs ../scripts ../docs/examples
+      - uv run --directory {{.BE}} ruff check --fix . ../packs ../scripts ../docs/examples
       - pnpm -C {{.FE}} lint:fix
       - pnpm -C {{.FE}} format
 
-  build:
-    desc: Build the SPA, copy it into the app wheel, build the SDK and app wheels, verify
+  build:spa:
+    desc: Build the SPA into backend/src/astro_canvas/static (what the e2e suite runs against)
+    sources:
+      - '{{.FE}}/src/**/*'
+      - '{{.FE}}/index.html'
+      - '{{.FE}}/package.json'
+      - '{{.FE}}/vite.config.ts'
+    generates:
+      - '{{.BE}}/src/astro_canvas/static/index.html'
     cmds:
       - pnpm -C {{.FE}} build
       - uv run --directory {{.BE}} python ../scripts/copy_static.py
+
+  build:
+    desc: Build the SPA, copy it into the app wheel, build the SDK and app wheels, verify
+    deps: [build:spa]
+    cmds:
       - uv build {{.BE}}/sdk --out-dir {{.BE}}/dist
       - uv build {{.BE}}
       - uv run --directory {{.BE}} python ../scripts/check_wheel.py
@@ -113,6 +145,7 @@ tasks:
       - uv run --directory {{.BE}} python ../scripts/export_openapi.py
       - pnpm -C {{.FE}} exec openapi-typescript ../backend/src/astro_canvas/server/openapi/openapi.json -o src/api/schema.d.ts
       - pnpm -C {{.FE}} exec prettier --write src/api/schema.d.ts
+      - uv run --directory {{.BE}} python ../scripts/gen_api_docs.py
 
   docs:
     desc: Serve the documentation site locally (http://127.0.0.1:8000)

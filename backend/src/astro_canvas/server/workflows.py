@@ -73,8 +73,14 @@ async def create_workflow(request: Request, doc: WorkflowDoc) -> WorkflowSaved:
 
 @router.get("/workflows/{workflow_id}", response_model=WorkflowDoc)
 async def get_workflow(request: Request, workflow_id: str) -> WorkflowDoc:
+    """The stored document, or its newest readable version with ``meta.recovered`` set.
+
+    A document that no longer validates is not a lost workflow: every save is in
+    ``workflow_versions``. If none of them validates either, the pydantic error travels as a 422
+    (`server/errors.py`) so the SPA can say what is wrong rather than "internal server error".
+    """
     try:
-        return get_runtime(request).get(workflow_id)
+        return get_runtime(request).get_or_recover(workflow_id)
     except UnknownWorkflowError:
         raise _not_found(workflow_id) from None
 

@@ -75,10 +75,21 @@ function syncRouteFromMode(): void {
   )
 }
 
+/**
+ * `openFromRoute` awaits the server, and the user can leave in the meantime: on a fresh
+ * workspace "create the first workflow" is a round trip, and clicking Manager or Templates
+ * during it used to be undone by the `router.replace` that arrived afterwards. Every navigation
+ * below therefore checks that the route it was reacting to is still the current one.
+ */
+function stillOn(name: unknown): boolean {
+  return router.currentRoute.value.name === name
+}
+
 async function openFromRoute(): Promise<void> {
   // Nothing is readable before the login on a `--auth users` server, and the router is about
   // to replace this route with /login anyway (design 12).
   if (auth.requiresLogin) return
+  const from = route.name
   const id = routeId.value
   if (id) {
     if (workflow.id === id) return
@@ -92,7 +103,7 @@ async function openFromRoute(): Promise<void> {
       }
     } catch {
       ui.notify(t('workflows.open_failed', { id }), 'error')
-      await router.replace({ name: 'home' })
+      if (stillOn(from)) await router.replace({ name: 'home' })
     }
     return
   }
@@ -106,12 +117,12 @@ async function openFromRoute(): Promise<void> {
   }
   const candidate = workflows.items.find((w) => w.id === last) ?? workflows.items[0]
   if (candidate) {
-    await router.replace({ name: 'workflow', params: { id: candidate.id } })
+    if (stillOn('home')) await router.replace({ name: 'workflow', params: { id: candidate.id } })
     return
   }
-  if (ui.isOnline) {
+  if (ui.isOnline && stillOn('home')) {
     const id = await session.createWorkflow(t('workflows.untitled'))
-    await router.replace({ name: 'workflow', params: { id } })
+    if (stillOn('home')) await router.replace({ name: 'workflow', params: { id } })
   }
 }
 

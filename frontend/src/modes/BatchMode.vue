@@ -304,10 +304,12 @@ function onCell(index: number, column: string, event: Event): void {
                     class="inline-block rounded-full px-1.5 py-0.5 text-[10px]"
                     :class="{
                       'bg-muted text-muted-foreground': batch.stateOf(index).state === 'pending',
-                      'bg-amber-500/15 text-amber-600': ['running', 'queued'].includes(
-                        batch.stateOf(index).state,
-                      ),
-                      'bg-emerald-500/15 text-emerald-600': batch.stateOf(index).state === 'done',
+                      'bg-amber-500/15 text-amber-700 dark:text-amber-400': [
+                        'running',
+                        'queued',
+                      ].includes(batch.stateOf(index).state),
+                      'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400':
+                        batch.stateOf(index).state === 'done',
                       'bg-destructive/15 text-destructive': batch.stateOf(index).state === 'error',
                       'bg-slate-500/15 text-slate-500': batch.stateOf(index).state === 'cancelled',
                     }"

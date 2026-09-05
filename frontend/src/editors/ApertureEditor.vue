@@ -161,9 +161,14 @@ function setRole(index: number, role: 'source' | 'background'): void {
   if (aperture) update(index, { ...aperture, role })
 }
 
-function setLabel(index: number, label: string): void {
+/**
+ * Every keystroke lands in the model, so Apply does not depend on the field losing focus first;
+ * the trim waits for `change`, because trimming while typing would eat the space in "e2e box".
+ */
+function setLabel(index: number, label: string, commit = false): void {
   const aperture = apertures.value[index]
-  if (aperture) update(index, { ...aperture, label: label.trim() || null })
+  const next = commit ? label.trim() : label
+  if (aperture) update(index, { ...aperture, label: next || null })
 }
 
 function clearAll(): void {
@@ -702,7 +707,8 @@ onBeforeUnmount(() => {
               data-testid="aperture-label"
               :value="aperture.label ?? ''"
               :placeholder="defaultLabel(aperture, index)"
-              @change="setLabel(index, ($event.target as HTMLInputElement).value)"
+              @input="setLabel(index, ($event.target as HTMLInputElement).value)"
+              @change="setLabel(index, ($event.target as HTMLInputElement).value, true)"
             />
             <button
               type="button"

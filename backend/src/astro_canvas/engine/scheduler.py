@@ -22,7 +22,6 @@ from pathlib import Path
 from typing import Any, Literal, Protocol
 
 import structlog
-from pydantic import ValidationError
 
 from astro_canvas.engine.cache import OutputCache, OutputRef, cache_key, sub_key
 from astro_canvas.engine.context import EngineContext
@@ -40,10 +39,10 @@ from astro_canvas.engine.events import (
 )
 from astro_canvas.engine.executors import ProcessExecutor, ThreadExecutor, ThreadJob
 from astro_canvas.engine.graph import ExecGraph, ExecNode, ValidationErrors, WorkflowDoc, compile
+from astro_canvas.engine.hints import hint_for
 from astro_canvas.engine.outputs import OutputError, coerce, unwrap_linked, wrap_outputs
 from astro_canvas.engine.worker import WorkerJob
 from astro_canvas.sdk import (
-    BlobError,
     Expansion,
     NodeDef,
     NodeRegistry,
@@ -503,7 +502,7 @@ class Scheduler:
                     node_id=nid,
                     message=rec.error,
                     traceback=traceback.format_exc(),
-                    hint=_hint(exc),
+                    hint=hint_for(exc),
                 )
             )
             self._emit_status(nid)
@@ -859,20 +858,6 @@ def _expansion_order(expansion: Expansion) -> list[str]:
         for sid in ready:
             del remaining[sid]
     return order
-
-
-def _hint(exc: BaseException) -> str | None:
-    if isinstance(exc, ValidationError):
-        return "Check the node's parameters against its schema."
-    if isinstance(exc, BlobError):
-        return "This value cannot be serialized; astro.Any outputs need cheap (in-process) nodes."
-    if isinstance(exc, UpstreamMissingError):
-        return "Run the upstream node first or reconnect the input."
-    if isinstance(exc, TimeoutError):
-        return "The node exceeded the configured time limit."
-    if isinstance(exc, OutputError):
-        return "The node returned a value that does not match its declared outputs."
-    return None
 
 
 Runner = Callable[[Sequence[str] | None], Any]

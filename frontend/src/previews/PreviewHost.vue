@@ -173,7 +173,7 @@ function pin(slot: Slot): void {
           class="nodrag absolute top-0.5 right-6 inline-flex size-5 items-center justify-center rounded bg-background/80 shadow-sm"
           :class="
             workflow.isPinned(nodeId, slot.port)
-              ? 'text-amber-600'
+              ? 'text-amber-700 dark:text-amber-400'
               : 'text-muted-foreground hover:text-foreground'
           "
           :aria-pressed="workflow.isPinned(nodeId, slot.port)"

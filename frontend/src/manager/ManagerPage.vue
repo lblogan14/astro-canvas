@@ -133,7 +133,7 @@ function installFromRegistry(entry: RegistryEntry): void {
 
     <div
       v-if="packs.restartRequired"
-      class="flex items-center gap-2 border-b border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400"
+      class="flex items-center gap-2 border-b border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400"
       data-testid="manager-restart"
       role="status"
     >
@@ -287,7 +287,7 @@ function installFromRegistry(entry: RegistryEntry): void {
           >
             <RefreshCw /> {{ t('manager.refresh') }}
           </Button>
-          <span v-if="packs.registry?.stale" class="text-[11px] text-amber-500">
+          <span v-if="packs.registry?.stale" class="text-[11px] text-amber-700 dark:text-amber-400">
             {{ t('manager.registry_stale') }}
           </span>
         </div>
@@ -322,7 +322,7 @@ function installFromRegistry(entry: RegistryEntry): void {
             <div class="mt-auto">
               <span
                 v-if="packs.isInstalled(entry)"
-                class="flex items-center gap-1 text-[11px] text-emerald-500"
+                class="flex items-center gap-1 text-[11px] text-emerald-700 dark:text-emerald-400"
                 :data-testid="`registry-installed-${entry.name}`"
               >
                 <CircleCheck class="size-3.5" /> {{ t('manager.already_installed') }}

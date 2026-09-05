@@ -57,10 +57,20 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  /*
+   * Darkened from shadcn's 0.556 (#737373): small text in that grey is 4.34:1 on `--muted`,
+   * which fails WCAG AA, and most of the app's secondary text sits on exactly that ground.
+   * 0.50 is 6.0:1 on the background and 5.5:1 on `--muted`, with enough margin left for the
+   * places where `bg-muted` composites onto an already tinted surface.
+   */
+  --muted-foreground: oklch(0.5 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  /*
+   * Also darkened (from 0.577): the destructive button and badge are `text-destructive` on a
+   * 10-20 % tint of the same colour, which was 4.0:1 and 3.3:1. At 0.45 they are 5.7:1 and 4.7:1.
+   */
+  --destructive: oklch(0.45 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -121,5 +131,25 @@
   body {
     @apply bg-background text-foreground;
     @apply font-sans;
+  }
+
+  /*
+   * Reduced motion (design 10.3). The app's animation is decoration - a pulsing running badge, a
+   * sliding sheet, the canvas's own easing - so when the OS asks for less of it, there is nothing
+   * to keep. `!important` is deliberate: the utilities this overrides are themselves utilities,
+   * and a per-component opt-out would be one more thing to forget.
+   *
+   * `scroll-behavior` is included because `navigation.instant`-style smooth scrolling is the one
+   * motion that is not decorative and still has to stop.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

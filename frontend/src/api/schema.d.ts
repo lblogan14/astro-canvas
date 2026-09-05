@@ -813,7 +813,14 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Get Workflow */
+    /**
+     * Get Workflow
+     * @description The stored document, or its newest readable version with ``meta.recovered`` set.
+     *
+     *     A document that no longer validates is not a lost workflow: every save is in
+     *     ``workflow_versions``. If none of them validates either, the pydantic error travels as a 422
+     *     (`server/errors.py`) so the SPA can say what is wrong rather than "internal server error".
+     */
     get: operations['get_workflow_api_workflows__workflow_id__get']
     /**
      * Put Workflow
@@ -1511,7 +1518,7 @@ export interface components {
     BundleLock: {
       /**
        * App Version
-       * @default 0.1.0a0
+       * @default 0.1.0
        */
       app_version: string
       /** Created */
@@ -3169,6 +3176,12 @@ export interface components {
      * @description The active workspace and the user's recent ones.
      */
     WorkspaceInfo: {
+      /**
+       * Available
+       * @description False when the workspace folder is gone (unplugged drive, unmounted share, deleted while the app was open). Everything else in this response still describes it, so the UI can name what it lost.
+       * @default true
+       */
+      available: boolean
       /**
        * Can Select
        * @description False when the server pins each user to their own workspace.

@@ -17,6 +17,7 @@ from astro_canvas.sdk import DiscoveryResult, discover
 from astro_canvas.server.auth import TokenAuthMiddleware, ensure_token
 from astro_canvas.server.batch import router as batch_router
 from astro_canvas.server.bundles import router as bundles_router
+from astro_canvas.server.errors import install_error_handlers
 from astro_canvas.server.exports import router as exports_router
 from astro_canvas.server.guard import check_exposure
 from astro_canvas.server.health import router as health_router
@@ -109,6 +110,7 @@ def create_app(
     app.state.manager = manager
     app.state.token = token
     app.state.users = users
+    install_error_handlers(app)
     app.include_router(health_router, prefix="/api")
     if users is not None:
         from astro_canvas.server.users import auth_router  # noqa: PLC0415 - optional extra

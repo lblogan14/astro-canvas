@@ -6,9 +6,9 @@
  * quarantine banner and the trust dialog gate the code — and through the API where the UI has no
  * way to hand a browser a file it did not download.
  */
-import { type Page, expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { E2E_TOKEN, expect, test } from './fixtures'
 
-import { E2E_TOKEN } from '../playwright.config'
 import {
   type WorkflowDocLike,
   createWorkflow,

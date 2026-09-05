@@ -13,7 +13,7 @@ from pathlib import Path
 
 from astro_canvas.sdk import PackRegistry
 
-__version__ = "0.1.0a0"
+__version__ = "0.1.0"
 
 os.environ.setdefault("MPLBACKEND", "Agg")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
