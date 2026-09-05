@@ -40,8 +40,8 @@ tasks:
   lint:
     desc: ruff + oxlint + eslint + prettier check + tooling rule
     cmds:
-      - uv run --directory {{.BE}} ruff check . ../packs ../scripts
-      - uv run --directory {{.BE}} ruff format --check . ../packs ../scripts
+      - uv run --directory {{.BE}} ruff check . ../packs ../scripts ../docs/examples
+      - uv run --directory {{.BE}} ruff format --check . ../packs ../scripts ../docs/examples
       - pnpm -C {{.FE}} lint
       - pnpm -C {{.FE}} format:check
       - task: check:tooling
@@ -108,8 +108,8 @@ tasks:
   fmt:
     desc: Format and auto-fix backend and frontend
     cmds:
-      - uv run --directory {{.BE}} ruff format . ../packs ../scripts
-      - uv run --directory {{.BE}} ruff check --fix . ../packs ../scripts
+      - uv run --directory {{.BE}} ruff format . ../packs ../scripts ../docs/examples
+      - uv run --directory {{.BE}} ruff check --fix . ../packs ../scripts ../docs/examples
       - pnpm -C {{.FE}} lint:fix
       - pnpm -C {{.FE}} format
 
@@ -145,6 +145,7 @@ tasks:
       - uv run --directory {{.BE}} python ../scripts/export_openapi.py
       - pnpm -C {{.FE}} exec openapi-typescript ../backend/src/astro_canvas/server/openapi/openapi.json -o src/api/schema.d.ts
       - pnpm -C {{.FE}} exec prettier --write src/api/schema.d.ts
+      - uv run --directory {{.BE}} python ../scripts/gen_api_docs.py
 
   docs:
     desc: Serve the documentation site locally (http://127.0.0.1:8000)

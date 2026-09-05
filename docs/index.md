@@ -69,6 +69,13 @@ multi-spectrum viewing, IFU cubes — as headless, web-native nodes.
 4. [**Bundles**](guide/bundles.md) — hand a colleague one `.acw` file and they get the workflow,
    the inputs, the results and the provenance.
 
+Already an rbcodes user? [**Coming from the rbcodes GUIs**](migrating/index.md) says where each
+button of `launch_specgui`, `rb_zfind`, `rb_multispec` and `rb_ifuview` went, what is the same
+(the numbers, the file formats, the keyboard) and what did not make v0.1.
+
+Want to put your own analysis on the canvas?
+[**Wrap a function as a node**](packs/tutorial.md) builds a complete pack in twenty minutes.
+
 ## What makes it different
 
 **Reactive, not batch.** Dirtiness comes from content hashes, not from edit events. Change a

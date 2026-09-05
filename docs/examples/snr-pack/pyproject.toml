@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "astro-canvas-snr"
+version = "0.1.0"
+description = "Example Astro Canvas pack: signal-to-noise of a spectrum, from rbcodes"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10,<3.14"
+authors = [{ name = "Your Name" }]
+dependencies = [
+  # The SDK, never the app: a pack must not depend on astro-canvas itself.
+  "astro-canvas-sdk>=0.1,<0.2",
+  # The port types this pack's nodes speak. `Spectrum1D` lives in the core pack.
+  "astro-canvas-core>=0.1,<0.2",
+  "numpy>=1.26",
+  "astropy>=6",
+  # rbcodes pins `python<3.11` upstream, so it is an extra rather than a hard dependency:
+  # `astro-canvas pack install 'astro-canvas-snr[rbcodes]'` on a 3.10 environment.
+]
+
+[project.optional-dependencies]
+rbcodes = ["rbcodes>=0.2"]
+
+[project.entry-points."astro_canvas.nodes"]
+snr = "astro_canvas_snr:register"
+
+[tool.astro-canvas]
+display_name = "Signal-to-noise (example)"
+publisher = "example"
+# `standard` means: no network, no subprocesses. See docs/packs/publishing.md.
+security = "standard"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/astro_canvas_snr"]

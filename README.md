@@ -1,5 +1,12 @@
 # Astro Canvas
 
+[![CI](https://github.com/lblogan14/astro-canvas/actions/workflows/ci.yml/badge.svg)](https://github.com/lblogan14/astro-canvas/actions/workflows/ci.yml)
+[![Nightly e2e](https://github.com/lblogan14/astro-canvas/actions/workflows/nightly.yml/badge.svg)](https://github.com/lblogan14/astro-canvas/actions/workflows/nightly.yml)
+[![Docs](https://github.com/lblogan14/astro-canvas/actions/workflows/docs.yml/badge.svg)](https://lblogan14.github.io/astro-canvas/)
+[![PyPI](https://img.shields.io/pypi/v/astro-canvas)](https://pypi.org/project/astro-canvas/)
+[![Python](https://img.shields.io/pypi/pyversions/astro-canvas)](https://pypi.org/project/astro-canvas/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **A node-based infinite canvas for exploring astronomical data.** Load spectra, images, and IFU cubes;
 wire analysis nodes together; see results inline and in expandable editors; share workflows as bundles.
 The scientific core comes from node packs, starting with [rbcodes](https://github.com/rongmon/rbcodes)
@@ -8,7 +15,10 @@ headless nodes so undergrads and researchers can run the same tools in a browser
 
 ## Status
 
-**Pre-alpha, phase 12 of 13 (distribution).** The repository builds, lints, tests, and runs a FastAPI + Vue app
+**v0.1.0 — the first release.** All thirteen phases are merged; the
+[changelog](CHANGELOG.md) has what is in it and the limitations it ships with, and
+[coming from rbcodes](docs/migrating/index.md) says where each GUI's buttons went. The repository
+builds, lints, tests, and runs a FastAPI + Vue app
 on Windows, macOS, and Linux. Packs register nodes and port types through `astro_canvas.sdk`; the server lists their
 schemas, stores `workflow.json` documents, and executes them reactively (content-hash cache, cost gating, thread/process
 executors, cancellation) with events over `/ws`. The browser canvas (Vue Flow) lets you browse nodes, place and connect
@@ -48,7 +58,7 @@ See [docs/guide/canvas.md](docs/guide/canvas.md), [docs/guide/data.md](docs/guid
 | 10 | App modes: promoted parameters and pinned views rendered as App, Wizard and Dashboard layouts (linked selection), templates gallery |
 | 11 | Pack manager (uv resolution plans, snapshots and rollback), git-backed registry, `.acw` bundles, Python code node behind a trust gate |
 | 12 | Distribution: full CLI, one-line and click-to-run installers, Docker Compose lab server with user accounts, docs site |
-| 13 | Hardening and `v0.1.0` |
+| 13 | Hardening and `v0.1.0`: parallel-safe e2e against the wheel, performance and memory gates, WCAG 2.1 AA, error UX, migration guides |
 
 ## Install it
 
@@ -137,7 +147,15 @@ workspace members) · `launcher/`, `deploy/` (phase 12) · `registry/` (pack ind
 
 ## Documentation
 
+- [CHANGELOG.md](CHANGELOG.md): what is in each release, and what it does not do yet.
 - [CONTRIBUTING.md](CONTRIBUTING.md): toolchain, tasks, conventions.
+- [docs/migrating/](docs/migrating/index.md): coming from `launch_specgui`, `rb_zfind`,
+  `rb_multispec` or `rb_ifuview` — where every button went.
+- [docs/packs/tutorial.md](docs/packs/tutorial.md): wrap a function as a node, end to end.
+- [docs/api.md](docs/api.md): every HTTP endpoint, generated from the OpenAPI snapshot.
+- [docs/dev/performance.md](docs/dev/performance.md) and
+  [docs/dev/accessibility.md](docs/dev/accessibility.md): the measured numbers, and what the
+  audits found.
 - [docs/formats/node-schema.md](docs/formats/node-schema.md): the `/api/nodes` JSON contract (`NodeSpec`,
   `ParamSpec`, port types, packs, blobs).
 - [docs/formats/workflow.md](docs/formats/workflow.md): `workflow.json` format v1, compile rules, execution model,
@@ -156,6 +174,12 @@ workspace members) · `launcher/`, `deploy/` (phase 12) · `registry/` (pack ind
 - [backend/sdk/README.md](backend/sdk/README.md): writing nodes with the SDK.
 - [docs/dev/rbcodes-compat.md](docs/dev/rbcodes-compat.md): rbcodes on Python 3.12, test results, and the
   proposed upstream patch ([docs/dev/rbcodes-upstream.patch](docs/dev/rbcodes-upstream.patch)).
+
+## Citing it
+
+If Astro Canvas is part of work you publish, [CITATION.cff](CITATION.cff) has the metadata (GitHub
+renders it as *Cite this repository*). Please cite [rbcodes](https://github.com/rongmon/rbcodes)
+as well when you use its nodes — the science in them is Rongmon Bordoloi's.
 
 ## License
 
