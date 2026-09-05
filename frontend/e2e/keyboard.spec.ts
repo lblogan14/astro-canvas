@@ -94,9 +94,15 @@ test.describe('keyboard and motion', () => {
           // The redshift step: reach the field and retype it without touching the mouse.
           const field = page.getByTestId('wizard-body-1').locator('input').first()
           await field.focus()
-          await page.keyboard.press('Control+A')
+          // `ControlOrMeta`, not `Control`: on macOS Ctrl+A is the emacs "start of line" binding,
+          // so nothing was selected and the new digits were *prepended* -- a redshift of
+          // 1.38550.348, whose transition falls a quarter of a million km/s outside the sample
+          // spectrum. The slice then failed and the export had nothing to write, which is what
+          // four rounds of the nightly's macOS leg were actually reporting.
+          await page.keyboard.press('ControlOrMeta+A')
           await page.keyboard.type('1.3855')
           await page.keyboard.press('Enter')
+          await expect(field).toHaveValue('1.3855')
           // Committing the field is an edit: wait for the step to come back before advancing,
           // so a failure here is about the step and not about the edit still being in flight.
           await settled(index)
