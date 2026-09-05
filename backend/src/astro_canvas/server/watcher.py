@@ -16,7 +16,16 @@ log = structlog.get_logger("astro_canvas.workspace")
 
 
 class WorkspaceWatcher:
-    """Watch ``root`` recursively (ignoring ``.astro-canvas``) and publish changed paths."""
+    """Watch ``root`` recursively (ignoring ``.astro-canvas``) and publish changed paths.
+
+    Granularity is the operating system's. inotify and the Windows backend report the file, so
+    ``paths`` names it; macOS watches through FSEvents, which reports the *directory*, so a change
+    can arrive as its containing folder — the workspace root itself included, as ``"."``. Both are
+    correct answers to "something changed under here", which is all a client needs to refresh a
+    listing. The one consequence worth knowing is that a directory-granular event cannot be
+    filtered by `_filter`: a write inside ``.astro-canvas`` can surface as its parent, so on macOS
+    the app's own state writes may cost a tree refresh.
+    """
 
     def __init__(self, bus: EventBus, root: Path, *, debounce_ms: int = 300) -> None:
         self.bus = bus

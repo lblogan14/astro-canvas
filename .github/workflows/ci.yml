@@ -41,6 +41,12 @@ jobs:
           uv run --directory backend ruff check . ../packs ../scripts ../docs/examples
           uv run --directory backend ruff format --check . ../packs ../scripts ../docs/examples
       - name: Mypy
+        # Once, on 3.12. The 3.10 entry of this matrix exists to prove rbcodes compatibility and
+        # to run the tests there; it resolves a different numpy, whose stubs narrow dtypes
+        # differently, and type-checking the same source against two stub sets produces 43
+        # disagreements that say nothing about either interpreter. `python_version = "3.12"` in
+        # `[tool.mypy]` fixes the *target*; this fixes the stubs.
+        if: matrix.python == '3.12'
         run: uv run --directory backend mypy
       - name: Pytest
         run: uv run --directory backend pytest

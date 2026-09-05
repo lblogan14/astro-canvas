@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import shutil
 import tempfile
 from collections.abc import Iterator
@@ -22,6 +23,9 @@ UPLOADS_DIR = "uploads"
 SHARED_DIR = "shared"
 """Prefix under which a lab server's read-only shared folder appears in every workspace."""
 
+DRIVE_PREFIX = re.compile(r"^[A-Za-z]:")
+"""A Windows drive letter, recognised on every platform (see ``safe_path``)."""
+
 
 class PathOutsideWorkspaceError(ValueError):
     """A user-supplied path escapes the workspace root (traversal or symlink)."""
@@ -38,7 +42,14 @@ def safe_path(root: Path, relative: str | PurePath) -> Path:
         PathOutsideWorkspaceError: when the path would escape ``root``.
     """
     root = root.resolve()
-    rel = PurePath(str(relative).replace("\\", "/"))
+    text = str(relative).replace("\\", "/")
+    rel = PurePath(text)
+    # A Windows drive prefix has to be refused on every platform, not just on Windows. `PurePath`
+    # only recognises one where it is running, so on a Linux server `c:relative` would otherwise
+    # become a file *named* `c:relative` inside the workspace -- the same request meaning two
+    # different things on two servers is worse than either meaning.
+    if DRIVE_PREFIX.match(text):
+        raise PathOutsideWorkspaceError(f"absolute paths are not allowed: {relative!s}")
     if rel.is_absolute() or (rel.parts and rel.parts[0].endswith(":")):
         raise PathOutsideWorkspaceError(f"absolute paths are not allowed: {relative!s}")
     if any(part in ("..", "") for part in rel.parts):
