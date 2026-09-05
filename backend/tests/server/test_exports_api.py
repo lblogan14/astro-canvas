@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -111,6 +112,43 @@ def test_a_failed_node_is_skipped_with_its_own_message(api: TestClient) -> None:
     assert body["files"] == []
     assert body["skipped"][0]["reason"] == "failed"
     assert body["skipped"][0]["message"].startswith("boom failed:")
+
+
+def test_a_node_whose_upstream_failed_reports_the_upstream(api: TestClient) -> None:
+    """A skipped node keeps its old state, so its own state describes nothing."""
+    doc = {
+        "format": "astro-canvas/workflow",
+        "version": 1,
+        "id": "upstream-failed",
+        "name": "Upstream failed",
+        "nodes": {
+            "boom": {"type": "test.fail", "params": {"message": "kaboom"}, "pos": [0, 0]},
+            "after": {
+                "type": "core.math.expr",
+                "params": {"expression": "x + 1"},
+                "linked": ["x"],
+                "pos": [200, 0],
+            },
+        },
+        "edges": {"e1": {"from": ["boom", "out"], "to": ["after", "x"]}},
+    }
+    assert api.post("/api/workflows", json=doc).status_code == 201
+    # `wait_status` waits for nothing to be dirty, and `after` stays dirty for good: the executor
+    # skipped it, so this is what a stuck graph looks like from outside.
+    deadline = time.monotonic() + 10.0
+    while True:
+        nodes = api.get(f"/api/workflows/{doc['id']}/status").json()["nodes"]
+        if nodes["boom"]["state"] == "error":
+            break
+        assert time.monotonic() < deadline, nodes
+    assert nodes["after"]["state"] == "dirty"
+
+    body = api.post(
+        f"/api/workflows/{doc['id']}/exports", json={"refs": ["after.out"], "run": True}
+    ).json()
+    assert body["skipped"][0]["reason"] == "failed"
+    assert "boom failed" in body["skipped"][0]["message"]
+    assert "kaboom" in body["skipped"][0]["message"]
 
 
 def test_an_export_on_the_heels_of_an_edit_waits_for_the_new_value(
