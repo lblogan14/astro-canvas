@@ -163,7 +163,9 @@ def test_registration_can_be_turned_off(tmp_path: Path, discovery: DiscoveryResu
     )
     with TestClient(create_app(settings, discovery)) as client:
         assert client.get("/api/auth/info").json()["registration"] is False
-        assert client.post("/api/auth/register", json=MEMBER).status_code == 404
+        # The route is simply not registered. Without a bundled SPA that is a 404; with one,
+        # the history fallback claims the path for GET only, so an unmatched POST is a 405.
+        assert client.post("/api/auth/register", json=MEMBER).status_code in (404, 405)
 
 
 def test_the_signing_secret_survives_a_restart(tmp_path: Path) -> None:

@@ -174,11 +174,9 @@ jobs:
       # Signing is env-gated: without a certificate the artefacts are unsigned and the docs say
       # so plainly rather than the build pretending otherwise.
       - name: Sign the Windows installer
-        if: matrix.os == 'windows-latest' && env.SIGNPATH_API_TOKEN != ''
-        env:
-          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
-          SIGNPATH_ORGANIZATION_ID: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
-          SIGNPATH_PROJECT_SLUG: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+        # A step-level `if` can read `secrets`, so an unconfigured certificate simply skips
+        # this rather than failing the build.
+        if: matrix.os == 'windows-latest' && secrets.SIGNPATH_API_TOKEN != ''
         uses: signpath/github-action-submit-signing-request@v1
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
@@ -295,7 +293,7 @@ jobs:
 
   install-smoke:
     name: fresh install (${{ matrix.os }})
-    needs: testpypi
+    needs: [wheels, testpypi]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
