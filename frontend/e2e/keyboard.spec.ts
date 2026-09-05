@@ -84,9 +84,18 @@ test.describe('keyboard and motion', () => {
       await expect(page.getByTestId('wizard-next')).toHaveCount(0)
       await tabTo(page, 'wizard-export')
       await page.keyboard.press('Enter')
-      await expect(page.getByTestId('wizard-exported')).toContainText('exports/', {
-        timeout: 60000,
-      })
+      // Either the export lands or something went wrong and said so in a toast; waiting only for
+      // the happy path turns a real failure into "element not found" 60 seconds later.
+      const exported = page.getByTestId('wizard-exported')
+      await expect(exported.or(page.getByTestId('toast')).first()).toBeVisible({ timeout: 120000 })
+      const toast = await page
+        .getByTestId('toast')
+        .textContent()
+        .catch(() => null)
+      await expect(
+        exported,
+        `export failed; the toast said: ${toast ?? '(nothing)'}`,
+      ).toContainText('exports/', { timeout: 30000 })
     } finally {
       await deleteWorkflow(request, id)
     }
