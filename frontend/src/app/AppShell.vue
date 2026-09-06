@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { LogOut, Monitor, Moon, ShieldCheck, Sun, UserRound } from '@lucide/vue'
 
 import ShellNotices from '@/app/ShellNotices.vue'
+import BrandMark from '@/components/BrandMark.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
@@ -40,9 +41,12 @@ async function signOut(): Promise<void> {
 <template>
   <div class="flex h-dvh flex-col bg-background text-foreground">
     <header class="flex h-10 shrink-0 items-center justify-between border-b px-4">
-      <div class="flex items-baseline gap-3">
-        <h1 class="text-sm font-semibold tracking-tight">{{ t('app.title') }}</h1>
-        <span class="hidden text-xs text-muted-foreground sm:inline">{{ t('app.tagline') }}</span>
+      <div class="flex items-center gap-2">
+        <BrandMark />
+        <div class="flex items-baseline gap-3">
+          <h1 class="text-sm font-semibold tracking-tight">{{ t('app.title') }}</h1>
+          <span class="hidden text-xs text-muted-foreground sm:inline">{{ t('app.tagline') }}</span>
+        </div>
       </div>
       <div class="flex items-center gap-2">
         <Badge
